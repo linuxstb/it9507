@@ -216,18 +216,12 @@ static u32  DRV_Initialize(
 	//u8 usb_dma_reg;
 	u8 chip_version = 0; 
 	u32 fileVersion, cmdVersion = 0; 
-	SystemConfig syscfg;
 	StreamType streamType_t;
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
 	if(EagleUser_getDeviceType((Modulator*) &pdc->modulator, &pdc->deviceType) != 0)
 		printk("- EagleUser_getDeviceType fail -\n");
-
-	if(EagleUser_getSystemConfig((Modulator*) &pdc->modulator, pdc->deviceType, &syscfg) != 0)
-		printk("- EagleUser_getSystemConfig fail -\n");	
- 
-	pdc->modulator.systemConfig = syscfg;
 
 	if(IT9507_setSlaveIICAddress((Modulator*) &pdc->modulator, SLAVE_DEMOD_2WIREADDR) != 0)
 		printk("- IT9507_setSlaveIICAddress fail -\n");	
@@ -1216,16 +1210,8 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         case IOCTL_ITE_DEMOD_SETDEVICETYPE_TX:
         {
             PTxSetDeviceTypeRequest pRequest = (PTxSetDeviceTypeRequest) pIOBuffer;
-            SystemConfig syscfg;
 
-            if(EagleUser_getSystemConfig(modulator, pRequest->DeviceType, &syscfg) != 0)
-                printk("- DeviceType id: %d, EagleUser_getSystemConfig fail -\n", pRequest->DeviceType);    
-            else 
-                printk("\n- DeviceType id: %d, EagleUser_getSystemConfig ok -\n", pRequest->DeviceType);                
-
-            modulator->systemConfig = syscfg;
-
-            if(EagleUser_setSystemConfig(modulator, syscfg) != 0)
+            if(EagleUser_setSystemConfig(modulator) != 0)
                 printk("\n- EagleUser_setSystemConfig fail -\n");    
             else 
                 printk("\n- EagleUser_setSystemConfig ok -\n");                

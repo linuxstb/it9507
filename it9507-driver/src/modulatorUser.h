@@ -68,16 +68,8 @@ typedef enum {
 	IndexEnd
 } PCBIndex;
 
-u32 EagleUser_getSystemConfig (
-    IN  Modulator*    modulator,
-    IN  u8          pcbIndex,
-	IN  SystemConfig* Config  
-);
-
-
 u32 EagleUser_setSystemConfig (
-    IN  Modulator*    modulator,
-	IN  SystemConfig  systemConfig
+    IN  Modulator*    modulator
 );
 
 u32 EagleUser_getTsInputType (

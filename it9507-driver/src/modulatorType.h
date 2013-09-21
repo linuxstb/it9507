@@ -427,27 +427,6 @@ typedef struct _TPS{
 
 //--------------------------
 
-typedef enum {
-	UNUSED = 0,
-    GPIOH1 = 0xD8AE,           //r_eagle_reg_top_gpioh1_i
-    GPIOH2 = 0xD8B6,           //r_eagle_reg_top_gpioh2_i
-	GPIOH3 = 0xD8B2,           //r_eagle_reg_top_gpioh3_i
-    GPIOH4 = 0xD8BE,           //r_eagle_reg_top_gpioh4_i
-	GPIOH5 = 0xD8BA,           //r_eagle_reg_top_gpioh5_i
-    GPIOH6 = 0xD8C6,           //r_eagle_reg_top_gpioh6_i
-	GPIOH7 = 0xD8C2,           //r_eagle_reg_top_gpioh7_i
-    GPIOH8 = 0xD8CE            //r_eagle_reg_top_gpioh8_i
-          
-} GPIO;
-
-
-typedef struct _SystemConfig{
-	GPIO	restSlave;
-	GPIO	rfEnable;
-	GPIO	irDa;
-	GPIO	uvFilter;
-	GPIO	powerDownSlave;
-} SystemConfig, *pSystemConfig;
 /**
  * The data structure of Eagle
  */
@@ -468,7 +447,6 @@ typedef struct {
 	u8 slaveIICAddr;  
 	ChannelModulation channelModulation;
 	CalibrationInfo calibrationInfo;
-	SystemConfig systemConfig;
 } Modulator;
 
 

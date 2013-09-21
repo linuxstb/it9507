@@ -80,71 +80,73 @@ static u32 Usb2_readControlBus (
 	return (Error_NO_ERROR);
 }
 
-u32 EagleUser_getSystemConfig (
-    IN  Modulator*    modulator,
-    IN  u8          pcbIndex,
-	IN  SystemConfig* Config  
-) {
-
-  /* This was originally device type 11 in the ITE driver */
-	Config->restSlave		= GPIOH1;
-	Config->rfEnable		= GPIOH2;
-	Config->irDa			= GPIOH7;
-	Config->uvFilter		= GPIOH8;
-	Config->powerDownSlave= GPIOH5;
-
-	return 0;
-}
+#define    GPIOH1_I	0xd8ae
+#define    GPIOH1_O	0xd8af
+#define    GPIOH1_EN	0xd8b0 
+#define    GPIOH1_ON	0xd8b1
+#define    GPIOH3_I	0xd8b2
+#define    GPIOH3_O	0xd8b3
+#define    GPIOH3_EN	0xd8b4
+#define    GPIOH3_ON	0xd8b5
+#define    GPIOH2_I	0xd8b6
+#define    GPIOH2_O	0xd8b7
+#define    GPIOH2_EN	0xd8b8
+#define    GPIOH2_ON	0xd8b9
+#define    GPIOH5_I	0xd8ba
+#define    GPIOH5_O	0xd8bb
+#define    GPIOH5_EN	0xd8bc
+#define    GPIOH5_ON	0xd8bd
+#define    GPIOH4_I	0xd8be
+#define    GPIOH4_O	0xd8bf
+#define    GPIOH4_EN	0xd8c0 
+#define    GPIOH4_ON	0xd8c1 
+#define    GPIOH7_I	0xd8c2
+#define    GPIOH7_O	0xd8c3
+#define    GPIOH7_EN	0xd8c4
+#define    GPIOH7_ON	0xd8c5
+#define    GPIOH6_I	0xd8c6
+#define    GPIOH6_O	0xd8c7
+#define    GPIOH6_EN	0xd8c8
+#define    GPIOH6_ON	0xd8c9
+#define    GPIOH8_I	0xd8ce
+#define    GPIOH8_O	0xd8cf 
+#define    GPIOH8_EN	0xd8d0 
+#define    GPIOH8_ON	0xd8d1 
 
 u32 EagleUser_setSystemConfig (
-    IN  Modulator*    modulator,
-	IN  SystemConfig  systemConfig
+    IN  Modulator*    modulator
 ) {
 	u32 error = 0;
-	u8 pinCnt = 0;
-	
-	if(systemConfig.restSlave != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.restSlave+1, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.restSlave+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.restSlave+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
-		EagleUser_delay(modulator, 10);
-	}
 
-	if(systemConfig.powerDownSlave != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.powerDownSlave+1, 0);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.powerDownSlave+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.powerDownSlave+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
-	}
+        /* restSlave */	
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH1_O, 1);//gpiox_en
+	if (error) goto exit;
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH1_EN, 1);//gpiox_en
+	if (error) goto exit;
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH1_ON, 1);//gpiox_on
+	if (error) goto exit;
+	EagleUser_delay(modulator, 10);
 
-	if(systemConfig.rfEnable != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.rfEnable+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.rfEnable+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
-	}
+        /* powerDownSlave */
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH5_O, 0);//gpiox_en
+	if (error) goto exit;
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH5_EN, 1);//gpiox_en
+	if (error) goto exit;
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH5_ON, 1);//gpiox_on
+	if (error) goto exit;
 
-	if(systemConfig.uvFilter != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.uvFilter+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.uvFilter+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
-	}
+        /* rfEnable */
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_EN, 1);//gpiox_en
+	if (error) goto exit;
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_ON, 1);//gpiox_on
+	if (error) goto exit;
 
-	if(pinCnt>8)
-		error = ModulatorError_INVALID_SYSTEM_CONFIG;
+        /* uvFilter */
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH8_EN, 1);//gpiox_en
+	if (error) goto exit;
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH8_ON, 1);//gpiox_on
+	if (error) goto exit;
 
-	if(error == ModulatorError_NO_ERROR)
-		modulator->systemConfig = systemConfig;
 exit:
     return (ModulatorError_NO_ERROR);
 }
@@ -355,29 +357,25 @@ u32 EagleUser_setBus (
      *  return (0);
      */
 	u32 error = 0;
-	 error = EagleUser_setSystemConfig(modulator, modulator->systemConfig);
+	 error = EagleUser_setSystemConfig(modulator);
 	 if (error) goto exit;
 
 	if(modulator->tsInterfaceType != StreamType_DVBT_DATAGRAM){
 		
-		if(modulator->systemConfig.restSlave != UNUSED){
-			error = IT9507_writeRegister (modulator, Processor_LINK, (u32)modulator->systemConfig.restSlave+1, 1); //RX(IT9133) rest 
-			if (error) goto exit;
-		}
+		error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH1_O, 1); //RX(IT9133) rest 
+		if (error) goto exit;
 
 		EagleUser_delay(modulator, 10);
-		if(modulator->systemConfig.powerDownSlave != UNUSED){
-			error = IT9507_writeRegister (modulator, Processor_LINK, (u32)modulator->systemConfig.powerDownSlave+1, 0); //RX(IT9133) power up
-			if (error) goto exit;
-		}
 
-
-	}
-
-	if(modulator->systemConfig.rfEnable != UNUSED){
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)modulator->systemConfig.rfEnable+1, 0); //RF out power down
+		error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH5_O, 0); //RX(IT9133) power up
 		if (error) goto exit;
+
+
 	}
+
+	// RF Enable
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_O, 0); //RF out power down
+	if (error) goto exit;
 exit:
     return (error);
 
@@ -418,16 +416,12 @@ u32 EagleUser_acquireChannel (
 	u32 error = 0;
 
 	if(frequency <= 300000){ // <=300000KHz v-filter gpio set to Lo
-		 if(modulator->systemConfig.uvFilter != UNUSED){
-			 error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.uvFilter+1, 0); 
-			 if (error) goto exit;
-		 }
+	  error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH8_O, 0);  /* uvFilter */
+		if (error) goto exit;
 
 	}else{
-		 if(modulator->systemConfig.uvFilter != UNUSED){
-			 error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.uvFilter+1, 1); 
-			 if (error) goto exit;
-		 }
+	  error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH8_O, 1); /* uvFilter */
+		if (error) goto exit;
 	}	
 exit:
 	return (error);
@@ -445,19 +439,12 @@ u32 EagleUser_setTxModeEnable (
      */
 	u32 error = ModulatorError_NO_ERROR;
 	if(enable){
-		if(modulator->systemConfig.rfEnable != UNUSED){
-			error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.rfEnable+1, 1); //RF power up 
+			error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_O, 1); //RF power up 
 			if (error) goto exit;
-		}	
 	}else{
-		if(modulator->systemConfig.rfEnable != UNUSED){
-			error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.rfEnable+1, 0); //RF power down 
+			error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_O, 0); //RF power down 
 			if (error) goto exit;
-		}
-		
 	}
 exit :
 	return (error);
 }
-
-
