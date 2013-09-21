@@ -35,10 +35,6 @@
 
 #define   DRIVER_RELEASE_VERSION    "v13.06.27.1"
 
-/************** DTVCAM & AVSENDER **************/
-//#define   DTVCAM_POWER_CTRL
-//#define   AVSENDER_POWER_CTRL
-
 #define URB_TEST	0
 #define URB_COUNT_TX   16
 #define URB_COUNT_TX_LOW_BRATE 64
@@ -50,7 +46,6 @@
 #define URB_BUFSIZE_RX 188 * 348//32712//65424//16356//32712
 #define CLEAN_HARDWARE_BUFFER_SIZE 1000
 //***************** from device.h *****************//
-#define AFA_USB_DEVICE
 
 #define SLAVE_DEMOD_2WIREADDR  0x3A
 

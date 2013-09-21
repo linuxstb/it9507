@@ -854,62 +854,6 @@ static u32 DRV_ApCtrl(
 }
 
 
-/*
-static u32 DRV_ApCtrl (
-      void *      handle,
-      u8        ucSlaveDemod,
-      bool        bOn
-)
-{
-	u32 dwError = Error_NO_ERROR;
-
-        PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-
-	deb_data("- Enter %s Function -\n",__FUNCTION__);
-	deb_data(" ucSlaveDemod = %d, bOn = %s \n", ucSlaveDemod, bOn?"ON":"OFF"); 
-
-      //deb_data("enter DRV_ApCtrl: Demod[%d].GraphBuilt = %d", ucSlaveDemod, pdc->fc[ucSlaveDemod].GraphBuilt); 
-
-	dwError = DRV_TunerPowerCtrl(pdc, ucSlaveDemod, bOn);
-       	if(dwError) { deb_data("	DRV_TunerPowerCtrl Fail: 0x%08x\n", dwError); return(dwError);}
-
-	
-    	dwError = IT9507_controlPowerSaving((Demodulator*) &pdc->Demodulator, bOn);   
-    	if(dwError) { deb_data("	DRV_ApCtrl: Demodulator_controlPowerSaving error = 0x%08x\n", dwError); return(dwError);}
-	
-    return(dwError);
-}
-*/
-
-/*
-static u32 DRV_ApReset(
-	void* handle,
-	u8 ucSlaveDemod,
-	bool bOn)
-{
-	u32 dwError = Error_NO_ERROR;
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	
-	deb_data("- Enter %s Function -\n",__FUNCTION__);
-	
-	pdc->fc[ucSlaveDemod].ulCurrentFrequency = 0;
-	pdc->fc[ucSlaveDemod].ucCurrentBandWidth = 6000; //for BDAUtil 
-	pdc->fc[ucSlaveDemod].bApOn = false;
-	
-	if(!bOn) { //Only for stop
-		pdc->fc[ucSlaveDemod].bEnPID = false;
-	}
-
-	//init Tuner info
-	pdc->fc[ucSlaveDemod].tunerinfo.bSettingFreq = false;
-	
-	dwError = DRV_ApCtrl(pdc, ucSlaveDemod, bOn);
-	if(dwError) deb_data("DRV_ApCtrl Fail!");
-
-	return(dwError);
-}
-*/
-
 static u32 DRV_TunerWakeup(
       void *     handle
 )
@@ -1559,8 +1503,6 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
         	PDC->UsbCtrlTimeOut = 5;
     	}//bBoot
 
-
-#ifdef AFA_USB_DEVICE 	
 	if (bBoot) {
 		//************* Set USB Info *************//
 		PDC->MaxPacketSize = 0x0200; //default USB2.0
@@ -1576,11 +1518,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
     	PDC->bEP45Error = false; 
     	PDC->ForceWrite = false;    
     	PDC->ulActiveFilter = 0;
-#else
-    	PDC->bSupportSuspend = false; 
-#endif//AFA_USB_DEVICE
 	
-#ifdef AFA_USB_DEVICE
 	if(bBoot)
     	{
 		//patch for eeepc
@@ -1667,97 +1605,14 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
         	} */
 //    	}        
 	
-/*    	if(PDC->modulator.chipNumber == 2)
-    	{
-       	 if(PDC->fc[0].GraphBuilt==0 && PDC->fc[1].GraphBuilt==0)
-        	{
-            		error = DL_NIMSuspend(PDC, true);            
-            		if(error) deb_data("DL_NIMSuspend fail!");   
-        	}
-    	}
-*/
 	deb_data("	%s success \n",__FUNCTION__);
 
-	/*AirHD need to init some regs only for ep6-ep4 loop back*/
-/*
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, Processor_OFDM, 0xF714, 0x0);	
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, Processor_LINK, 0xDD88, 0x40);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, Processor_LINK, 0xDD89, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, Processor_LINK, 0xDD0E, 0x80);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, Processor_LINK, 0xDD0C, 0x80);
-	
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, Processor_LINK, 0xDD11, 0x7, 0x1, 0x0);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, Processor_LINK, 0xDD11, 0x5, 0x1, 0x0);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, Processor_LINK, 0xDD13, 0x7, 0x1, 0x0);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, Processor_LINK, 0xDD13, 0x5, 0x1, 0x0);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, Processor_LINK, 0xDD11, 0x7, 0x1, 0x1);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, Processor_LINK, 0xDD11, 0x5, 0x1, 0x1);
-		
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDDA9, 0x04);
 
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF714, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF731, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xD91E, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF732, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xD91F, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF730, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF778, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF73C, 0x1);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF776, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF99D, 0x1);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF9A4, 0x1);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD11, 0x5, 0x1, 0x0);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD11, 0x6, 0x1, 0x0);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD13, 0x5, 0x1, 0x0);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD13, 0x6, 0x1, 0x0);
-
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD11, 0x5, 0x1, 0x1);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD88, 0xE4);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD89, 0x3F);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD0C, 0x80);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD11, 0x6, 0x1, 0x1);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD8A, 0xE4);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD8B, 0x3F);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD0D, 0x80);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF985, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF986, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF9A3, 0x1);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF9CC, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF9CD, 0x1);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF99D, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF9A4, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF9A5, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF9B5, 0x1);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xD920, 0x1);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF12B, 0xA);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF128, 0x9);
-
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD11, 0x7, 0x1, 0x0);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD13, 0x7, 0x1, 0x0);
-	error = IT9507_writeRegisterBits((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD11, 0x7, 0x1, 0x1);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDD0E, 0x80);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_LINK, 0xDDA9, 0x16);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF721, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF723, 0x4);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF726, 0x1);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF710, 0x0);
-	error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF702, 0x0);
-	//error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF99A, 0x0);
-*/
-	//error = IT9507_writeRegister((Demodulator*) &PDC->Demodulator, 0, Processor_OFDM, 0xF7C1, 0x1);
 	error = IT9507_writeRegister((Modulator*) &PDC->modulator, Processor_OFDM, 0xF7C6, 0x1);
 	if(error)	printk( "AirHD Reg Write fail!\n");
 	else printk( "AirHD Reg Write ok!\n");
 	
-	
-	//error = EagleUser_getDeviceType((Modulator*) &PDC->modulator, &PDC->deviceType);
-	/*if(DL_LoadIQtable_Fromfile(PDC) == Error_NO_ERROR)
-		printk( "done!\n");	
-	else
-		printk( "fail! num: %lu\n", error);	
-	*/
 Exit:
-#endif //AFA_USB_DEVICE
 	
 	if(errcount)
         printk( "[Device_init] Error %d\n", errcount);
