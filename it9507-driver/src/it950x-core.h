@@ -266,7 +266,7 @@ extern DWORD DL_getSNR(void *handle, BYTE ucSlaveDemod, Constellation* constella
 extern DWORD DL_ReSetInterval(void);
 extern DWORD DL_Reboot(void* handle);
 extern DWORD DL_CheckTunerInited(void *handle, BYTE ucSlaveDemod, Bool *bOn);
-extern DWORD DL_DemodIOCTLFun(void* handle, DWORD IOCTLCode, unsigned long pIOBuffer);
+extern DWORD DL_DemodIOCTLFun(Modulator* modulator, DWORD IOCTLCode, unsigned long pIOBuffer);
 extern DWORD DL_LoadIQtable_Fromfile(void *handle);
 //extern Bool DevicePower, DeviceReboot;
 // TunerInited0, TunerInited1
