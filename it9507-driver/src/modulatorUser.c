@@ -20,15 +20,6 @@
 #include "modulatorError.h"
 #include "modulatorUser.h"
 
-static u32 Usb2_exitDriver (
-    IN  Modulator*    modulator
-) {
-    u32 error = ModulatorError_NO_ERROR;
-
-    return (error);
-}
-
-
 static u32 Usb2_writeControlBus (
     IN  Modulator*    modulator,
     IN  u32           bufferLength,
@@ -381,25 +372,6 @@ exit:
 
  }
 
-
-u32 EagleUser_Finalize  (
-    IN  Modulator*    modulator
-) {
-	/*
-     *  ToDo:  Add code here
-     *
-     *  // If no error happened return 0, else return error code.
-     *  return (0);
-     */
-	u32 error = 0;
-	if(modulator->busId == Bus_USB)
-		error = Usb2_exitDriver(modulator);
-	else
-		error = ModulatorError_INVALID_BUS_TYPE;
-    return (error);
-
- }
- 
 
 u32 EagleUser_acquireChannel (
 	IN  Modulator*    modulator,

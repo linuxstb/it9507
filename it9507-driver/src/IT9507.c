@@ -1408,17 +1408,6 @@ exit:
 }
 
 
-u32 IT9507_finalize (
-    IN  Modulator*    modulator
-) {
-	u32 error = ModulatorError_NO_ERROR;
-
-	error = EagleUser_Finalize(modulator);
-
-	return (error);
-}
-
-
 u32 IT9507_reset (
     IN  Modulator*    modulator
 ) {
