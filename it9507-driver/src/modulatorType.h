@@ -446,12 +446,7 @@ typedef struct _SystemConfig{
 	GPIO	rfEnable;
 	GPIO	irDa;
 	GPIO	uvFilter;
-	GPIO	chSelect3;
-	GPIO	chSelect2;
-	GPIO	chSelect1;
-	GPIO	chSelect0;
 	GPIO	powerDownSlave;
-	GPIO	muxSelect;
 } SystemConfig, *pSystemConfig;
 /**
  * The data structure of Eagle

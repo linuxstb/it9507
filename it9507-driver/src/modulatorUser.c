@@ -91,20 +91,10 @@ u32 EagleUser_getSystemConfig (
 	Config->rfEnable		= GPIOH2;
 	Config->irDa			= GPIOH7;
 	Config->uvFilter		= GPIOH8;
-	Config->chSelect0		= UNUSED;
-	Config->chSelect1		= UNUSED;		
-	Config->chSelect2		= UNUSED;
-	Config->chSelect3		= UNUSED;
-	Config->muxSelect		= UNUSED;
 	Config->powerDownSlave= GPIOH5;
 
 	return 0;
 }
-
-
-
-
-
 
 u32 EagleUser_setSystemConfig (
     IN  Modulator*    modulator,
@@ -122,14 +112,6 @@ u32 EagleUser_setSystemConfig (
 		if (error) goto exit;
 		pinCnt++;
 		EagleUser_delay(modulator, 10);
-	}
-
-	if(systemConfig.muxSelect != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.muxSelect+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.muxSelect+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
 	}
 
 	if(systemConfig.powerDownSlave != UNUSED){ //output
@@ -478,95 +460,4 @@ exit :
 	return (error);
 }
 
-
-u32 EagleUser_getChannelIndex (
-	IN  Modulator*            modulator,
-	IN  u8*                    index	
-) {
-
-	/*
-     *  ToDo:  Add code here
-     *
-     *  // If no error happened return 0, else return error code.
-     *  return (0);
-     */
-	u32 error = ModulatorError_NO_ERROR;
-	u8 Freqindex = 0;
-	u8 temp = 0;
-	// get HW setting
-	if(modulator->systemConfig.muxSelect != UNUSED){
-		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.muxSelect+1, 1); //MUX
-		if (error) goto exit;
-	}
-
-	if(modulator->systemConfig.chSelect0 != UNUSED){ //input
-		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect0+2, 0);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect0+3, 1);//gpiox_on
-		if (error) goto exit;
-	}
-
-	if(modulator->systemConfig.chSelect1 != UNUSED){ //input
-		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect1+2, 0);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect1+3, 1);//gpiox_on
-		if (error) goto exit;					
-	}
-
-	if(modulator->systemConfig.chSelect2 != UNUSED){ //input
-		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect2+2, 0);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect2+3, 1);//gpiox_on
-		if (error) goto exit;					
-	}
-
-	if(modulator->systemConfig.chSelect3 != UNUSED){ //input
-		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect3+2, 0);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect3+3, 1);//gpiox_on
-		if (error) goto exit;					
-	}
-	//--- get HW freq setting
-	if(modulator->systemConfig.chSelect0 != UNUSED){
-		error = IT9507_readRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect0, &temp); 					
-	}
-	if (error) goto exit;
-	Freqindex = Freqindex | (temp);
-
-	if(modulator->systemConfig.chSelect1 != UNUSED){
-		error = IT9507_readRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect1, &temp); 
-	}
-	if (error) goto exit;
-	Freqindex = Freqindex | (temp<<1);
-
-	if(modulator->systemConfig.chSelect2 != UNUSED){
-		error = IT9507_readRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect2, &temp); 					
-	}
-	if (error) goto exit;
-	Freqindex = Freqindex | (temp<<2);
-
-	if(modulator->systemConfig.chSelect3 != UNUSED){
-		error = IT9507_readRegister (modulator, Processor_LINK, modulator->systemConfig.chSelect3, &temp); 					
-	}
-	if (error) goto exit;
-	Freqindex = Freqindex | (temp<<3);
-
-	error = IT9507_readRegister (modulator, Processor_LINK, 0x49E5, &temp);
-	if (error) goto exit;
-	Freqindex = Freqindex | (temp<<4);
-	//--------------------
-
-
-	error = EagleUser_setSystemConfig (modulator, modulator->systemConfig);
-	if (error) goto exit;
-
-
-	if(modulator->systemConfig.muxSelect != UNUSED){
-		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.muxSelect+1, 0); //MUX					
-	}
-
-	*index = Freqindex;
-exit :
-	return (error);
-}
 
