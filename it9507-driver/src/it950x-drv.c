@@ -1,5 +1,6 @@
 #include "it950x-core.h"
 #include "modulatorFirmware.h"
+#include "register.h"
 #include "firmware.h"
 #include "firmware_V2.h"
 #include "IQ_fixed_table.h"
@@ -111,38 +112,7 @@ exit:
 
 }
 
-/*
-static DWORD  DRV_GetEEPROMConfig2(
-        void *      handle,
-        BYTE       ucSlaveDemod)
-{
 
-	DWORD dwError = Error_NO_ERROR;
-    	tWORD    shift = 0;
-    	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	BYTE btmp = 0;
-
-	deb_data("- Enter %s Function -",__FUNCTION__);
-	
-    	if(ucSlaveDemod) shift = EEPROM_SHIFT;
-    
-    	dwError = Demodulator_readRegisters((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, EEPROM_TUNERID+shift, 1, &btmp);
-    	//if (dwError) goto exit;
-	//tunerID option, in Omega, not need to read register, just assign 0x38;
-    	//btmp = 0x38;		
-	//btmp = 0x51;	
-	if (btmp != 0x51)
-		btmp = 0x38;
-
-    	deb_data("EEPROM_TUNERID%d  = 0x%02X\n", ucSlaveDemod, btmp);		
-    	PTI.TunerId = btmp;  
-
-//exit:
- 
-    return(dwError);  
-
-}  
-*/
 static DWORD DRV_SetFreqBw(
     	void*	handle,      
      	BYTE 	ucSlaveDemod,
@@ -239,135 +209,6 @@ exit:
     pdc->fc[ucSlaveDemod].tunerinfo.bSettingFreq = false;
 
     return(dwError);  
-}
-
-static DWORD DRV_isLocked(
-        void*   handle,
-        BYTE    ucSlaveDemod,
-        Bool*   bLock   
-)
-{
-        DWORD dwError = Error_NO_ERROR;
-        PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-        *bLock = true;
-
-	deb_data("- Enter %s Function -\n ",__FUNCTION__);
-
-	dwError= Demodulator_isLocked((Demodulator*) &pdc->demodulator, bLock);
-        if(dwError)  
-                deb_data("      IT950x_isLocked is failed!\n"); 
-        else 
-                deb_data("      The chip=%d signal is %s Lock\n", ucSlaveDemod, *bLock?"":"not"); 
-
-	return(dwError);
-}
-static DWORD DRV_getSignalStrength(
-        void*   handle,
-        BYTE    ucSlaveDemod,
-        BYTE*    strength  
-)
-{
-        DWORD dwError = Error_NO_ERROR;
-        PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-
-        deb_data("- Enter %s Function -\n ",__FUNCTION__);
-
-	 dwError= Demodulator_getSignalStrengthIndication((Demodulator*) &pdc->demodulator, strength);
-	if(dwError)
-                deb_data("      IT9507_getSignalStrength is failed!\n");
-	else
-                deb_data("      The signal strength is %d \n", *strength);
-
-	return(dwError);
-}
-
-static DWORD DRV_getSignalStrengthDbm(
-    void*   handle,
-    BYTE    ucSlaveDemod,
-    Long*   strengthDbm
-)
-{
-    DWORD dwError = Error_NO_ERROR;
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-
-    deb_data("- Enter %s Function -\n ",__FUNCTION__);
-
-    dwError= Demodulator_getSignalStrengthIndication((Demodulator*) &pdc->demodulator, (Byte *)strengthDbm);
-    if(dwError)
-    {
-    	deb_data("      IT9507_getSignalStrengthDbm is failed!\n");
-    }
-    else
-    {
-    	deb_data("      The signal strengthDbm is %ld \n", *strengthDbm);
-    }
-
-    return(dwError);
-}
-/*
-static DWORD DRV_getChannelStatistic(
-    void*   handle,
-    BYTE    ucSlaveDemod,
-    ChannelStatistic*           channelStatistic
-)
-{
-    DWORD dwError = Error_NO_ERROR;
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-    
-    deb_data("- Enter %s Function -\n ",__FUNCTION__);
-    
-    dwError= IT9507_getChannelStatistic((Demodulator*) &pdc->Demodulator, channelStatistic);
-    if(dwError)
-	deb_data("      Demodulator_getChannelStatistic is failed!\n");
-
-    return(dwError);
-}
-*/
-static DWORD DRV_getChannelModulation(
-    void*   handle,
-    BYTE    ucSlaveDemod,
-    ChannelModulation*      channelModulation
-)
-{
-    DWORD dwError = Error_NO_ERROR;
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-
-    deb_data("- Enter %s Function -\n ",__FUNCTION__);
-
-    dwError= Standard_getChannelModulation((Demodulator*) &pdc->demodulator, channelModulation);
-    if(dwError)
-	deb_data("      Demodulator_getChannelStatistic is failed!\n");
-
-    return(dwError);
-}
-
-static DWORD DRV_getSNRValue(
-    void*   handle,
-    DWORD*   snr_value
-)
-{
-    DWORD dwError = Error_NO_ERROR;
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-    BYTE snr_reg_23_16, snr_reg_15_8, snr_reg_7_0;
-    
-    deb_data("- Enter %s Function -\n ",__FUNCTION__);
-
-
-    dwError = IT9507_readRegister((Modulator*) &pdc->modulator,Processor_OFDM, 0x2e,(unsigned char *) &snr_reg_23_16);
-    if(dwError)
-	deb_data("      Demodulator_getSNR snr_reg_23_16 is failed!\n");
-
-     dwError = IT9507_readRegister((Modulator*) &pdc->modulator,Processor_OFDM, 0x2d,(unsigned char *) &snr_reg_15_8);
-     if(dwError)
-	deb_data("      IT9507_getSNR snr_reg_15_8 is failed!\n");
-
-    dwError = IT9507_readRegister((Modulator*) &pdc->modulator,Processor_OFDM, 0x2c,(unsigned char *) &snr_reg_7_0);
-    if(dwError)
-	deb_data("      Demodulator_getSNR snr_reg_7_0 is failed!\n");
-
-    *snr_value = (snr_reg_23_16&0xff)*256*256+(snr_reg_15_8&0xff)*256+(snr_reg_7_0&0xff);
-
-    return(dwError);
 }
 
 static DWORD DRV_getFirmwareVersionFromFile( 
@@ -553,8 +394,9 @@ static DWORD  DRV_Initialize(
 				 
 				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08ld\n", error);
 				else deb_data("    Device initialize TX Ok\n");
-				
+
 				pdc->demodulator.userData = &pdc->modulator;
+#if 0				
 				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
 				
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
@@ -566,6 +408,7 @@ static DWORD  DRV_Initialize(
 					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08ld\n", error);
 					else deb_data("    Device initialize RX Ok\n");
 				}
+#endif
 				break;
 			case StreamType_DVBT_PARALLEL:
 				deb_data("    StreamType_DVBT_PARALLEL\n");
@@ -574,6 +417,7 @@ static DWORD  DRV_Initialize(
 				else deb_data("    Device initialize TX Ok\n");
 				
 				pdc->demodulator.userData = &pdc->modulator;
+#if 0				
 				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
 
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
@@ -585,6 +429,7 @@ static DWORD  DRV_Initialize(
 					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08ld\n", error);
 					else deb_data("    Device initialize RX Ok\n");
 				}
+#endif
 				break;
 			case StreamType_DVBT_SERIAL:
 				deb_data("    StreamType_DVBT_SERIAL\n"); 
@@ -595,6 +440,7 @@ static DWORD  DRV_Initialize(
 				
 				pdc->demodulator.userData = &pdc->modulator;
 				
+#if 0				
 				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
 				else {
@@ -605,6 +451,7 @@ static DWORD  DRV_Initialize(
 					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08ld\n", error);
 					else deb_data("    Device initialize RX Ok\n");
 				}
+#endif
 				break;
 			default:
 				deb_data(" Set Default StreamType_DVBT_PARALLEL\n");
@@ -614,6 +461,7 @@ static DWORD  DRV_Initialize(
 				else deb_data("    Device initialize TX Ok\n");
 
 				pdc->demodulator.userData = &pdc->modulator;
+#if 0				
 				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
 
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
@@ -627,6 +475,7 @@ static DWORD  DRV_Initialize(
 					else deb_data("    Device initialize RX Ok\n");
 					//error_rx = Demodulator_writeRegister((Demodulator*) &pdc->demodulator, Processor_LINK, 0xd830, 1);			
 				}			
+#endif
 				break;
 			
 		} 
@@ -1839,6 +1688,7 @@ DWORD DL_ApPwCtrl (
 	deb_data("  chip =  %d  bOn = %s\n", bChipCtl, bOn?"ON":"OFF");
 
 	if(bChipCtl) {    // 913x
+#if 0
 		if(bOn) {		// resume
 			deb_data("IT9130x Power ON\n");		
 			dwError = IT9507_writeRegisterBits((Modulator*) &PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
@@ -1856,6 +1706,7 @@ DWORD DL_ApPwCtrl (
 				goto exit;
 			}			
 		}
+#endif
 	} else {          // 9507
 		if(bOn) {	  // resume
 			deb_data("IT950x Power ON\n");				
@@ -1963,66 +1814,6 @@ DWORD DL_Tuner_SetFreqBw(void *handle, BYTE ucSlaveDemod, u32 dwFreq,u8 ucBw)
     	return(dwError);	
 }
 
-/*
-DWORD  DL_LoadIQtable_Fromfile(
-      void *     handle
-)
-{
-	DWORD dwError = Error_NO_ERROR;
-
-    mutex_lock(&mymutex);
-
-	dwError = DRV_LoadIQtable_Fromfile(handle);
-
-    mutex_unlock(&mymutex);
-
-    return(dwError);
-}*/
-
-DWORD DL_isLocked(void *handle, BYTE ucSlaveDemod, Bool *bLock )
-{
-	DWORD dwError = Error_NO_ERROR;
-   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
-    mutex_lock(&mymutex);
-
-    deb_data("- Enter %s Function -\n",__FUNCTION__);
-	
-	dwError =  DRV_isLocked(PDC, ucSlaveDemod, bLock);	
-
-    mutex_unlock(&mymutex);
-	return(dwError);
-}
-
-DWORD DL_getSignalStrength(void *handle, BYTE ucSlaveDemod, BYTE* strength)
-{
-	DWORD dwError = Error_NO_ERROR;
-   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
-    mutex_lock(&mymutex);
-
-    deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-    dwError =  DRV_getSignalStrength(PDC, ucSlaveDemod, strength);
-
-//	deb_data("      The signal strength is %d \n", *strength);
-    mutex_unlock(&mymutex);
-
-        return(dwError);
-}
-
-DWORD DL_getSignalStrengthDbm(void *handle, BYTE ucSlaveDemod, Long* strengthDbm)
-{
-	DWORD dwError = Error_NO_ERROR;
-   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
-	mutex_lock(&mymutex);
-
-    deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-    dwError =  DRV_getSignalStrengthDbm(PDC, ucSlaveDemod, strengthDbm);
-
-mutex_unlock(&mymutex);
-    return(dwError);
-}
-
 DWORD DL_getDeviceType(void *handle)
 {
 	DWORD dwError = Error_NO_ERROR;
@@ -2032,158 +1823,6 @@ DWORD DL_getDeviceType(void *handle)
 	dwError =  DRV_getDeviceType(PDC);
 
 	mutex_unlock(&mymutex);
-    return(dwError);
-}
-
-/*
-DWORD DL_getChannelStatistic(BYTE ucSlaveDemod, ChannelStatistic*	channelStatistic)
-{
-
-    mutex_lock(&mymutex);
-
-    DWORD dwError = Error_NO_ERROR;
-
-    deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-    dwError = DRV_getChannelStatistic(PDC, ucSlaveDemod, channelStatistic);
-
-    mutex_unlock(&mymutex);
-
-    return(dwError);
-}
-*/
-DWORD DL_getChannelModulation(void *handle, BYTE ucSlaveDemod, ChannelModulation*    channelModulation)
-{
-	DWORD dwError = Error_NO_ERROR;
-   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
-	mutex_lock(&mymutex);
-
-	deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-    dwError = DRV_getChannelModulation(PDC, ucSlaveDemod, channelModulation);
-
-    mutex_unlock(&mymutex);
-
-    return(dwError);
-}
-
-DWORD DL_getSNR(void *handle, BYTE ucSlaveDemod, Constellation* constellation, BYTE* snr)
-{
-	DWORD dwError = Error_NO_ERROR;
-	ChannelModulation    channelModulation;
-	DWORD   snr_value;
-   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
-   	
-	mutex_lock(&mymutex);
-
-    deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-    dwError = DRV_getChannelModulation(PDC, ucSlaveDemod, &channelModulation);
-    if (dwError)    return(dwError);
-
-    dwError = DRV_getSNRValue(PDC, &snr_value);
-    if (dwError)    return(dwError);
-
-    *constellation = channelModulation.constellation;
-
-    if(channelModulation.constellation == 0) //Constellation_QPSK 
-    {
-	if(snr_value < 0xB4771)    *snr = 0;
-	else if(snr_value < 0xC1AED)	*snr = 1;
-	else if(snr_value < 0xD0D27)   *snr = 2;
-	else if(snr_value < 0xE4D19)   *snr = 3;
-	else if(snr_value < 0xE5DA8)   *snr = 4;
-	else if(snr_value < 0x107097)   *snr = 5;
-	else if(snr_value < 0x116975)   *snr = 6;
-	else if(snr_value < 0x1252D9)   *snr = 7;
-	else if(snr_value < 0x131FA4)   *snr = 8;
-	else if(snr_value < 0x13D5E1)   *snr = 9;
-	else if(snr_value < 0x148E53)   *snr = 10;
-	else if(snr_value < 0x15358B)   *snr = 11;
-	else if(snr_value < 0x15DD29)   *snr = 12;
-	else if(snr_value < 0x168112)   *snr = 13;
-	else if(snr_value < 0x170B61)   *snr = 14;
-	else if(snr_value < 0x17A532)   *snr = 15;
-	else if(snr_value < 0x180F94)   *snr = 16;
-	else if(snr_value < 0x186ED2)   *snr = 17;
-	else if(snr_value < 0x18B271)   *snr = 18;
-	else if(snr_value < 0x18E118)   *snr = 19;
-	else if(snr_value < 0x18FF4B)   *snr = 20;
-	else if(snr_value < 0x190AF1)   *snr = 21;
-	else if(snr_value < 0x191451)   *snr = 22;
-	else	*snr = 23;
-    }
-
-    else if ( channelModulation.constellation == 1) //Constellation_16QAM
-    {
-        if(snr_value < 0x4F0D5)    *snr = 0;
-	else if(snr_value < 0x5387A)   *snr = 1;
-	else if(snr_value < 0x573A4)   *snr = 2;
-	else if(snr_value < 0x5A99E)   *snr = 3;
-	else if(snr_value < 0x5CC80)   *snr = 4;
-	else if(snr_value < 0x5EB62)   *snr = 5;
-	else if(snr_value < 0x5FECF)   *snr = 6;
-	else if(snr_value < 0x60B80)   *snr = 7;
-	else if(snr_value < 0x62501)   *snr = 8;
-	else if(snr_value < 0x64865)   *snr = 9;
-	else if(snr_value < 0x69604)   *snr = 10;
-	else if(snr_value < 0x6F356)   *snr = 11;
-	else if(snr_value < 0x7706A)   *snr = 12;
-	else if(snr_value < 0x804D3)   *snr = 13;
-	else if(snr_value < 0x89D1A)   *snr = 14;
-	else if(snr_value < 0x93E3D)   *snr = 15;
-	else if(snr_value < 0x9E35D)   *snr = 16;
-	else if(snr_value < 0xA7C3C)   *snr = 17;
-	else if(snr_value < 0xAFAF8)   *snr = 18;
-	else if(snr_value < 0xB719D)   *snr = 19;
-	else if(snr_value < 0xBDA6A)   *snr = 20;
-	else if(snr_value < 0xC0C75)   *snr = 21;
-	else if(snr_value < 0xC3F7D)   *snr = 22;
-	else if(snr_value < 0xC5E62)   *snr = 23;
-	else if(snr_value < 0xC6C31)   *snr = 24;
-	else if(snr_value < 0xC7925)   *snr = 25;
-	else    *snr = 26;
-    }
-
-    else if ( channelModulation.constellation == 2) //Constellation_64QAM
-    {
-        if(snr_value < 0x256D0)    *snr = 0;
-	else if(snr_value < 0x27A65)   *snr = 1;
-	else if(snr_value < 0x29873)   *snr = 2;
-	else if(snr_value < 0x2B7FE)   *snr = 3;
-	else if(snr_value < 0x2CF1E)   *snr = 4;
-	else if(snr_value < 0x2E234)   *snr = 5;
-	else if(snr_value < 0x2F409)   *snr = 6;
-	else if(snr_value < 0x30046)   *snr = 7;
-	else if(snr_value < 0x30844)   *snr = 8;
-	else if(snr_value < 0x30A02)   *snr = 9;
-	else if(snr_value < 0x30CDE)   *snr = 10;
-	else if(snr_value < 0x31031)   *snr = 11;
-	else if(snr_value < 0x3144C)   *snr = 12;
-	else if(snr_value < 0x315DD)   *snr = 13;
-	else if(snr_value < 0x31920)   *snr = 14;
-	else if(snr_value < 0x322D0)   *snr = 15;
-	else if(snr_value < 0x339FC)   *snr = 16;
-	else if(snr_value < 0x364A1)   *snr = 17;
-	else if(snr_value < 0x38BCC)   *snr = 18;
-	else if(snr_value < 0x3C7D3)   *snr = 19;
-	else if(snr_value < 0x408CC)   *snr = 20;
-	else if(snr_value < 0x43BED)   *snr = 21;
-	else if(snr_value < 0x48061)   *snr = 22;
-	else if(snr_value < 0x4BE95)   *snr = 23;
-	else if(snr_value < 0x4FA7D)   *snr = 24;
-	else if(snr_value < 0x52405)   *snr = 25;
-	else if(snr_value < 0x5570D)   *snr = 26;
-	else if(snr_value < 0x59FEB)   *snr = 27;
-	else if(snr_value < 0x5BF38)   *snr = 28;
-	else    *snr = 29;
-    }
-
-    else 
-	deb_data("      Get constellation is failed!\n");
-
-    mutex_unlock(&mymutex);	
-
     return(dwError);
 }
 

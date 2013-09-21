@@ -10,6 +10,9 @@
 
 
 #include "it950x-core.h"
+#include "register.h"
+#include "version.h"
+#include "IT9507.h"
 
 /*****************************************************************************
 *
@@ -87,85 +90,16 @@ DWORD DemodIOCTLFun(
 			deb_data("IT950x TxMode RF ON\n");				
 			break;
         }
-        case IOCTL_ITE_DEMOD_ADDPIDAT:
-        {
-			PAddPidAtRequest pRequest = (PAddPidAtRequest) pIOBuffer;
-    		pRequest->error = Demodulator_addPidToFilter((Demodulator*) handle, pRequest->index, pRequest->pid.value);
-    		break;
-        }
-        case IOCTL_ITE_DEMOD_ADDPIDAT_TX:
-        {
-			PTxAddPidAtRequest pRequest = (PTxAddPidAtRequest) pIOBuffer;
-			pRequest->error = IT9507_addPidToFilter((Modulator*) handle, pRequest->index, pRequest->pid);
-    		break;
-        }
 		case IOCTL_ITE_DEMOD_ACQUIRECHANNEL_TX:
 		{
 			PTxAcquireChannelRequest pRequest = (PTxAcquireChannelRequest) pIOBuffer;
 			pRequest->error = IT9507_acquireTxChannel((Modulator*) handle, pRequest->bandwidth, pRequest->frequency);
 			break;
         }
-        case IOCTL_ITE_DEMOD_RESETPID:
-        {
-            PResetPidRequest pRequest = (PResetPidRequest) pIOBuffer;
-            pRequest->error = Demodulator_resetPidFilter((Demodulator*) handle);
-    		break;
-        }
-        case IOCTL_ITE_DEMOD_RESETPID_TX:
-        {
-            PTxResetPidRequest pRequest = (PTxResetPidRequest) pIOBuffer;
-            pRequest->error = IT9507_resetPidFilter((Modulator*) handle);
-    		break;
-        }
-        case IOCTL_ITE_DEMOD_GETFIRMWAREVERSION:
-        {
-            PGetFirmwareVersionRequest pRequest = (PGetFirmwareVersionRequest) pIOBuffer;
-			pRequest->error = Demodulator_getFirmwareVersion ((Demodulator*) handle, pRequest->processor, pRequest->version);
-    		break;
-        }
         case IOCTL_ITE_DEMOD_GETFIRMWAREVERSION_TX:
         {
             PTxGetFirmwareVersionRequest pRequest = (PTxGetFirmwareVersionRequest) pIOBuffer;
 			pRequest->error = IT9507_getFirmwareVersion ((Modulator*) handle, pRequest->processor, pRequest->version);
-    		break;
-        }
-        case IOCTL_ITE_DEMOD_ACQUIRECHANNEL:
-        {
-			PAcquireChannelRequest pRequest = (PAcquireChannelRequest) pIOBuffer;
-			pRequest->error = Demodulator_acquireChannel ((Demodulator*) handle, pRequest->bandwidth, pRequest->frequency);
-    		break;
-        }
-        case IOCTL_ITE_DEMOD_ISLOCKED:
-        {
-			PIsLockedRequest pRequest = (PIsLockedRequest) pIOBuffer;
-			pRequest->error = Demodulator_isLocked ((Demodulator*) handle, pRequest->locked);
-    		break;
-        }
-        case IOCTL_ITE_DEMOD_GETCHANNELSTATISTIC:
-        {
-			PGetChannelStatisticRequest pRequest = (PGetChannelStatisticRequest) pIOBuffer;
-			Dword postErrCnt;
-			Dword postBitCnt;
-			Word rsdAbortCnt;
-			//ChannelStatistic       RxChannelStatistic;
-
-			pRequest->channelStatistic->postVitErrorCount = 0;
-			pRequest->channelStatistic->postVitBitCount = 0;
-			pRequest->channelStatistic->abortCount = 0;
-
-			pRequest->error = Demodulator_getPostVitBer ((Demodulator*) handle, &postErrCnt, &postBitCnt, &rsdAbortCnt);
-			if (pRequest->error == Error_NO_ERROR) {
-				pRequest->channelStatistic->postVitErrorCount = postErrCnt;
-				pRequest->channelStatistic->postVitBitCount = postBitCnt;
-				pRequest->channelStatistic->abortCount = rsdAbortCnt;
-				}
-			//pRequest->channelStatistic = RxChannelStatistic;
-    		break;
-        }
-        case IOCTL_ITE_DEMOD_GETSTATISTIC:
-        {
-			PGetStatisticRequest pRequest = (PGetStatisticRequest) pIOBuffer;
-			pRequest->error = Demodulator_getStatistic ((Demodulator*) handle, pRequest->statistic);
     		break;
         }
         case IOCTL_ITE_DEMOD_CONTROLPIDFILTER_TX:
@@ -175,17 +109,10 @@ DWORD DemodIOCTLFun(
             
     		break;
         }
-        case IOCTL_ITE_DEMOD_CONTROLPIDFILTER:
-        {
-			PControlPidFilterRequest pRequest = (PControlPidFilterRequest) pIOBuffer;
-			pRequest->error = Demodulator_controlPidFilter ((Demodulator*) handle, pRequest->control);
-            
-    		break;
-        }
         case IOCTL_ITE_DEMOD_CONTROLPOWERSAVING:
         {
 			PControlPowerSavingRequest pRequest = (PControlPowerSavingRequest) pIOBuffer;
-			pRequest->error = Demodulator_controlPowerSaving ((Demodulator*) handle, pRequest->control);
+			//DAVE: pRequest->error = Demodulator_controlPowerSaving ((Demodulator*) handle, pRequest->control);
 			pRequest->error = IT9507_writeRegisterBits((Modulator*) handle, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, !pRequest->control);
     		break;
         }
@@ -222,38 +149,6 @@ DWORD DemodIOCTLFun(
 			PTxFinalizeRequest pRequest = (PTxFinalizeRequest) pIOBuffer;
             //pRequest->error = IT9507_finalize ((Modulator*) handle);
             //pRequest->error = IT9507_controlPowerSaving ((Modulator*) handle, 0);
-    		break;
-        }
-        case IOCTL_ITE_DEMOD_GETDRIVERINFO:
-        {
-		//	deb_data("IOCTL_ITE_DEMOD_GETDRIVERINFO %x, %x\n", pIOBuffer, handle);
-
-			PDemodDriverInfo pDriverInfo = (PDemodDriverInfo)pIOBuffer;
-			DWORD dwFWVerionLink = 0;
-			DWORD dwFWVerionOFDM = 0;
-			
-            strcpy((char *)pDriverInfo->DriverVerion, DRIVER_RELEASE_VERSION);
-			sprintf((char *)pDriverInfo->APIVerion, "%X.%X.%X.%X", (BYTE)(Version_NUMBER>>8), (BYTE)(Version_NUMBER), Version_DATE, Version_BUILD);
-			Demodulator_getFirmwareVersion ((Demodulator*) handle, Processor_LINK, &dwFWVerionLink);
-			sprintf((char *)pDriverInfo->FWVerionLink, "%X.%X.%X.%X", (BYTE)(dwFWVerionLink>>24), (BYTE)(dwFWVerionLink>>16), (BYTE)(dwFWVerionLink>>8), (BYTE)dwFWVerionLink);
-			deb_data("Demodulator_getFirmwareVersion Processor_LINK %s\n", (char *)pDriverInfo->FWVerionLink);
-			
-			Demodulator_getFirmwareVersion ((Demodulator*) handle, Processor_OFDM, &dwFWVerionOFDM);
-			sprintf((char *)pDriverInfo->FWVerionOFDM, "%X.%X.%X.%X", (BYTE)(dwFWVerionOFDM>>24), (BYTE)(dwFWVerionOFDM>>16), (BYTE)(dwFWVerionOFDM>>8), (BYTE)dwFWVerionOFDM);
-			deb_data("Demodulator_getFirmwareVersion Processor_OFDM %s\n", (char *)pDriverInfo->FWVerionOFDM);
-			//strcpy((char *)pDriverInfo->DateTime, ""__DATE__" "__TIME__"");
-			strcpy((char *)pDriverInfo->Company, "ITEtech");
-//#ifdef JUPITER
-//			strcpy((char *)pDriverInfo->SupportHWInfo, "Jupiter DVBT/H");
-//#endif
-//#ifdef GANYMEDE
-			strcpy((char *)pDriverInfo->SupportHWInfo, "Ganymede DVBT");
-//#endif
-//#ifdef GEMINI
-//			strcpy((char *)pDriverInfo->SupportHWInfo, "Gemini DVBT/H,TDMB/DAB,FM");
-//#endif
-			pDriverInfo->error = Error_NO_ERROR;
-
     		break;
         }
         case IOCTL_ITE_DEMOD_GETDRIVERINFO_TX:
@@ -297,13 +192,6 @@ DWORD DemodIOCTLFun(
 
     		break;
         }
-        case IOCTL_ITE_DEMOD_WRITEREGISTERS:
-        {
-			PWriteRegistersRequest pRequest = (PWriteRegistersRequest) pIOBuffer;
-            pRequest->error = Demodulator_writeRegisters ((Demodulator*) handle, pRequest->processor, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
-
-    		break;
-        }
         case IOCTL_ITE_DEMOD_WRITEEEPROMVALUES_TX:
         {
 			PWriteEepromValuesRequest pRequest = (PWriteEepromValuesRequest) pIOBuffer;
@@ -311,25 +199,10 @@ DWORD DemodIOCTLFun(
 
     		break;
         }
-        case IOCTL_ITE_DEMOD_WRITEREGISTERBITS:
-        {
-			PWriteRegisterBitsRequest pRequest = (PWriteRegisterBitsRequest) pIOBuffer;
-			pRequest->error = Demodulator_writeRegisterBits ((Demodulator*) handle, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
-
-    		break;
-        }
         case IOCTL_ITE_DEMOD_WRITEREGISTERBITS_TX:
         {
 			PTxWriteRegisterBitsRequest pRequest = (PTxWriteRegisterBitsRequest) pIOBuffer;
 			pRequest->error = IT9507_writeRegisterBits ((Modulator*) handle, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
-
-    		break;
-        }
-        case IOCTL_ITE_DEMOD_READREGISTERS:
-        {
-		//	deb_data("IOCTL_ITE_DEMOD_READREGISTERS_RX\n");
-			PReadRegistersRequest pRequest = (PReadRegistersRequest) pIOBuffer;
-			pRequest->error = Demodulator_readRegisters ((Demodulator*) handle, pRequest->processor, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
 
     		break;
         }
@@ -345,13 +218,6 @@ DWORD DemodIOCTLFun(
         {
 			PTxReadEepromValuesRequest pRequest = (PTxReadEepromValuesRequest) pIOBuffer;
 			pRequest->error = IT9507_readEepromValues ((Modulator*) handle, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
-
-    		break;
-        }
-        case IOCTL_ITE_DEMOD_READREGISTERBITS:
-        {
-			PReadRegisterBitsRequest pRequest = (PReadRegisterBitsRequest) pIOBuffer;
-			pRequest->error = Demodulator_readRegisterBits ((Demodulator*) handle, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
 
     		break;
         }

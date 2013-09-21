@@ -22,14 +22,13 @@
 #include <linux/fs.h>
 #include <linux/file.h>
 #include <asm/uaccess.h>
+#include "error.h"
 #include "modulatorIocontrol.h"
-#include "IT9133.h"
 #include "IT9507.h"
 #include "userdef.h"
 #include "modulatorFirmware.h"
 #include "modulatorType.h"
 #include "Common.h"
-#include "tuner.h"
 #include <linux/version.h>
 #include <linux/mutex.h>
 #include <linux/mm.h>
