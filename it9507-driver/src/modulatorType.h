@@ -14,19 +14,9 @@
 #endif
 //#define ModulatorStatus extern "C" DllExport Dword
 
-#define Tuner_Afatech_OMEGA                 0x38
-#define Tuner_Afatech_OMEGA_LNA_Config_1	0x51 // 0x50~0x5f reserved for OMEGA use
-#define Tuner_Afatech_OMEGA_LNA_Config_2    0x52
-#define Tuner_Afatech_OMEGA_V2              0x60 // 0x60~0x6f reserved for OMEGA V2 use
-#define Tuner_Afatech_OMEGA_V2_LNA_Config_1	0x61 
-#define Tuner_Afatech_OMEGA_V2_LNA_Config_2 0x62
-#define Tuner_Afatech_AF9007                0xFF
 #define IN
 #define OUT
-#define INOUT
-#define Bus_I2C             1
 #define Bus_USB             2
-#define Bus_9035U2I         3  /** I2C bus for Ganymede USB */
 #define IT9507Cmd_buildCommand(command, processor)  (command + (u16) (processor << 12))
 #define Eagle_MAX_BIT               8
 #define IQ_TABLE_NROW 92
@@ -138,55 +128,6 @@ typedef enum {
     Hierarchy_ALPHA_2,          /** Signalling format uses alpha of 2 */
     Hierarchy_ALPHA_4           /** Signalling format uses alpha of 4 */
 } Hierarchy;
-
-/**
- * The defination of SubchannelType.
- */
-typedef enum {
-    SubchannelType_AUDIO = 0,           /** Signal in subchannel is audio format          */
-    SubchannelType_VIDEO = 1,           /** Signal in subchannel is video format          */
-    SubchannelType_PACKET = 3,          /** Signal in subchannel is packet format         */
-    SubchannelType_ENHANCEPACKET = 4    /** Signal in subchannel is enhance packet format */
-} SubchannelType;
-
-
-/**
- * The defination of ProtectionLevel.
- */
-typedef enum {
-    ProtectionLevel_NONE = 0x00,    /** The protection level of subchannel is none     */
-    ProtectionLevel_PL1 = 0x01,     /** The protection level of subchannel is level 1  */
-    ProtectionLevel_PL2 = 0x02,     /** The protection level of subchannel is level 2  */
-    ProtectionLevel_PL3 = 0x03,     /** The protection level of subchannel is level 3  */
-    ProtectionLevel_PL4 = 0x04,     /** The protection level of subchannel is level 4  */
-    ProtectionLevel_PL5 = 0x05,     /** The protection level of subchannel is level 5  */
-    ProtectionLevel_PL1A = 0x1A,    /** The protection level of subchannel is level 1A */
-    ProtectionLevel_PL2A = 0x2A,    /** The protection level of subchannel is level 2A */
-    ProtectionLevel_PL3A = 0x3A,    /** The protection level of subchannel is level 3A */
-    ProtectionLevel_PL4A = 0x4A,    /** The protection level of subchannel is level 4A */
-    ProtectionLevel_PL1B = 0x1B,    /** The protection level of subchannel is level 1B */
-    ProtectionLevel_PL2B = 0x2B,    /** The protection level of subchannel is level 2B */
-    ProtectionLevel_PL3B = 0x3B,    /** The protection level of subchannel is level 3B */
-    ProtectionLevel_PL4B = 0x4B     /** The protection level of subchannel is level 4B */
-} ProtectionLevel;
-
-
-/**
- * The defination of SubchannelModulation. This structure is used to
- * represent subchannel modulation when device is operate in T-DMB/DAB mode.
- *
- */
-typedef struct {
-    u8 subchannelId;                  /** The ID of subchannel.                                                 */
-    u16 subchannelSize;                /** The size of subchannel.                                               */
-    u16 bitRate;                       /** The bit rate of subchannel.                                           */
-    u8 transmissionMode;              /** The transmission mode of subchannel, possible values are: 1, 2, 3, 4. */
-    ProtectionLevel protectionLevel;    /** The protection level of subchannel.                                   */
-    SubchannelType subchannelType;      /** The type of subchannel                                                */
-    u8 conditionalAccess;             /** If a conditional access exist                                         */
-    u8 tiiPrimary;                    /** TII primary                                                           */
-    u8 tiiCombination;                /** TII combination                                                       */
-} SubchannelModulation;
 
 /**
  * The type defination of IpVersion.
@@ -322,28 +263,6 @@ typedef struct {
     u32 address;      /** The address of target register */
     u8 value;         /** The value of target register   */
 } ValueSet;
-
-/**
- * The type defination of tuner group.
- */
-typedef struct {
-    u16 tunerId;       /** The id of tuner */
-    u8 groupIndex;    /** The index of group */
-} TunerGroup;
-
-
-/**
- * The type defination of Datetime.
- */
-typedef struct {
-    u32 mjd;              /** The mjd of datetime           */
-    u8 configuration;     /** The configuration of datetime */
-    u8 hours;             /** The hours of datetime         */
-    u8 minutes;           /** The minutes of datetime       */
-    u8 seconds;           /** The seconds of datetime       */
-    u16 milliseconds;      /** The milli seconds of datetime */
-} Datetime;
-
 
 /**
  * The type defination of Interrupt.
@@ -506,92 +425,6 @@ typedef struct _TPS{
 
 } TPS, *pTPS;
 
-//------------------------
-/**
- * The type defination of Demodulator.
- */
-typedef struct {
-    Handle userData;
-	Handle driver;
-} Demodulator;
-
-/**
- * General tuner opening function
- *
- * @param demodulator the handle of demodulator.
- * @return Error_NO_ERROR: successful, non-zero error code otherwise.
- */
-typedef u32 (*OpenTuner) (
-    IN  Demodulator*    demodulator
-);
-
-
-/**
- * General tuner closing function
- *
- * @param demodulator the handle of demodulator.
- * @return Error_NO_ERROR: successful, non-zero error code otherwise.
- */
-typedef u32 (*CloseTuner) (
-    IN  Demodulator*    demodulator
-);
-
-
-/**
- * General tuner setting function
- *
- * @param demodulator the handle of demodulator.
- * @return Error_NO_ERROR: successful, non-zero error code otherwise.
- */
-typedef u32 (*SetTuner) (
-    IN  Demodulator*    demodulator,
-    IN  u16            bandwidth,
-    IN  u32           frequency
-);
-/**
- * The type defination of TunerDescription
- */
-typedef struct {
-    OpenTuner       openTunerFunc;
-    CloseTuner      closeTunerFunc;
-    SetTuner        setTunerFunc;
-    ValueSet*       tunerScriptTable;
-    u16*           tunerScriptSetsTable;
-    u8            tunerAddress;
-    u8            registerAddressLength;
-    u32           ifFrequency;
-    bool            inversion;
-    u16            tunerId;
-} TunerDescription;
-
-
-/**
- * The data structure of Ganymede
- */
-typedef struct {
-    /** Basic structure */
-    Handle userData;
-	Handle driver;
-    u8* firmwareCodes;
-    Segment* firmwareSegments;
-    u8* firmwarePartitions;
-    u16* scriptSets;
-    ValueSet* scripts;
-    u32 crystalFrequency;
-    u32 adcFrequency;
-    StreamType streamType;
-    u16 bandwidth;
-    u32 frequency;
-    u32 fcw;
-    Statistic statistic;
-    u8 hostInterface;
-    bool booted;
-    bool initialized;
-    u8 pidCounter;
-    u8 demodAddr;       /** Demodulator I2C Address */
-    bool Clkout_en;       /** Clock output enable */
-	ChannelStatistic channelStatistic;
-} DefaultDemodulator;
 //--------------------------
 
 typedef enum {

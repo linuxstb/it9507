@@ -190,7 +190,6 @@ typedef struct _DEVICE_CONTEXT {
     u8 UsbCtrlTimeOut;
 	
 	Modulator modulator;
-	DefaultDemodulator demodulator;
 	u8 deviceType;    
 	Handle handle_driver;
     

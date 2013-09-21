@@ -316,8 +316,8 @@ static u32  DRV_Initialize(
 				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
 
-				pdc->demodulator.userData = &pdc->modulator;
 #if 0				
+				pdc->demodulator.userData = &pdc->modulator;
 				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
 				
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
@@ -337,8 +337,8 @@ static u32  DRV_Initialize(
 				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
 				
-				pdc->demodulator.userData = &pdc->modulator;
 #if 0				
+				pdc->demodulator.userData = &pdc->modulator;
 				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
 
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
@@ -359,9 +359,8 @@ static u32  DRV_Initialize(
 				if (error) deb_data("IT9507_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
 				
-				pdc->demodulator.userData = &pdc->modulator;
-				
 #if 0				
+				pdc->demodulator.userData = &pdc->modulator;
 				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
 				else {
@@ -381,8 +380,8 @@ static u32  DRV_Initialize(
 				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
 
-				pdc->demodulator.userData = &pdc->modulator;
 #if 0				
+				pdc->demodulator.userData = &pdc->modulator;
 				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
 
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
@@ -1487,7 +1486,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 		PDC->bSupportSelSuspend = false;
 //		PDC->modulator.userData = (Handle)PDC;
 //		PDC->modulator.chipNumber = 1; 
-		PDC->demodulator.userData = (Handle)PDC;
+//		PDC->demodulator.userData = (Handle)PDC;
 		PDC->architecture=Architecture_DCA;
 		PDC->modulator.frequency = 666000;
 		PDC->modulator.bandwidth = 8000;
