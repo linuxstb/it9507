@@ -50,16 +50,9 @@ remove:
 	@modprobe -r usb_it950x 
 
 clean:
-	@-rm -f *~ *.o *.ko .*.o.cmd .*.ko.cmd *.mod.c *.*~ \
+	@-rm -f *~ *.o *.ko .*.o.cmd .*.ko.cmd *.mod.c \
 	demux.h dmxdev.h dvb-pll.h dvb-usb-ids.h dvb-usb.h dvb_demux.h dvb_frontend.h \
 	dvb_net.h dvb_ringbuffer.h dvbdev.h modules.order Module.markers Module.symvers
-
-releasesrc:
-	@rm -rf release
-	@mkdir release; mkdir release/it950x_SRC; mkdir release/it950x_SRC/api
-	@cp -f api/*.h release/it950x_SRC/api; cp -af src release/it950x_SRC; cp -af .*.o.cmd release/it950x_SRC/api; cp -af *.o release/it950x_SRC/api
-	@cp -f Makefile.release release/it950x_SRC; mv release/it950x_SRC/Makefile.release release/it950x_SRC/Makefile
-	@rm release/it950x_SRC/api/it950x-*.o; rm release/it950x_SRC/api/dvb-usb-*.o
 
 -include $(KDIR)/Rules.make
 
