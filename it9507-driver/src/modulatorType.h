@@ -5,7 +5,6 @@
 
 #include <linux/stddef.h>
 #include <linux/types.h>
-#include <linux/delay.h>
 
 
 #ifdef __cplusplus

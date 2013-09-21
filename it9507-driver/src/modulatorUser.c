@@ -1,4 +1,5 @@
 #include "modulatorUser.h"
+#include <linux/delay.h>
 
 #include "ADF4351.h"
 DeviceDescription HwDesc[] =

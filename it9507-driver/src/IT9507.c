@@ -1,4 +1,5 @@
 #include "IT9507.h"
+#include <linux/delay.h>
 
 u8 IT9507Cmd_sequence = 0;
 //u8 CmdSequence_EagleSlaveIIC = 0;
