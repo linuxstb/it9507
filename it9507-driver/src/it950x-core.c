@@ -48,18 +48,13 @@ struct it950x_dev {
 //	__u8			bulk_in_endpointAddr;	/* the address of the bulk in endpoint */
 //	__u8			bulk_out_endpointAddr;	/* the address of the bulk out endpoint */
 	struct kref		kref;
-	struct file *file;
 	struct file *tx_file;
 	DEVICE_CONTEXT DC;	
 	Byte tx_on;
-	Byte rx_on;
-	Byte rx_chip_minor;
 	Byte tx_chip_minor;	
 	Byte g_AP_use;
 	atomic_t g_AP_use_tx;
-	atomic_t g_AP_use_rx;
 	atomic_t tx_pw_on;	
-	atomic_t rx_pw_on;	
 	Bool DeviceReboot, DevicePower;	
 	Bool TunerInited0, TunerInited1;	
 	Byte is_use_low_brate;
@@ -106,21 +101,6 @@ struct it950x_dev {
 	Dword* pTxWriteBuffPointAddr_cmd;	
 	Dword dwTxWriteTolBufferSize_cmd;
 	Dword dwTxRemaingBufferSize_cmd;	
-
-	/* USB URB Related for RX */
-	int    rx_urb_streaming;
-	struct urb *rx_urbs[URB_COUNT_RX];
-	URBContext rx_urb_context[URB_COUNT_RX];
-	Byte rx_urbstatus[URB_COUNT_RX];
-	atomic_t rx_urb_counter;
-	Byte rx_urb_index;
-	Byte rx_first_urb_reset;
-	spinlock_t RxRBKeylock;
-	Byte *pRxRingBuffer;
-	Dword RxCurrBuffPointAddr;
-	Dword RxReadBuffPointAddr;
-	Dword dwRxTolBufferSize;
-	Dword dwRxReadRemaingBufferSize;
 
 };
 
@@ -207,41 +187,6 @@ Dword Tx_RMRingBuffer_cmd(struct it950x_urb_context *context, Dword dwDataFrameS
 	return 0;
 }
 
-void Rx_FillRingBuffer(
-	struct it950x_dev *dev,
-	Dword data_size)
-{ 
-	unsigned long flags = 0;
-	
-	/*
-	 * dwRxCurrBuffPointAddr : Return_urb addr (allow reading addr)
-	 * dwRxTolBufferSize : total ringbuffer size
-	 */
-	spin_lock_irqsave(&dev->RxRBKeylock, flags);
-		dev->RxCurrBuffPointAddr = (dev->RxCurrBuffPointAddr + data_size) % (dev->dwRxTolBufferSize);
-		dev->dwRxReadRemaingBufferSize += data_size;
-	spin_unlock_irqrestore(&dev->RxRBKeylock, flags);
-	
-	atomic_add(1, &dev->rx_urb_counter);
-	
-	if(atomic_read(&dev->rx_urb_counter) == URB_COUNT_RX){
-		deb_data("\t %s warning: RingBuffer already full\n", __func__);
-	}
-}
-
-static void
-rx_free_urbs(struct it950x_dev *dev)
-{
-	int i;
-	//deb_data("Enter %s Function\n",__FUNCTION__);
-	
-	for (i = 0; i < URB_COUNT_RX; i++) {
-		usb_free_urb(dev->rx_urbs[i]);
-		dev->rx_urbs[i] = NULL;
-	}
-	
-	deb_data("%s() end\n", __func__);
-}
 static void
 tx_free_urbs(struct it950x_dev *dev)
 {
@@ -294,37 +239,6 @@ tx_kill_busy_urbs(struct it950x_dev *dev)
 	deb_data("%s() end\n", __func__);
 }
 */
-static int rx_stop_urb_transfer(struct it950x_dev *dev)
-{
-	int i;
-
-	//deb_data("%s()\n", __func__);
-
-	if (!dev->rx_urb_streaming) {
-		deb_data("%s: iso xfer already stop!\n", __func__);
-		return 0;
-	}
-
-	dev->rx_urb_streaming = 0;
-	
-	msleep(1000);//waiting urb complete.
-
-	/*DM368 usb bus error when using kill urb */
-#if 0
-	//mutex_lock(&it950x_urb_kill);	     /* if urb doesn't call back, kill it. */
-	for (i = 0; i < URB_COUNT_RX; i++) {
-		if(dev->rx_urbstatus[i] == 1){
-			usb_kill_urb(dev->rx_urbs[i]);
-			deb_data("kill rx urb index %d\n", i);
-		}
-	}
-	//mutex_unlock(&it950x_urb_kill);		
-#endif
-
-	deb_data("%s() end\n", __func__);
-
-	return 0;
-}
 
 static int tx_stop_urb_transfer(struct it950x_dev *dev)
 {
@@ -630,89 +544,6 @@ DWORD Tx_RingBuffer_cmd(
     return Error_NO_ERROR;
 }
 
-DWORD Rx_RingBuffer(
-	struct it950x_dev *dev,
-	Byte *pBuffer,
-	Dword *pBufferLength)
-{
-	Dword dwCpBuffLen = *pBufferLength;
-	Dword dwCurrBuffAddr = dev->RxCurrBuffPointAddr;
-	Dword dwReadBuffAddr = dev->RxReadBuffPointAddr;
-	Dword dwBuffLen = 0;
-	unsigned long flags = 0;
-	int ret = -ENOMEM;
-	
-	//deb_data("- Enter %s Function -\n", __func__);
-	if((dev->dwRxReadRemaingBufferSize) == 0){
-		*pBufferLength = 0;
-		//deb_data("\t Warning: ReadRemaingBufferSize = 0\n");
-		return Error_NO_ERROR;
-	}
-
-    if(*pBufferLength == 0){
-		*pBufferLength = 0;
-        return Error_BUFFER_INSUFFICIENT;
-    }
-    
-    if((dev->dwRxReadRemaingBufferSize) < dwCpBuffLen){
-		*pBufferLength = 0;
-		//deb_data("\t Warning: ReadRemaingBufferSize(%lu) < Request(%lu)\n", chip->dwReadRemaingBufferSize, dwCpBuffLen);
-		return Error_NO_ERROR;
-	}
-	
-	/*
-	 * dwReadBuffAddr : already read addr
-	 * dwCurrBuffAddr : Return_urb addr (allow reading addr)
-	 * dwTolBufferSize : total ringbuffer size
-	 */
-	
-	/* memory must enough because already checking */
-	
-	//RingBuffer
-	if(dwReadBuffAddr >= dwCurrBuffAddr){
-		//Return_urb run a cycle and already_read not
-		dwBuffLen = dev->dwRxTolBufferSize - dwReadBuffAddr; //remaining memory (to buffer end), not contain buffer beginning to Return_urb
-		if(dwBuffLen >= dwCpBuffLen){
-			//end remaining memory is enough
-			memcpy(pBuffer, dev->pRxRingBuffer + dwReadBuffAddr, dwCpBuffLen);
-		}
-		else{
-			//use all end memory, run a cycle and need use beginning memory
-			memcpy(pBuffer, dev->pRxRingBuffer + dwReadBuffAddr, dwBuffLen); //using end memory
-			memcpy(pBuffer + dwBuffLen, dev->pRxRingBuffer, dwCpBuffLen - dwBuffLen); //using begining memory
-		}
-	}
-	else{
-		//Return_urb not run a cycle or both run a cycle
-		memcpy(pBuffer, dev->pRxRingBuffer + dwReadBuffAddr, dwCpBuffLen);
-	}
-	
-	spin_lock_irqsave(&dev->RxRBKeylock, flags);
-		dev->RxReadBuffPointAddr = (dev->RxReadBuffPointAddr + dwCpBuffLen) % (dev->dwRxTolBufferSize);
-		dev->dwRxReadRemaingBufferSize -= dwCpBuffLen;
-	spin_unlock_irqrestore(&dev->RxRBKeylock, flags);
-	
-	//Submit urb
-	if(dev->rx_urb_streaming == 1 && dev->rx_first_urb_reset == 1){
-		//allow submit urb && first urb already resubmit
-		while((dev->RxReadBuffPointAddr - (dev->rx_urb_index * URB_BUFSIZE_RX)) >= URB_BUFSIZE_RX && atomic_read(&dev->rx_urb_counter) > 0){
-			//while urb empty and not submit
-			ret = usb_submit_urb(dev->rx_urbs[dev->rx_urb_index], GFP_ATOMIC);
-			if (ret != 0) {
-				rx_stop_urb_transfer(dev);
-				deb_data("\t Error: urb[%d] resubmit fail, err = %d\n",dev->rx_urb_index , ret);
-				return ret;
-			}
-			
-			dev->rx_urbstatus[dev->rx_urb_index] = 1;
-			dev->rx_urb_index = (dev->rx_urb_index + 1) % URB_COUNT_RX;
-			atomic_sub(1, &dev->rx_urb_counter);
-		}
-	}
-	
-	return Error_NO_ERROR;
-}
-
 /******************************************************************/
 
 static void tx_urb_completion(struct urb *purb)
@@ -861,82 +692,6 @@ static void tx_urb_completion_cmd(struct urb *purb)
 	Tx_RMRingBuffer_cmd(context, URB_BUFSIZE_TX_CMD);
 	
 	return;
-}
-
-static void rx_urb_completion(struct urb *purb)
-{
-	struct it950x_urb_context *context = purb->context;
-	struct it950x_dev *dev = context->dev;	
-	int ptype = usb_pipetype(purb->pipe);
-	int ret = -ENOMEM;
-
-	//deb_data("%s", __func__);
-	//deb_data("'%s' urb completed. status: %d, length: %d/%d, pack_num: %d, errors: %d\n",
-	//	ptype == PIPE_ISOCHRONOUS ? "isoc" : "bulk",
-	//	purb->status,purb->actual_length,purb->transfer_buffer_length,
-	//	purb->number_of_packets,purb->error_count);
-	//deb_data("urb_complete(%d)\n", context->index);
-
-	if(purb->actual_length != URB_BUFSIZE_RX)	
-		deb_data("\t Warning: Rx_urb[%d].length = %d\n", context->index, purb->actual_length);
-			
-		
-	context->dev->rx_urbstatus[context->index] = 0;
-	switch (purb->status) {
-		case 0:              /* Success */
-			break;
-		case -ETIMEDOUT:     /* NAK */
-			deb_data("RX ETIMEDOUT -urb completition error %d.\n", purb->status);
-			break;
-		case -ECONNRESET:    /* unlink */
-			deb_data("RX ECONNRESET -urb completition error %d.\n", purb->status);
-			return;
-		case -ENOENT:        /* kill */
-			deb_data("RX ENOENT -urb completition error %d.\n", purb->status);
-			return;
-		case -ESHUTDOWN:
-			deb_data("RX ESHUTDOWN -urb completition error %d.\n", purb->status);
-			return;
-		default:             /* error */
-			deb_data("RX urb completition error %d.\n", purb->status);
-			break;
-	}
-
-	if (!dev){
-		deb_data("dev is NULL\n");
-		return;
-	}
-
-	if (ptype != PIPE_BULK) {
-		deb_data("RX %s() Unsupported URB type %d\n", __func__, ptype);
-		return;
-	}
-
-	/* For solve first urb not correct problem */
-	if(dev->rx_urb_streaming){
-		if(!dev->rx_first_urb_reset){
-			ret = usb_submit_urb(dev->rx_urbs[0], GFP_ATOMIC);
-			if(ret != 0){
-				rx_stop_urb_transfer(dev);
-				deb_data("\t%s error: urb[0] resubmit fail, err = %d\n", __func__ , ret);
-				return ;
-			}
-			else{
-				//deb_data("\t urb[0] resubmit success\n");
-			}
-			
-			dev->rx_urbstatus[0] = 1;
-			dev->rx_urb_index = (dev->rx_urb_index + 1) % URB_COUNT_RX;
-			dev->rx_first_urb_reset = 1;
-		}
-		else{
-			Rx_FillRingBuffer(dev, URB_BUFSIZE_RX);
-		}
-	}
-	else{
-		if(context->index != 0)
-			Rx_FillRingBuffer(dev, URB_BUFSIZE_RX);
-	}
 }
 
 /* AirHD */
@@ -1091,158 +846,6 @@ err:
 }
 
 
-static void rx_start_urb_transfer(struct it950x_dev *dev)
-{
-	int urb_index = 0, ret = -ENOMEM;
-
-	deb_data("- Enter %s Function -\n", __func__);
-
-	dev->rx_urb_index = 0;
-	dev->RxCurrBuffPointAddr = URB_BUFSIZE_RX;	//first time skip urb[0]
-	dev->RxReadBuffPointAddr = URB_BUFSIZE_RX;	//first time skip urb[0]
-	dev->rx_first_urb_reset = 0;
-	dev->dwRxReadRemaingBufferSize = 0;
-	atomic_set(&dev->rx_urb_counter, URB_COUNT_RX);
-	
-	for(urb_index = 0; urb_index < URB_COUNT_RX; urb_index++){
-		ret = usb_submit_urb(dev->rx_urbs[urb_index], GFP_ATOMIC);
-		if(ret != 0){
-			rx_stop_urb_transfer(dev);
-			deb_data("\t AError: urb[%d] submit fail, err = %d\n", urb_index, ret);
-			return ;
-		}
-		else{
-			//deb_data("\t urb[%d] submit success\n", urb_index);
-		}
-		
-		dev->rx_urbstatus[urb_index] = 1;
-		dev->rx_urb_index = (dev->rx_urb_index + 1) % URB_COUNT_RX;
-		atomic_sub(1, &dev->rx_urb_counter);
-	}
-	
-	dev->rx_urb_streaming = 1;
-	return ;
-}
-/*
-static void afa_delete(struct kref *kref)
-{
-	struct it950x_dev *dev = to_afa_dev(kref);
-
-	usb_put_dev(dev->usbdev);
-//	kfree (dev->bulk_in_buffer);
-	kfree (dev);
-}
-*/
-static int it950x_usb_open(struct inode *inode, struct file *file)
-{
-	struct it950x_dev *dev;
-	struct usb_interface *interface;
-	int subminor, mainsubminor;
-	int retval = 0;
-	int error, order, urb_index;
-
-	deb_data("it950x_usb_rx_open function\n");
-	mainsubminor = iminor(inode);
-	subminor = iminor(inode) + USB_it913x_MINOR_RANGE;
-	interface = usb_find_interface(&it950x_driver, subminor);
-
-try:
-	while (!interface) {
-		subminor++;
-		interface = usb_find_interface(&it950x_driver, subminor);
-		if (subminor >= mainsubminor + USB_it913x_MINOR_RANGE)
-			break;
-	}	
-	
-	if (!interface) {
-		deb_data("%s - error, can't find device for minor %d",
-		     __FUNCTION__, subminor);
-		retval = -ENODEV;
-		goto exit;
-	}
-	
-	dev = usb_get_intfdata(interface);
-	if (!dev) {
-		deb_data("usb_get_intfdata fail!\n");
-		retval = -ENODEV;
-		goto exit;
-	}
-	
-	if (subminor != dev->tx_chip_minor) {
-		interface = NULL;
-		goto try;
-	}	
-	deb_data("open RX subminor: %d\n", subminor);		
-	atomic_add(1, &dev->g_AP_use_rx);		
-	
-	if(	atomic_read(&dev->g_AP_use_rx) == 1) {	
-		/* Ring buffer alloc & chip init */
-		spin_lock_init(&dev->RxRBKeylock);
-		dev->rx_urb_streaming = 0;
-		dev->dwRxReadRemaingBufferSize = 0;
-		dev->dwRxTolBufferSize = URB_BUFSIZE_RX * URB_COUNT_RX;
-		dev->rx_urb_index = 0;
-		dev->rx_first_urb_reset = 0;
-		
-		atomic_set(&dev->rx_urb_counter, URB_COUNT_RX);
-		dev->pRxRingBuffer = (Byte*)__get_free_pages(GFP_KERNEL, get_order(dev->dwRxTolBufferSize));
-
-		/*Allocate RX urb*/	
-		for (urb_index = 0; urb_index < URB_COUNT_RX; urb_index++) {
-			dev->rx_urbs[urb_index] = usb_alloc_urb(0, GFP_KERNEL);
-			if (!dev->rx_urbs[urb_index])
-				retval = -ENOMEM;
-				
-			dev->rx_urbs[urb_index]->transfer_buffer = dev->pRxRingBuffer + (URB_BUFSIZE_RX * urb_index);
-
-			if(!dev->rx_urbs[urb_index]->transfer_buffer){
-				usb_free_urb(dev->rx_urbs[urb_index]);
-				dev->rx_urbs[urb_index] = NULL;
-				retval = -ENOMEM;
-				goto exit;
-			}
-
-			dev->rx_urb_context[urb_index].index = urb_index;
-			dev->rx_urbstatus[urb_index] = 0;
-			dev->rx_urb_context[urb_index].dev = dev;
-			dev->rx_urbs[urb_index]->status = -EINPROGRESS;
-			
-			usb_fill_bulk_urb(dev->rx_urbs[urb_index],
-					  dev->usbdev,
-					  usb_rcvbulkpipe(dev->usbdev, 0x85),
-					  dev->rx_urbs[urb_index]->transfer_buffer,
-					  URB_BUFSIZE_RX,
-					  rx_urb_completion,
-					  &dev->rx_urb_context[urb_index]);
-							  
-				dev->rx_urbs[urb_index]->transfer_flags = 0;
-
-		}	
-#if !(defined(DTVCAM_POWER_CTRL) && defined(AVSENDER_POWER_CTRL))	
-		if(atomic_read(&dev->rx_pw_on) == 0) {
-			if(atomic_read(&dev->tx_pw_on) == 0) {
-				error = DL_ApPwCtrl(&dev, 0, 1);
-				error = DL_ApPwCtrl(&dev->DC, 1, 1);
-				atomic_set(&dev->tx_pw_on, 1);	
-				atomic_set(&dev->rx_pw_on, 1);				
-			} else {		
-				error = DL_ApPwCtrl(&dev->DC, 1, 1);
-				atomic_set(&dev->rx_pw_on, 1);	
-			}
-		}	
-#endif			
-	}	
-	/* increment our usage count for the device */
-	//kref_get(&dev->kref);
-	
-	/* save our object in the file's private structure */
-	dev->file = file;
-	file->private_data = dev;
-
-exit:
-	return retval;
-}
-
 static int it950x_usb_tx_open(struct inode *inode, struct file *file)
 {
 	struct it950x_dev *dev;
@@ -1367,64 +970,6 @@ exit:
 	return retval;
 }
 
-static int it950x_usb_release(struct inode *inode, struct file *file)
-{
-	struct it950x_dev *dev;
-	int error, i;
-	int order;
-	//deb_data("it950x_usb_release function\n");
-	dev = (struct it950x_dev *)file->private_data;
-	if (dev == NULL) {
-		deb_data("dev is NULL\n");
-		return -ENODEV;
-	}
-	
-	if(atomic_read(&dev->g_AP_use_rx) == 1) {
-		rx_stop_urb_transfer(dev);
-
-/*		if(dev->g_AP_use == 1) {
-			dev->DevicePower = 0;
-			error = DL_ApCtrl(&dev->DC, 0, 0);
-			error = DL_ApCtrl(&dev->DC, 1, 0);
-		}
-		dev->g_AP_use--;*/
-		
-		dev = (struct it950x_dev *)file->private_data;
-		if (dev == NULL)
-			return -ENODEV;
-
-		/* decrement the count on our device */
-		//kref_put(&dev->kref, afa_delete);
-
-		if (dev->pRxRingBuffer)
-			free_pages((long unsigned int)dev->pRxRingBuffer, get_order(dev->dwRxTolBufferSize));
-	
-
-		for (i = 0; i < URB_COUNT_RX; i++) {   /* if urb doesn't call back, kill it. */
-			if(dev->rx_urbstatus[i] == 1){
-				usb_kill_urb(dev->rx_urbs[i]);
-			}
-		}	
-		rx_free_urbs(dev);	
-
-#if !(defined(DTVCAM_POWER_CTRL) && defined(AVSENDER_POWER_CTRL))
-		if(atomic_read(&dev->rx_pw_on) == 1) {
-			if(atomic_read(&dev->g_AP_use_tx) == 0) {    // normal.
-				error = DL_ApPwCtrl(&dev->DC, 1, 0);
-				error = DL_ApPwCtrl(&dev->DC, 0, 0);
-				atomic_set(&dev->rx_pw_on, 0);	
-				atomic_set(&dev->tx_pw_on, 0);				
-			} else {		                                 // if tx in used. just off rx.
-				error = DL_ApPwCtrl(&dev->DC, 1, 0);
-				atomic_set(&dev->rx_pw_on, 0);	
-			}
-		}	
-#endif		
-	}
-	atomic_sub(1, &dev->g_AP_use_rx);
-	return 0;
-}
-
 static int it950x_usb_tx_release(struct inode *inode, struct file *file)
 {
 	struct it950x_dev *dev;
@@ -1464,12 +1009,12 @@ static int it950x_usb_tx_release(struct inode *inode, struct file *file)
 		
 #if !(defined(DTVCAM_POWER_CTRL) && defined(AVSENDER_POWER_CTRL))		
 		if(atomic_read(&dev->tx_pw_on) == 1) {
-			if(atomic_read(&dev->g_AP_use_rx) == 0) {   // RX not used, suspend tx.
+//DAVE			if(atomic_read(&dev->g_AP_use_rx) == 0) {   // RX not used, suspend tx.
 				error = DL_ApPwCtrl(&dev->DC, 0, 0);
 				atomic_set(&dev->tx_pw_on, 0);	
-			} else {
-				deb_data("RX lock TX_PowerSaving\n");
-			}
+//DAVE			} else {
+//DAVE				deb_data("RX lock TX_PowerSaving\n");
+//DAVE			}
 		}
 #endif		
 
@@ -1478,63 +1023,6 @@ static int it950x_usb_tx_release(struct inode *inode, struct file *file)
 
 	return 0;
 }
-
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,35)
-static int it950x_usb_ioctl(struct inode *inode, struct file *file,
-	unsigned int cmd,  unsigned long parg)
-{
-	struct it950x_dev *dev;
-	Byte temp0 = 0, temp1 = 1;
-	Dword status;
-	deb_data("it9507_usb_ioctl function\n");
-  
-	dev = (struct it950x_dev *)file->private_data;
-	if (dev == NULL) {
-		deb_data("dev is NULL\n");
-		return -ENODEV;
-	}
-
-	/*
-	* extract the type and number bitfields, and don't decode
-	* wrong cmds: return ENOTTY (inappropriate ioctl) before access_ok()
-	*/
-
-	//if (_IOC_TYPE(cmd) != AFA_IOC_MAGIC) return -ENOTTY;
-	//if (_IOC_NR(cmd) > AFA_IOC_MAXNR) return -ENOTTY;
-
-	switch (cmd)
-	{	
-		case IOCTL_ITE_DEMOD_STARTCAPTURE:
-			rx_start_urb_transfer(dev);
-			return 0;		
-		
-		case IOCTL_ITE_DEMOD_STOPCAPTURE:
-			rx_stop_urb_transfer(dev);
-			return 0;
-		
-		//clean 12 bytes garbage through 9507(TX)	
-		case IOCTL_ITE_DEMOD_ADDPIDAT:
-			status = IT9507_writeRegisters ((Modulator*)&dev->DC.modulator, Processor_OFDM, 0xF9A4, 1, &temp1);
-			if(status)
-			deb_data("DTV_WriteRegOFDM() return error!\n");
-
-			status = IT9507_writeRegisters ((Modulator*)&dev->DC.modulator, Processor_OFDM, 0xF9CC, 1, &temp0);
-			if(status)
-			deb_data("DTV_WriteRegOFDM() return error!\n");
-
-			status = IT9507_writeRegisters ((Modulator*)&dev->DC.modulator, Processor_OFDM, 0xF9A4, 1, &temp0);
-			if(status)
-			deb_data("DTV_WriteRegOFDM() return error!\n");
-
-			status = IT9507_writeRegisters ((Modulator*)&dev->DC.modulator, Processor_OFDM, 0xF9CC, 1, &temp1);
-			if(status)
-			deb_data("DTV_WriteRegOFDM() return error!\n");
-
-			break;
-	}
-	return DL_DemodIOCTLFun((void *)&dev->DC.demodulator, (DWORD)cmd, parg);
-}
-#endif
 
 int SetLowBitRateTransfer(struct it950x_dev *dev, void *parg)
 {
@@ -1606,46 +1094,6 @@ static int it950x_usb_tx_ioctl(struct inode *inode, struct file *file,
 #endif
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
-long it950x_usb_unlocked_ioctl(
-	struct file *file,
-	unsigned int cmd,
-	unsigned long parg)
-{
-
-	struct it950x_dev *dev;
-	
-	//deb_data("it950x_usb_ioctl function\n");
-
-	dev = (struct it950x_dev *)file->private_data;
-	if (dev == NULL) {
-		deb_data("dev is NULL\n");
-		return -ENODEV;
-	}
-
-	/*
-	* extract the type and number bitfields, and don't decode
-	* wrong cmds: return ENOTTY (inappropriate ioctl) before access_ok()
-	*/
-
-	//if (_IOC_TYPE(cmd) != AFA_IOC_MAGIC) return -ENOTTY;
-	//if (_IOC_NR(cmd) > AFA_IOC_MAXNR) return -ENOTTY;
-
-	switch (cmd)
-	{	
-		case IOCTL_ITE_DEMOD_STARTCAPTURE:
-			rx_start_urb_transfer(dev);
-			return 0;
-
-		case IOCTL_ITE_DEMOD_STOPCAPTURE:
-			rx_stop_urb_transfer(dev);
-			return 0;
-	}
-
-	return DL_DemodIOCTLFun((void *)&dev->DC.demodulator, (DWORD)cmd, parg);
-}
-#endif
-
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
 long it950x_usb_tx_unlocked_ioctl(
 	struct file *file,
 	unsigned int cmd,
@@ -1701,47 +1149,6 @@ long it950x_usb_tx_unlocked_ioctl(
 #endif
 
 
-static ssize_t it950x_read(
-	struct file *file, 
-	char __user *buf,
-	size_t count, 
-	loff_t *ppos)
-{
-	struct it950x_dev *dev = (struct it950x_dev *)file->private_data;
-	Dword Len = count;
-
-	if (dev == NULL) 
-		return -ENODEV;
-
-	Rx_RingBuffer(dev, buf, &Len);
-	//deb_data("ReadRingBuffer - %d\n", Len);
-
-	return Len;
-
-	/*AirHD*/
-#if 0
-	//udev = (struct usb_device *)file->private_data;
-	//dev = (DEVICE_CONTEXT *)dev_get_drvdata(&udev->dev);
-
-		ret = usb_bulk_msg(usb_get_dev(dev->DC->modulator.userData),
-				usb_rcvbulkpipe(usb_get_dev(dev->DC->modulator.userData), 0x85), //dev->Demodulator.driver
-				buffer,
-				256,
-				&nBytesRead,
-				100000);	
-
-		if (ret) deb_data("--------Usb2_readControlBus fail : 0x%08lx\n", ret);
-	
-		copy_to_user(buf, buffer, 256);
-
-		for(i = 0; i < 256; i++)
-			deb_data("---------Read data buffer[%d] 0x%x\n", i, buf[i]);
-
-		return 0;
-#endif
-
-}
-
 static ssize_t it950x_tx_write(
 	struct file *file,
 	const char __user *user_buffer,
@@ -1790,20 +1197,6 @@ static ssize_t it950x_tx_write(
 }
 
 
-static struct file_operations it950x_usb_fops ={
-	.owner =		THIS_MODULE,
-	.open =		it950x_usb_open,
-	.read =		it950x_read,
-	//.write =	it950x_write,
-	.release =	it950x_usb_release,
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
-		.unlocked_ioctl = it950x_usb_unlocked_ioctl,
-#else
-		.ioctl = it950x_usb_ioctl,
-#endif
-
-};
-
 static struct file_operations it950x_usb_tx_fops ={
 	.owner =		THIS_MODULE,
 	.open =		it950x_usb_tx_open,
@@ -1822,12 +1215,6 @@ static struct file_operations it950x_usb_tx_fops ={
  * usb class driver info in order to get a minor number from the usb core,
  * and to have the device registered with devfs and the driver core
  */
-static struct usb_class_driver it950x_class = {
-	.name =			"usb-it913x%d",
-	.fops =			&it950x_usb_fops,
-	.minor_base = 	USB_it913x_MINOR_BASE
-};
-
 static struct usb_class_driver it950x_class_tx = {
 	.name =			"usb-it950x%d",
 	.fops =			&it950x_usb_tx_fops,
@@ -1849,7 +1236,6 @@ static int it950x_probe(struct usb_interface *intf, const struct usb_device_id *
 	dev->g_AP_use = 0;
 	//dev->DC.modulator.ptrIQtableEx = kzalloc(sizeof(IQtable)*91, GFP_KERNEL);
 	atomic_set(&dev->g_AP_use_tx, 0);
-	atomic_set(&dev->g_AP_use_rx, 0);	
 
 	if (dev == NULL) {
 		deb_data("Out of memory\n");
@@ -1869,16 +1255,6 @@ static int it950x_probe(struct usb_interface *intf, const struct usb_device_id *
 		return retval;
 	}
 	
-	/* we can register the device now, as it is ready */
-	retval = usb_register_dev(intf, &it950x_class);
-	if (retval) {
-		deb_data("Not able to get a minor for this device.");
-		usb_set_intfdata(intf, NULL);
-		//goto error;
-		return -ENOTTY;
-	}
-	dev->rx_chip_minor = intf->minor;
-	deb_data("rx minor %d \n", dev->rx_chip_minor);
 	intf->minor = -1;
 	retval = usb_register_dev(intf, &it950x_class_tx);
 	if (retval) {
@@ -1911,9 +1287,10 @@ static int it950x_probe(struct usb_interface *intf, const struct usb_device_id *
 	}	
 	
 #if !(defined(DTVCAM_POWER_CTRL) && defined(AVSENDER_POWER_CTRL))
+	//TODO:
 	atomic_set(&dev->tx_pw_on, 0);	
-	atomic_set(&dev->rx_pw_on, 0);	
-	DL_ApPwCtrl(&dev->DC, 1, 0);	
+//DAVE	atomic_set(&dev->rx_pw_on, 0);	
+//DAVE	DL_ApPwCtrl(&dev->DC, 1, 0);	
 	DL_ApPwCtrl(&dev->DC, 0, 0);	
 #endif	
 	deb_data("USB ITEtech device now attached to USBSkel-%d \n", intf->minor);
@@ -2011,10 +1388,6 @@ static void it950x_disconnect(struct usb_interface *intf)
 	usb_set_intfdata(intf, NULL);
 
 	/* give back our minor */
-	
-	intf->minor = dev->rx_chip_minor;
-	usb_deregister_dev(intf, &it950x_class);
-
 	intf->minor = dev->tx_chip_minor;
 	usb_deregister_dev(intf, &it950x_class_tx);
 
@@ -2025,7 +1398,6 @@ static void it950x_disconnect(struct usb_interface *intf)
 	//	kref_put(&dev->kref, afa_delete);
 
 	if (dev){
-		if(dev->file) dev->file->private_data = NULL;
 		if(dev->tx_file) dev->tx_file->private_data = NULL;
 		kfree(dev);
 	}
