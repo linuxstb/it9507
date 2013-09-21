@@ -10,7 +10,6 @@
 
 
 #include "it950x-core.h"
-#include "register.h"
 #include "version.h"
 #include "IT9507.h"
 
@@ -113,6 +112,10 @@ DWORD DemodIOCTLFun(
         {
 			PControlPowerSavingRequest pRequest = (PControlPowerSavingRequest) pIOBuffer;
 			//DAVE: pRequest->error = Demodulator_controlPowerSaving ((Demodulator*) handle, pRequest->control);
+#define    p_reg_top_gpioh5_o 0xD8BB 
+#define reg_top_gpioh5_o_pos 0
+#define reg_top_gpioh5_o_len 1
+
 			pRequest->error = IT9507_writeRegisterBits((Modulator*) handle, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, !pRequest->control);
     		break;
         }
