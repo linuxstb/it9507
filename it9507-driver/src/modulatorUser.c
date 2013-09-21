@@ -1,7 +1,87 @@
 #include "modulatorUser.h"
+
+// all for Linux
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/kref.h>
+#include <linux/usb.h>
+#include <asm/uaccess.h>
+#include <linux/device.h>
+#include <linux/string.h>
+#include <linux/firmware.h>
 #include <linux/delay.h>
+#include <linux/vmalloc.h>
 
 #include "ADF4351.h"
+#include "it950x-core.h"
+#include "modulatorType.h"
+#include "modulatorError.h"
+#include "modulatorUser.h"
+
+static u32 Usb2_exitDriver (
+    IN  Modulator*    modulator
+) {
+    u32 error = ModulatorError_NO_ERROR;
+
+    return (error);
+}
+
+
+static u32 Usb2_writeControlBus (
+    IN  Modulator*    modulator,
+    IN  u32           bufferLength,
+    IN  u8*           buffer
+) {
+    u32     ret;
+    int		  act_len;
+	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
+	ret = 0;
+
+	if (pTmpBuffer) 
+		memcpy(pTmpBuffer, buffer, bufferLength);
+//deb_data(" ---------Usb2_writeControlBus----------\n", ret);	
+	ret = usb_bulk_msg(usb_get_dev( modulator->userData),
+			usb_sndbulkpipe(usb_get_dev(modulator->userData), 0x02),
+			pTmpBuffer,
+			bufferLength,
+			&act_len,
+			1000000);
+   
+	if (ret) deb_data(" Usb2_writeControlBus fail : 0x%08x\n", ret);
+
+	return (Error_NO_ERROR);
+}
+
+
+static u32 Usb2_readControlBus (
+    IN  Modulator*    modulator,
+    IN  u32           bufferLength,
+    OUT u8*           buffer
+) {
+	u32     ret;
+	int       nu8sRead;
+	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
+	ret = 0;
+
+//deb_data(" ---------Usb2_readControlBus----------\n", ret);			
+   ret = usb_bulk_msg(usb_get_dev(modulator->userData),
+				usb_rcvbulkpipe(usb_get_dev(modulator->userData),129),
+				pTmpBuffer,
+				bufferLength,
+				&nu8sRead,
+				1000000);
+	if (pTmpBuffer)
+		memcpy(buffer, pTmpBuffer, bufferLength);   
+	 
+	if (ret) 	deb_data(" Usb2_readControlBus fail : 0x%08x\n", ret);
+
+	return (Error_NO_ERROR);
+}
+
+
 DeviceDescription HwDesc[] =
 {
 	//GPIOH1    GPIOH2    GPIOH3     GPIOH4   GPIOH5          GPIOH6        GPIOH7  GPIOH8  
