@@ -1039,61 +1039,6 @@ int SetLowBitRateTransfer(struct it950x_dev *dev, void *parg)
 	return 0;
 }
 
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,35)
-static int it950x_usb_tx_ioctl(struct inode *inode, struct file *file,
-	unsigned int cmd,  unsigned long parg)
-{
-	struct it950x_dev *dev;
-	PCmdRequest pRequest;
-	
-	deb_data("it950x_usb_tx_ioctl function\n");
-	
-	dev = (struct it950x_dev *)file->private_data;
-	if (dev == NULL) {
-		deb_data("dev is NULL\n");
-		return -ENODEV;
-	}
-
-	/*
-	* extract the type and number bitfields, and don't decode
-	* wrong cmds: return ENOTTY (inappropriate ioctl) before access_ok()
-	*/
-
-	//if (_IOC_TYPE(cmd) != AFA_IOC_MAGIC) return -ENOTTY;
-	//if (_IOC_NR(cmd) > AFA_IOC_MAXNR) return -ENOTTY;
-    
-	switch (cmd)
-	{
-		case IOCTL_ITE_DEMOD_STARTTRANSFER_TX:
-			tx_start_urb_transfer(dev);
-			return 0;
-					
-		case IOCTL_ITE_DEMOD_STOPTRANSFER_TX:
-			tx_stop_urb_transfer(dev);
-			return 0;
-			
-		case IOCTL_ITE_DEMOD_STARTTRANSFER_CMD_TX:
-			tx_start_urb_transfer_cmd(dev);
-			return 0;
-			
-		case IOCTL_ITE_DEMOD_STOPTRANSFER_CMD_TX:
-			tx_stop_urb_transfer_cmd(dev);
-			return 0;
-		
-		case IOCTL_ITE_DEMOD_WRITECMD_TX:
-			pRequest = (PCmdRequest) parg;
-			Tx_RingBuffer_cmd(dev, pRequest->cmd, pRequest->len);
-			return 0;		
-			
-		case IOCTL_ITE_DEMOD_SETLOWBRATETRANS_TX:
-			SetLowBitRateTransfer(dev, (void*)parg);
-			return 0;
-	}
-	return DL_DemodIOCTLFun((void *)&dev->DC.modulator, (DWORD)cmd, parg);
-}
-#endif
-
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
 long it950x_usb_tx_unlocked_ioctl(
 	struct file *file,
 	unsigned int cmd,
@@ -1146,7 +1091,6 @@ long it950x_usb_tx_unlocked_ioctl(
 	}
 	return DL_DemodIOCTLFun((void *)&dev->DC.modulator, (DWORD)cmd, parg);
 }
-#endif
 
 
 static ssize_t it950x_tx_write(
@@ -1203,12 +1147,7 @@ static struct file_operations it950x_usb_tx_fops ={
 	//.read =		it950x_read,
 	.write =	it950x_tx_write, /*AirHD*/ 
 	.release =	it950x_usb_tx_release,
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
-		.unlocked_ioctl = it950x_usb_tx_unlocked_ioctl,
-#else
-		.ioctl = it950x_usb_tx_ioctl,
-#endif
-
+	.unlocked_ioctl = it950x_usb_tx_unlocked_ioctl,
 };
 
 /*
@@ -1407,9 +1346,6 @@ static void it950x_disconnect(struct usb_interface *intf)
 
 
 static struct usb_driver it950x_driver = {
-#if LINUX_VERSION_CODE <=  KERNEL_VERSION(2,6,15)
-	.owner = THIS_MODULE,
-#endif
 	.name       = "usb-it950x",
 	.probe      = it950x_probe,
 	.disconnect = it950x_disconnect,//dvb_usb_device_exit,
