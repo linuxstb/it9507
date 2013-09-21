@@ -57,8 +57,6 @@ struct it950x_dev {
 	atomic_t tx_pw_on;	
 	bool DeviceReboot, DevicePower;	
 	bool TunerInited0, TunerInited1;	
-	u8 is_use_low_brate;
-	atomic_t urb_counter_low_brate;
 
 	/* USB URB Related for TX*/
 	int	   tx_urb_streaming;
@@ -75,20 +73,6 @@ struct it950x_dev {
 	u32 dwTxWriteTolBufferSize;  // Total ringbuffer size.
 	u32 dwTxRemaingBufferSize;   // Remaining size in buffer.
 
-	/* USB URB Related for TX low bitrate*/
-	int	   tx_urb_streaming_low_brate;
-	struct urb *tx_urbs_low_brate[URB_COUNT_TX_LOW_BRATE];
-	URBContext tx_urb_context_low_brate[URB_COUNT_TX_LOW_BRATE];
-	u8 tx_urbstatus_low_brate[URB_COUNT_TX_LOW_BRATE];
-	u8 tx_urb_index_low_brate;
-	u8 tx_urb_use_count_low_brate;	
-	u8* pTxRingBuffer_low_brate;
-	u8* pWriteFrameBuffer_low_brate;
-	u32* pTxCurrBuffPointAddr_low_brate;	
-	u32* pTxWriteBuffPointAddr_low_brate;	
-	u32 dwTxWriteTolBufferSize_low_brate;
-	u32 dwTxRemaingBufferSize_low_brate;	
-	
 	/* USB URB Related for TX_CMD */
 	int	   tx_urb_streaming_cmd;
 	struct urb *tx_urbs_cmd[URB_COUNT_TX_CMD];
@@ -138,34 +122,6 @@ u32 Tx_RMRingBuffer(struct it950x_urb_context *context, u32 dwDataFrameSize)
 	return 0;
 }
 
-/* AirHD for low bitrate */
-u32 Tx_RMRingBuffer_low_brate(struct it950x_urb_context *context, u32 dwDataFrameSize)
-{
-	struct it950x_dev *dev = context->dev;
-	u32 dwBuffLen = 0;
-	//deb_data("enter %s", __func__);
-	//deb_data("Tx_RMRingBuffer: (*dev->pTxCurrBuffPointAddr) %d", (*dev->pTxCurrBuffPointAddr));
-	
-	dwBuffLen = (dev->dwTxWriteTolBufferSize_low_brate) - (*dev->pTxCurrBuffPointAddr_low_brate);
-	
-	if(dwBuffLen >= dwDataFrameSize){
-		(*dev->pTxCurrBuffPointAddr_low_brate) += dwDataFrameSize;
-		if((*dev->pTxCurrBuffPointAddr_low_brate) >= (dev->dwTxWriteTolBufferSize_low_brate)) (*dev->pTxCurrBuffPointAddr_low_brate) = 0;
-	}else{
-		(*dev->pTxCurrBuffPointAddr_low_brate) = 0;
-		(*dev->pTxCurrBuffPointAddr_low_brate) += (dwDataFrameSize - dwBuffLen);
-	}
-	dev->dwTxRemaingBufferSize_low_brate += dwDataFrameSize;
-	//deb_data("RMRing URB complete index: %d", context->index);
-	//dev->tx_urbstatus[context->index] = 0;
-	dev->tx_urbstatus_low_brate[context->index] = 0;
-	atomic_add(1, &dev->urb_counter_low_brate);
-	//dev->urb_use_count++;
-	//if(dev->urb_use_count < 1) 
-		//deb_data("urb index is %d---------- back, urb_use_count = %d\n", context->index, dev->urb_use_count);
-	return 0;
-}
-
 /* AirHD for cmd */
 u32 Tx_RMRingBuffer_cmd(struct it950x_urb_context *context, u32 dwDataFrameSize)
 {
@@ -204,10 +160,6 @@ tx_free_urbs(struct it950x_dev *dev)
 		usb_free_urb(dev->tx_urbs_cmd[i]);
 		dev->tx_urbs_cmd[i] = NULL;
 	}
-	for(i = 0; i < URB_COUNT_TX_LOW_BRATE; i++){
-		usb_free_urb(dev->tx_urbs_low_brate[i]);
-		dev->tx_urbs_low_brate[i] = NULL;
-	}			
 	deb_data("%s() end\n", __func__);
 }
 /*
@@ -247,7 +199,7 @@ static int tx_stop_urb_transfer(struct it950x_dev *dev)
 {
 	//deb_data("%s()\n", __func__);
 
-	if (!dev->tx_urb_streaming && !dev->tx_urb_streaming_low_brate) {
+	if (!dev->tx_urb_streaming) {
 		deb_data("%s: iso xfer already stop!\n", __func__);
 		return 0;
 	}
@@ -255,7 +207,6 @@ static int tx_stop_urb_transfer(struct it950x_dev *dev)
 	min_1 = 0;
 #endif	
 	dev->tx_urb_streaming = 0;
-	dev->tx_urb_streaming_low_brate = 0;
 	
 	/*DM368 usb bus error when using kill urb */
 #if 0
@@ -416,114 +367,6 @@ int Tx_RingBuffer(
     return Error_NO_ERROR;
 }
 
-/* AirHD low bitrate */
-int Tx_RingBuffer_low_brate(
-	struct it950x_dev *dev,
-    u8*  pBuffer,
-    u32* pBufferLength)
-{
-    u32 dwBuffLen = 0;
-    u32 dwCpBuffLen = *pBufferLength;
-    u32 dwCurrBuffAddr = (*dev->pTxCurrBuffPointAddr_low_brate);
-    u32 dwWriteBuffAddr = (*dev->pTxWriteBuffPointAddr_low_brate);
-    int ret = -ENOMEM;
-    int i;
-
-//	deb_data("Tx_RingBuffer-CPLen %d, dwCurrBuffAddr %d, dwWriteBuffAddr %d, dev->urb_back %d\n", dwCpBuffLen, dwCurrBuffAddr, dwWriteBuffAddr, dev->urb_back);
-	if(dev->tx_urb_streaming_low_brate == 1 && (dwWriteBuffAddr - (dev->tx_urb_index_low_brate * URB_BUFSIZE_TX_LOW_BRATE))>= URB_BUFSIZE_TX_LOW_BRATE && (atomic_read(&dev->urb_counter_low_brate)) > 0/*dev->urb_use_count > 0*/){
-		ret = usb_submit_urb(dev->tx_urbs_low_brate[dev->tx_urb_index_low_brate], GFP_ATOMIC);
-		if (ret != 0){
-			tx_stop_urb_transfer(dev);
-			deb_data("%s: failed urb submission, err = %d\n", __func__, ret);
-			return ret;
-		}//else deb_data("usb_submit_urb ok \n");
-		
-		//if (atomic_read(&dev->urb_counter_low_brate) < 5) deb_data("\nless_than_10_can_urb_use_count = %d\n", atomic_read(&dev->urb_counter_low_brate));
-		dev->tx_urbstatus_low_brate[dev->tx_urb_index_low_brate] = 1;
-		dev->tx_urb_index_low_brate++;
-		atomic_sub(1, &dev->urb_counter_low_brate);
-		if(dev->tx_urb_index_low_brate == URB_COUNT_TX_LOW_BRATE) dev->tx_urb_index_low_brate = 0;
-	}
-
-	/*RingBuffer full*/
-	if ((dev->dwTxRemaingBufferSize_low_brate) == 0){
-		*pBufferLength = 0;
-//		udelay(100);
-		return Error_NO_ERROR;
-	}
-	
-    if ((dev->dwTxRemaingBufferSize_low_brate) < dwCpBuffLen){
-		*pBufferLength = 0;
-//		udelay(100);
-		return Error_NO_ERROR;
-	}
-
-    if (*pBufferLength == 0){
-//		udelay(100);
-        return Error_BUFFER_INSUFFICIENT;
-    }
-
-    if (dwCurrBuffAddr <= (*dev->pTxWriteBuffPointAddr_low_brate)) {
-		dwBuffLen = dev->dwTxWriteTolBufferSize_low_brate - (*dev->pTxWriteBuffPointAddr_low_brate);
-
-		if(dwCpBuffLen <= dwBuffLen){ 
-			/*It will NOT TOUCH end of ring buffer*/
-			memcpy(dev->pWriteFrameBuffer_low_brate+(*dev->pTxWriteBuffPointAddr_low_brate), pBuffer, dwCpBuffLen);
-			*pBufferLength = dwCpBuffLen;
-			(*dev->pTxWriteBuffPointAddr_low_brate) = dwWriteBuffAddr; // FIX memcy will modify pTxWriteBuffPointAddr value
-			(*dev->pTxWriteBuffPointAddr_low_brate) += dwCpBuffLen;
-			dev->dwTxRemaingBufferSize_low_brate = dev->dwTxRemaingBufferSize_low_brate - dwCpBuffLen;
-		}else{
-			/*It will TOUCH end of ring buffer*/
-			
-#if 0
-			memcpy(dev->pTxRingBuffer+(*dev->pTxWriteBuffPointAddr), pBuffer, dwBuffLen);
-			*pBufferLength = dwBuffLen;
-			(*dev->pTxWriteBuffPointAddr) = 0;
-			//dwWriteBuffAddr = 0;
-			pBuffer += dwBuffLen;
-			dwCpBuffLen -= dwBuffLen;
-			dev->dwTxRemaingBufferSize -= dwBuffLen;
-#endif
-			if(dwBuffLen > 0){
-				memcpy(dev->pTxRingBuffer+(*dev->pTxWriteBuffPointAddr_low_brate), pBuffer, dwBuffLen);
-				*pBufferLength = dwBuffLen;
-				(*dev->pTxWriteBuffPointAddr_low_brate) = 0;
-				pBuffer += dwBuffLen;
-				dwCpBuffLen -= dwBuffLen;
-				dev->dwTxRemaingBufferSize_low_brate -= dwBuffLen;
-			}else{
-				
-				(*dev->pTxWriteBuffPointAddr_low_brate) = 0;
-			}
-
-			memcpy(dev->pWriteFrameBuffer_low_brate+(*dev->pTxWriteBuffPointAddr_low_brate), pBuffer, dwCpBuffLen);
-			*pBufferLength += dwBuffLen;
-			(*dev->pTxWriteBuffPointAddr_low_brate) = 0;
-			(*dev->pTxWriteBuffPointAddr_low_brate) += dwCpBuffLen;
-
-			dev->dwTxRemaingBufferSize_low_brate = dev->dwTxRemaingBufferSize_low_brate - dwCpBuffLen;
-		}
-    }else {
-        dwBuffLen = dwCurrBuffAddr - (*dev->pTxWriteBuffPointAddr_low_brate);
-
-        if (dwCpBuffLen > dwBuffLen) {
-            *pBufferLength = 0;
-//			udelay(100);
-			return Error_NO_ERROR;
-        }
-        else {
-            memcpy(dev->pWriteFrameBuffer_low_brate+(*dev->pTxWriteBuffPointAddr_low_brate), pBuffer, dwCpBuffLen);
-			*pBufferLength = dwCpBuffLen;
-			(*dev->pTxWriteBuffPointAddr_low_brate) = dwWriteBuffAddr;
-			(*dev->pTxWriteBuffPointAddr_low_brate) += dwCpBuffLen;
-			
-			dev->dwTxRemaingBufferSize_low_brate = dev->dwTxRemaingBufferSize_low_brate - dwCpBuffLen;
-        }
-    }
-    return Error_NO_ERROR;
-}
-
 /* AirHD_CMD */
 int Tx_RingBuffer_cmd(
 	struct it950x_dev *dev,
@@ -607,57 +450,6 @@ static void tx_urb_completion(struct urb *purb)
 	return;
 }
 
-static void tx_urb_completion_low_brate(struct urb *purb)
-{
-	struct it950x_urb_context *context = purb->context;
-	int ptype = usb_pipetype(purb->pipe);
-	int ret = -ENOMEM;
-	int i;
-	
-	//deb_data("enter %s", __func__);
-
-	//deb_data("'%s' urb completed. status: %d, length: %d/%d, pack_num: %d, errors: %d\n",
-	//	ptype == PIPE_ISOCHRONOUS ? "isoc" : "bulk",
-	//	purb->status,purb->actual_length,purb->transfer_buffer_length,
-	//	purb->number_of_packets,purb->error_count);
-	//context->dev->tx_urbstatus[context->index] = 0;
-	switch (purb->status) {
-		case 0:         /* success */
-		case -ETIMEDOUT:    /* NAK */
-			break;
-		case -ECONNRESET:   /* kill */
-		case -ENOENT:
-			context->dev->tx_urb_use_count_low_brate++;
-			deb_data("TX ENOENT-tx_urb_completion_low_brate error %d.\n", purb->status);
-		case -ESHUTDOWN:
-			return;
-		default:        /* error */
-			deb_data("tx_urb_completion_low_brate error %d.\n", purb->status);
-			break;
-	}
-
-	if (!context->dev)
-		return;
-	
-	if (context->dev->tx_urb_streaming_low_brate == 0)
-		return;
-
-	if (ptype != PIPE_BULK) {
-		deb_data("TX %s() Unsupported URB type %d\n", __func__, ptype);
-		return;
-	}
-	
-	//ptr = (u8 *)purb->transfer_buffer;
-
-	/* Feed the transport payload into the kernel demux */
-	//dvb_dmx_swfilter_packets(&dev->dvb.demux,
-	//	purb->transfer_buffer, purb->actual_length / 188);
-	//if (purb->actual_length > 0)
-	
-	Tx_RMRingBuffer_low_brate(context, URB_BUFSIZE_TX_LOW_BRATE);
-	return;
-}
-
 static void tx_urb_completion_cmd(struct urb *purb)
 {
 	struct it950x_urb_context *context = purb->context;
@@ -715,16 +507,13 @@ static int tx_start_urb_transfer(struct it950x_dev *dev)
 #if URB_TEST
 	min_1 = 0;
 #endif	
-	if (dev->tx_urb_streaming || dev->tx_urb_streaming_low_brate) {
+	if (dev->tx_urb_streaming) {
 		deb_data("%s: iso xfer already running!\n", __func__);
 		return 0;
 	}
 	
 	dev->TxCurrBuffPointAddr	= 0;
 	dev->TxWriteBuffPointAddr = 0;
-
-	*dev->pTxCurrBuffPointAddr_low_brate = 0;
-	*dev->pTxWriteBuffPointAddr_low_brate = 0;
 
 	for (i = 0; i < URB_COUNT_TX; i++) {
 		purb = dev->tx_urbs[i];
@@ -751,45 +540,10 @@ static int tx_start_urb_transfer(struct it950x_dev *dev)
 		
 		purb->transfer_flags = 0;
 	}
-	for (i = 0; i < URB_COUNT_TX_LOW_BRATE; i++) {
-
-		//dev->urbs[i] = usb_alloc_urb(0, GFP_KERNEL);
-		//if (!dev->urbs[i])
-		//	goto err;
-
-		purb = dev->tx_urbs_low_brate[i];
-
-		purb->transfer_buffer = dev->pWriteFrameBuffer_low_brate + (URB_BUFSIZE_TX_LOW_BRATE * i);
-		if (!purb->transfer_buffer) {
-			usb_free_urb(purb);
-			dev->tx_urbs_low_brate[i] = NULL;
-			goto err;
-		}
-		
-		dev->tx_urb_context_low_brate[i].index = i;
-		dev->tx_urb_context_low_brate[i].dev = dev;
-		dev->tx_urbstatus_low_brate[i] = 0;
-		
-		purb->status = -EINPROGRESS;
-		usb_fill_bulk_urb(purb,
-				  dev->usbdev,
-				  usb_sndbulkpipe(dev->usbdev, 0x06),
-				  purb->transfer_buffer,
-				  URB_BUFSIZE_TX_LOW_BRATE,
-				  tx_urb_completion_low_brate,
-				  &dev->tx_urb_context_low_brate[i]);
-		
-		purb->transfer_flags = 0;
-	}	
 	dev->dwTxRemaingBufferSize = dev->dwTxWriteTolBufferSize;
 	dev->tx_urb_index = 0;
 	dev->tx_urb_streaming = 1;
 	atomic_set(&dev->tx_urb_counter, URB_COUNT_TX);
-
-	dev->dwTxRemaingBufferSize_low_brate = dev->dwTxWriteTolBufferSize_low_brate;
-	dev->tx_urb_index_low_brate = 0;
-	dev->tx_urb_use_count_low_brate = URB_COUNT_TX_LOW_BRATE;
-	dev->tx_urb_streaming_low_brate = 1;
 
 	ret = 0;
 
@@ -923,7 +677,6 @@ try:
 	if( atomic_read(&dev->g_AP_use_tx) == 1) {      // Allocate buffer just for first user.
 		init_waitqueue_head(&dev->TxQueue);
 		atomic_set(&dev->tx_urb_counter, URB_COUNT_TX);
-		atomic_set(&dev->urb_counter_low_brate, URB_COUNT_TX_LOW_BRATE);	
 		/*Write Ring buffer alloc*/
 		dev->dwTxWriteTolBufferSize = URB_BUFSIZE_TX * URB_COUNT_TX;
 		order = get_order(dev->dwTxWriteTolBufferSize);
@@ -950,19 +703,6 @@ try:
 			//dev->urb_use_count_cmd = URB_COUNT_TX_CMD;
 		}
 		
-		/*Write low bitrate Ring buffer alloc*/
-		dev->dwTxWriteTolBufferSize_low_brate = URB_BUFSIZE_TX_LOW_BRATE * URB_COUNT_TX_LOW_BRATE;
-		order = get_order(dev->dwTxWriteTolBufferSize_low_brate + 8);
-		dev->pTxRingBuffer_low_brate = (u8*)__get_free_pages(GFP_KERNEL, order);
-		if (dev->pTxRingBuffer_low_brate) {
-			dev->pWriteFrameBuffer_low_brate = dev->pTxRingBuffer_low_brate + 8;
-			dev->pTxCurrBuffPointAddr_low_brate = (u32*)dev->pTxRingBuffer_low_brate;
-			dev->pTxWriteBuffPointAddr_low_brate = (u32*)(dev->pTxRingBuffer_low_brate + 4);
-			dev->dwTxRemaingBufferSize_low_brate = dev->dwTxWriteTolBufferSize_low_brate;
-			dev->tx_urb_index_low_brate = 0;
-			dev->tx_urb_use_count_low_brate = URB_COUNT_TX_LOW_BRATE;
-		}
-			
 		/* increment our usage count for the device */
 		//kref_get(&dev->kref);
 
@@ -1014,11 +754,6 @@ static int it950x_usb_tx_release(struct inode *inode, struct file *file)
 			free_pages((long unsigned int)dev->pTxRingBuffer_cmd, order);
 		}
 
-		if (dev->pTxRingBuffer_low_brate){
-			order = get_order(dev->dwTxWriteTolBufferSize_low_brate + 8);
-			free_pages((long unsigned int)dev->pTxRingBuffer_low_brate, order);
-		}			
-		
 #if !(defined(DTVCAM_POWER_CTRL) && defined(AVSENDER_POWER_CTRL))		
 		if(atomic_read(&dev->tx_pw_on) == 1) {
 //DAVE			if(atomic_read(&dev->g_AP_use_rx) == 0) {   // RX not used, suspend tx.
@@ -1033,21 +768,6 @@ static int it950x_usb_tx_release(struct inode *inode, struct file *file)
 	}
 	atomic_sub(1, &dev->g_AP_use_tx);
 
-	return 0;
-}
-
-int SetLowBitRateTransfer(struct it950x_dev *dev, void *parg)
-{
-	//unsigned char b_buf[188];
-	u32 dwError = Error_NO_ERROR;
-	int act_len;
-	
-	PSetLowBitRateTransferRequest pRequest = (PSetLowBitRateTransferRequest) parg;
-	
-	//deb_data("SetLowBitRateTransfer function %d\n", pRequest->pdwBufferLength);
-	deb_data("--------is_use_low_brate [%s]\n", pRequest->pdwBufferLength?"ON":"OFF");
-	dev->is_use_low_brate = pRequest->pdwBufferLength;
-		
 	return 0;
 }
 
@@ -1096,10 +816,6 @@ long it950x_usb_tx_unlocked_ioctl(
 			pRequest = (PCmdRequest) parg;
 			Tx_RingBuffer_cmd(dev, pRequest->cmd, pRequest->len);
 			return 0;		
-			
-		case IOCTL_ITE_DEMOD_SETLOWBRATETRANS_TX:
-			SetLowBitRateTransfer(dev, (void*)parg);
-			return 0;
 	}
 	return DL_DemodIOCTLFun((void *)&dev->DC.modulator, (u32)cmd, parg);
 }
@@ -1210,13 +926,7 @@ static int it950x_probe(struct usb_interface *intf, const struct usb_device_id *
 		if (!dev->tx_urbs[i])
 			retval = -ENOMEM;
 	}
-	for(i = 0; i < URB_COUNT_TX_LOW_BRATE; i++){
 
-		dev->tx_urbs_low_brate[i] = usb_alloc_urb(0, GFP_KERNEL);
-		if (!dev->tx_urbs_low_brate[i])
-			retval = -ENOMEM;
-	}	
-	
 #if !(defined(DTVCAM_POWER_CTRL) && defined(AVSENDER_POWER_CTRL))
 	//TODO:
 	atomic_set(&dev->tx_pw_on, 0);	
