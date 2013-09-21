@@ -20,57 +20,6 @@
 #include "modulatorError.h"
 #include "modulatorUser.h"
 
-static u32 Usb2_writeControlBus (
-    IN  Modulator*    modulator,
-    IN  u32           bufferLength,
-    IN  u8*           buffer
-) {
-    u32     ret;
-    int		  act_len;
-	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
-	ret = 0;
-
-	if (pTmpBuffer) 
-		memcpy(pTmpBuffer, buffer, bufferLength);
-//deb_data(" ---------Usb2_writeControlBus----------\n", ret);	
-	ret = usb_bulk_msg(usb_get_dev( modulator->userData),
-			usb_sndbulkpipe(usb_get_dev(modulator->userData), 0x02),
-			pTmpBuffer,
-			bufferLength,
-			&act_len,
-			1000000);
-   
-	if (ret) deb_data(" Usb2_writeControlBus fail : 0x%08x\n", ret);
-
-	return (Error_NO_ERROR);
-}
-
-
-static u32 Usb2_readControlBus (
-    IN  Modulator*    modulator,
-    IN  u32           bufferLength,
-    OUT u8*           buffer
-) {
-	u32     ret;
-	int       nu8sRead;
-	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
-	ret = 0;
-
-//deb_data(" ---------Usb2_readControlBus----------\n", ret);			
-   ret = usb_bulk_msg(usb_get_dev(modulator->userData),
-				usb_rcvbulkpipe(usb_get_dev(modulator->userData),129),
-				pTmpBuffer,
-				bufferLength,
-				&nu8sRead,
-				1000000);
-	if (pTmpBuffer)
-		memcpy(buffer, pTmpBuffer, bufferLength);   
-	 
-	if (ret) 	deb_data(" Usb2_readControlBus fail : 0x%08x\n", ret);
-
-	return (Error_NO_ERROR);
-}
-
 #define    GPIOH1_I	0xd8ae
 #define    GPIOH1_O	0xd8af
 #define    GPIOH1_EN	0xd8b0 
@@ -262,27 +211,24 @@ u32 EagleUser_busTx (
     IN  u32           bufferLength,
     IN  u8*           buffer
 ) {
-    /*
-     *  ToDo:  Add code here
-     *
-     *  //Pseudo code
-     *  short i;
-     *
-     *  start();
-     *  write_i2c(uc2WireAddr);
-     *  ack();
-     *  for (i = 0; i < bufferLength; i++) {
-     *      write_i2c(*(ucpBuffer + i));
-     *      ack();
-     *  }
-     *  stop();
-     *
-     *  // If no error happened return 0, else return error code.
-     *  return (0);
-     */
-	u32 error = 0;
-	error = Usb2_writeControlBus(modulator,bufferLength,buffer);
-    return (error);
+    u32     ret;
+    int		  act_len;
+	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
+	ret = 0;
+
+	if (pTmpBuffer) 
+		memcpy(pTmpBuffer, buffer, bufferLength);
+//deb_data(" ---------Usb2_writeControlBus----------\n", ret);	
+	ret = usb_bulk_msg(usb_get_dev( modulator->userData),
+			usb_sndbulkpipe(usb_get_dev(modulator->userData), 0x02),
+			pTmpBuffer,
+			bufferLength,
+			&act_len,
+			1000000);
+   
+	if (ret) deb_data(" Usb2_writeControlBus fail : 0x%08x\n", ret);
+
+	return (Error_NO_ERROR);
 }
 
 
@@ -291,29 +237,24 @@ u32 EagleUser_busRx (
     IN  u32           bufferLength,
     OUT u8*           buffer
 ) {
-    /*
-     *  ToDo:  Add code here
-     *
-     *  //Pseudo code
-     *  short i;
-     *
-     *  start();
-     *  write_i2c(uc2WireAddr | 0x01);
-     *  ack();
-     *  for (i = 0; i < bufferLength - 1; i++) {
-     *      read_i2c(*(ucpBuffer + i));
-     *      ack();
-     *  }
-     *  read_i2c(*(ucpBuffer + bufferLength - 1));
-     *  nack();
-     *  stop();
-     *
-     *  // If no error happened return 0, else return error code.
-     *  return (0);
-     */
-	u32 error = 0;
-	error = Usb2_readControlBus(modulator,bufferLength,buffer);
-	return (error);
+	u32     ret;
+	int       nu8sRead;
+	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
+	ret = 0;
+
+//deb_data(" ---------Usb2_readControlBus----------\n", ret);			
+   ret = usb_bulk_msg(usb_get_dev(modulator->userData),
+				usb_rcvbulkpipe(usb_get_dev(modulator->userData),129),
+				pTmpBuffer,
+				bufferLength,
+				&nu8sRead,
+				1000000);
+	if (pTmpBuffer)
+		memcpy(buffer, pTmpBuffer, bufferLength);   
+	 
+	if (ret) 	deb_data(" Usb2_readControlBus fail : 0x%08x\n", ret);
+
+	return (Error_NO_ERROR);
 }
 
 
