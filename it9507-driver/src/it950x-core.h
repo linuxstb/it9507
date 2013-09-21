@@ -33,9 +33,6 @@
 #include <linux/mutex.h>
 #include <linux/mm.h>
 #include <linux/gfp.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
-#include <linux/smp_lock.h>
-#endif
 
 #define   DRIVER_RELEASE_VERSION    "v13.06.27.1"
 
@@ -53,15 +50,6 @@
 #define URB_BUFSIZE_TX_CMD 188//65424//16356//32712
 #define URB_BUFSIZE_RX 188 * 348//32712//65424//16356//32712
 #define CLEAN_HARDWARE_BUFFER_SIZE 1000
-//***************** Customization *****************
-//#define QuantaMID 1
-//#define EEEPC 1
-//***************** from compat.h *****************
-#if LINUX_VERSION_CODE <=  KERNEL_VERSION(2,6,18)
-//typedef int bool;
-#define true 1
-#define false 0
-#endif
 //***************** from device.h *****************//
 #define AFA_USB_DEVICE
 
