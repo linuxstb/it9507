@@ -51,22 +51,6 @@ static DWORD DRV_Initialize(
 static DWORD DL_Initialize(
 	void* handle);
   
-//************** DRV_ *************//
-/*
-static DWORD DRV_SetArchitecture(
-	void* handle,
-	Architecture architecture)
-{
-	DWORD dwError = Error_NO_ERROR;
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	
-	//deb_data("- Enter %s Function -\n ",__FUNCTION__);
-	
-	dwError= Eagle_setArchitecture ((Demodulator*) &pdc->Demodulator);	
-	
-	return(dwError);
-}
-*/
 static DWORD DRV_IrTblDownload(IN void* handle)
 {
         DWORD dwError = Error_NO_ERROR;
@@ -112,104 +96,6 @@ exit:
 
 }
 
-
-static DWORD DRV_SetFreqBw(
-    	void*	handle,      
-     	BYTE 	ucSlaveDemod,
-      	DWORD   dwFreq,      
-      	WORD	ucBw
-)
-{
-    	DWORD dwError = Error_NO_ERROR;
-    
-    	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-
-	//Bool bLock = true;
-
-	deb_data("- Enter %s Function -\n ",__FUNCTION__);
-	deb_data("	ucSlaveDemod = %d, Freq= %ld, BW=%d\n", ucSlaveDemod, dwFreq, ucBw);
-
-    if (pdc->fc[ucSlaveDemod].bEnPID)
-    {
-        IT9507_resetPidFilter((Modulator*) &pdc->modulator);
-        //Disable PID filter
-        IT9507_writeRegisterBits ((Modulator*) &pdc->modulator, Processor_OFDM, p_mp2if_pid_en, mp2if_pid_en_pos, mp2if_pid_en_len, 0);
-    }
-	
-    (pdc->fc[ucSlaveDemod].tunerinfo).bSettingFreq = true; //before acquireChannel, it is ture;  otherwise, it is false
-
-    if(dwFreq) {
-        pdc->fc[ucSlaveDemod].ulDesiredFrequency = dwFreq;
-    }
-    else {
-        dwFreq = pdc->fc[ucSlaveDemod].ulDesiredFrequency;
-    }
-
-    if(ucBw) {
-        pdc->fc[ucSlaveDemod].ucDesiredBandWidth = ucBw*1000;
-	}
-    else {
-        ucBw = pdc->fc[ucSlaveDemod].ucDesiredBandWidth;
-    	}
-
-    deb_data("	Real Freq= %ld, BW=%d\n", pdc->fc[ucSlaveDemod].ulDesiredFrequency, pdc->fc[ucSlaveDemod].ucDesiredBandWidth);
-           
-
-    if(!pdc->fc[ucSlaveDemod].tunerinfo.bTunerInited){
-        deb_data("	Skip SetFreq - Tuner is still off!\n");
-        goto exit;
-    }
-	
-    pdc->fc[ucSlaveDemod].tunerinfo.bTunerOK = false;        
-
-    if (pdc->fc[ucSlaveDemod].ulDesiredFrequency!=0 && pdc->fc[ucSlaveDemod].ucDesiredBandWidth!=0)	
-    {
-	deb_data("	AcquireChannel : Real Freq= %ld, BW=%d\n", pdc->fc[ucSlaveDemod].ulDesiredFrequency, pdc->fc[ucSlaveDemod].ucDesiredBandWidth);
-	//dwError = Demodulator_acquireChannel ((Demodulator*) &pdc->Demodulator, ucSlaveDemod, pdc->fc[ucSlaveDemod].ucDesiredBandWidth, pdc->fc[ucSlaveDemod].ulDesiredFrequency);  
-	//PTI.bSettingFreq = false;
-    	if (dwError) 
-    	{
-        	deb_data("	Demod_acquireChannel fail! 0x%08ld\n", dwError);
-        	goto exit;
-    	}	
-	else //when success acquireChannel, record currentFreq/currentBW.
-	{
-		pdc->fc[ucSlaveDemod].ulCurrentFrequency = pdc->fc[ucSlaveDemod].ulDesiredFrequency;	
-		pdc->fc[ucSlaveDemod].ucCurrentBandWidth = pdc->fc[ucSlaveDemod].ucDesiredBandWidth;  
-	}
-    }
-
-    if(pdc->StreamType == StreamType_DVBT_DATAGRAM) {
-        pdc->fc[ucSlaveDemod].OvrFlwChk = 5;
-    }
-  
-    /*if (pdc->fc[ucSlaveDemod].ulDesiredFrequency!=0 && pdc->fc[ucSlaveDemod].ucDesiredBandWidth!=0)
-    {
-	// patch for IT9507_isLocked
-	//mdelay(700);
-
-    	dwError= IT9507_isLocked((Demodulator*) &pdc->Demodulator, ucSlaveDemod, &bLock);
-    	if(dwError)  
-        	deb_data("	Demodulator_isLocked is failed!\n"); 
-    	else 
-	{
-        	deb_data("	The signal is %s Lock\n", bLock?"":"not"); 
-
-		//patch for mce channel change lag
-		if(bLock) {
-			mdelay(500); 
-		}
-    	}
-    }*/
-
-    pdc->fc[ucSlaveDemod].tunerinfo.bTunerOK = true;
-
-exit:
-
-    pdc->fc[ucSlaveDemod].tunerinfo.bSettingFreq = false;
-
-    return(dwError);  
-}
 
 static DWORD DRV_getFirmwareVersionFromFile( 
 		void* handle,
@@ -838,71 +724,6 @@ static DWORD DRV_TunerPowerCtrl(
 }
 #endif
 
-/*
-static DWORD DRV_TunerPowerCtrl(
-    	void *	handle, 
-     	BYTE	ucSlaveDemod,
-     	Bool		bPowerOn
-)
-{ 
-    DWORD dwError = Error_NO_ERROR;	
-
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-
-    deb_data("- Enter %s Function -",__FUNCTION__);
-    deb_data("chip = %d\n", ucSlaveDemod); 
-
-    // init gpioH7
-    dwError = IT9507_writeRegisterBits((Demodulator*) &pdc->Demodulator, 0, Processor_LINK,  p_reg_top_gpioh7_en, reg_top_gpioh7_en_pos, reg_top_gpioh7_en_len, 1);
-    dwError = IT9507_writeRegisterBits((Demodulator*) &pdc->Demodulator, 0, Processor_LINK,  p_reg_top_gpioh7_on, reg_top_gpioh7_on_pos, reg_top_gpioh7_on_len, 1);    
-
-    if(bPowerOn)
-        PTI.bTunerInited = true;
-    else
-        PTI.bTunerInited = false;    
-
-
-    if(bPowerOn) //tuner on
-    {
-        dwError = IT9507_writeRegisterBits((Demodulator*) &pdc->Demodulator, 0, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);    
-
-        if(pdc->bTunerPowerOff == true) 
-        {
-            dwError = IT9507_initialize ((Demodulator*) &pdc->Demodulator, pdc->Demodulator.chipNumber , pdc->Demodulator.bandwidth[0], pdc->StreamType, pdc->architecture);  
-            pdc->bTunerPowerOff = false;
-        }              	        
-    }
-    else //tuner off
-    {
-        if(pdc->architecture == Architecture_PIP)
-        {
-            if(pdc->fc[0].tunerinfo.bTunerInited == false && pdc->fc[1].tunerinfo.bTunerInited == false) 
-            {                                
-                if(pdc->bTunerPowerOff == false) 
-                {
-                    dwError = IT9507_finalize((Demodulator*) &pdc->Demodulator);
-                    pdc->bTunerPowerOff = true;
-                }
-                
-                dwError = IT9507_writeRegisterBits((Demodulator*) &pdc->Demodulator, 0, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 0);    
-            }                   
-        }
-        else 
-        {
-            if(pdc->bTunerPowerOff == false) 
-            {                
-                dwError = IT9507_finalize((Demodulator*) &pdc->Demodulator);
-                pdc->bTunerPowerOff = true;
-            }      
-
-            dwError = IT9507_writeRegisterBits((Demodulator*) &pdc->Demodulator, 0, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 0);    
-        }        	
-
-    }
-    return(dwError);
-}
-*/
-
 DWORD NIM_ResetSeq(IN  void *	handle)
 {
 	DWORD dwError = Error_NO_ERROR;
@@ -1283,21 +1104,6 @@ exit:
 	return(dwError);
 }
 */
-static DWORD DRV_Reboot(
-      void *     handle
-)
-{
-	DWORD dwError = Error_NO_ERROR;
-
-        PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
-
-        deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-        dwError = IT9507_TXreboot((Modulator*) &pdc->modulator);
-
-	return(dwError);
-}
-
 
 #ifndef TURN_OFF_UNUSED_OLD_POWER_CTRL
 static DWORD DRV_USBSetup(
@@ -1327,48 +1133,6 @@ static DWORD DRV_USBSetup(
     return(dwError);
 }
 #endif
-/*
-DWORD DRV_GPIOCtrl(
-	IN void * handle, 
-	IN BYTE ucIndex, 
-	IN bool bHigh)
-{
-	DWORD dwError = Error_NO_ERROR;
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
-
-	deb_data("enter DRV_GPIOCtrl, Idx=%d, High=%d\n", ucIndex, bHigh);	
-
-DWORD gpio_x_en = p_reg_top_gpiohIdx_en; 
-DWORD gpio_x_en_pos;
-DWORD gpio_x_en_len;
-p_reg_top_gpioh5_en
-reg_top_gpioh5_en_pos	
-reg_top_gpioh5_en_len
-
-DWORD gpio_x_on;
-DWORD gpio_x_on_pos;
-DWORD gpio_x_on_len;
-p_reg_top_gpioh5_on
-reg_top_gpioh5_on_pos	
-reg_top_gpioh5_on_len
-
-DWORD gpio_x_o;
-DWORD gpio_x_o_pos;
-DWORD gpio_x_o_len;
-p_reg_top_gpioh5_o
-reg_top_gpioh5_o_pos	
-reg_top_gpioh5_o_len
-
-	//output
-	dwError = IT9507_writeRegisterBits((Demodulator*) &pdc->Demodulator, Processor_LINK, p_reg_top_gpioh3_en, reg_top_gpioh3_en_pos, reg_top_gpioh3_en_len, 1);
-	dwError = IT9507_writeRegisterBits((Demodulator*) &pdc->Demodulator, Processor_LINK, p_reg_top_gpioh3_on, reg_top_gpioh3_on_pos, reg_top_gpioh3_on_len, 1);
-	//control
-	dwError = IT9507_writeRegisterBits((Demodulator*) &pdc->Demodulator, Processor_LINK, p_reg_top_gpioh3_o, reg_top_gpioh3_o_pos, reg_top_gpioh3_o_len, 0);
-	if(dwError) deb_data("DRV_GPIOCtrl failed \n");
-
-	return(dwError);
-}
-*/
 
 static DWORD DRV_NIMSuspend(
     void *      handle,
@@ -1797,60 +1561,6 @@ DWORD DL_ApCtrl (
    	return(dwError);
 }
 
-
-DWORD DL_Tuner_SetFreqBw(void *handle, BYTE ucSlaveDemod, u32 dwFreq,u8 ucBw)
-{
-
-	DWORD dwError = Error_NO_ERROR;
-   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;	
-	
-	mutex_lock(&mymutex);
-
-	deb_data("- Enter %s Function -\n",__FUNCTION__);
-	if (PDC->fc[ucSlaveDemod].ulDesiredFrequency!=dwFreq || PDC->fc[ucSlaveDemod].ucDesiredBandWidth!=ucBw*1000) 
-	 	dwError = DRV_SetFreqBw(PDC, ucSlaveDemod, dwFreq, ucBw);
-
-    mutex_unlock(&mymutex);
-    	return(dwError);	
-}
-
-DWORD DL_getDeviceType(void *handle)
-{
-	DWORD dwError = Error_NO_ERROR;
-   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
-	mutex_lock(&mymutex);
-
-	dwError =  DRV_getDeviceType(PDC);
-
-	mutex_unlock(&mymutex);
-    return(dwError);
-}
-
-DWORD DL_ReSetInterval(void)
-{
-    DWORD dwError = Error_NO_ERROR;
-
-    mutex_lock(&mymutex);
-
-    mutex_unlock(&mymutex);
-
-    return(dwError);
-}
-
-DWORD DL_Reboot(void *handle) 
-{
-   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
-	DWORD dwError = Error_NO_ERROR;
-    mutex_lock(&mymutex);
-
-	deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-	dwError = DRV_Reboot(PDC);
-
-    mutex_unlock(&mymutex);
-
-    return(dwError);
-}
 
 DWORD DL_CheckTunerInited(
 	void* handle,
