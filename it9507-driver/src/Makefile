@@ -10,9 +10,9 @@ LMDIR26 := /lib/firmware
 
 usb-it950x-objs := \
 		it950x-core.o it950x-drv.o iocontrol.o  \
-		cmd.o ADF4351.o \
+		ADF4351.o \
 		IT9507.o eagleTuner.o \
-		usb2impl.o modulatorUser.o user.o 
+		usb2impl.o modulatorUser.o
 
 obj-m += usb-it950x.o 
 
