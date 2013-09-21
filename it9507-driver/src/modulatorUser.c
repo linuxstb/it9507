@@ -15,7 +15,6 @@
 #include <linux/delay.h>
 #include <linux/vmalloc.h>
 
-#include "ADF4351.h"
 #include "it950x-core.h"
 #include "modulatorType.h"
 #include "modulatorError.h"
@@ -90,10 +89,6 @@ u32 EagleUser_getSystemConfig (
   /* This was originally device type 11 in the ITE driver */
 	Config->restSlave		= GPIOH1;
 	Config->rfEnable		= GPIOH2;
-	Config->loClk			= UNUSED;
-	Config->loData		= UNUSED;
-	Config->loLe			= UNUSED;
-	Config->lnaPowerDown	= UNUSED;
 	Config->irDa			= GPIOH7;
 	Config->uvFilter		= GPIOH8;
 	Config->chSelect0		= UNUSED;
@@ -101,10 +96,7 @@ u32 EagleUser_getSystemConfig (
 	Config->chSelect2		= UNUSED;
 	Config->chSelect3		= UNUSED;
 	Config->muxSelect		= UNUSED;
-	Config->uartTxd		= UNUSED;
 	Config->powerDownSlave= GPIOH5;
-	Config->intrEnable	= UNUSED;
-	Config->lnaGain		= UNUSED;
 
 	return 0;
 }
@@ -130,38 +122,6 @@ u32 EagleUser_setSystemConfig (
 		if (error) goto exit;
 		pinCnt++;
 		EagleUser_delay(modulator, 10);
-	}
-
-   	if(systemConfig.lnaPowerDown != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.lnaPowerDown+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.lnaPowerDown+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
-	}
-
-	if(systemConfig.loClk != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loClk+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loClk+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
-	}
-
-	if(systemConfig.loData != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loData+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loData+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
-	}
-
-	if(systemConfig.loLe != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loLe+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loLe+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
 	}
 
 	if(systemConfig.muxSelect != UNUSED){ //output
@@ -190,26 +150,10 @@ u32 EagleUser_setSystemConfig (
 		pinCnt++;
 	}
 
-	if(systemConfig.uartTxd != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.uartTxd+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.uartTxd+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
-	}
-
 	if(systemConfig.uvFilter != UNUSED){ //output
 		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.uvFilter+2, 1);//gpiox_en
 		if (error) goto exit;
 		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.uvFilter+3, 1);//gpiox_on
-		if (error) goto exit;
-		pinCnt++;
-	}
-
-	if(systemConfig.lnaGain != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.lnaGain+2, 1);//gpiox_en
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.lnaGain+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
@@ -452,12 +396,6 @@ u32 EagleUser_setBus (
 		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)modulator->systemConfig.rfEnable+1, 0); //RF out power down
 		if (error) goto exit;
 	}
-	if(modulator->systemConfig.lnaGain != UNUSED){
-		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)modulator->systemConfig.lnaGain+1, 0); //lna Gain
-		if (error) goto exit;
-	}
-	if(modulator->systemConfig.loClk != UNUSED)
-		ADF4351_busInit(modulator);
 exit:
     return (error);
 
@@ -496,9 +434,6 @@ u32 EagleUser_acquireChannel (
      *  return (0);
      */
 	u32 error = 0;
-
-	if(modulator->systemConfig.loClk != UNUSED)
-		ADF4351_setFrequency(modulator, frequency);//External Lo control
 
 	if(frequency <= 300000){ // <=300000KHz v-filter gpio set to Lo
 		 if(modulator->systemConfig.uvFilter != UNUSED){

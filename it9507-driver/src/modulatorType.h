@@ -444,10 +444,6 @@ typedef enum {
 typedef struct _SystemConfig{
 	GPIO	restSlave;
 	GPIO	rfEnable;
-	GPIO	loClk;
-	GPIO	loData;
-	GPIO	loLe;
-	GPIO	lnaPowerDown;
 	GPIO	irDa;
 	GPIO	uvFilter;
 	GPIO	chSelect3;
@@ -455,10 +451,7 @@ typedef struct _SystemConfig{
 	GPIO	chSelect1;
 	GPIO	chSelect0;
 	GPIO	powerDownSlave;
-	GPIO	uartTxd;
 	GPIO	muxSelect;
-	GPIO	lnaGain;
-	GPIO	intrEnable;
 } SystemConfig, *pSystemConfig;
 /**
  * The data structure of Eagle

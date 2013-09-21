@@ -8,7 +8,7 @@ KDIR26	 := /lib/modules/$(CURRENT)/kernel/drivers/media
 DEST = /lib/modules/$(CURRENT)/kernel/$(MDIR)
 LMDIR26 := /lib/firmware
 
-usb-it950x-objs := it950x-core.o it950x-drv.o ADF4351.o IT9507.o eagleTuner.o modulatorUser.o
+usb-it950x-objs := it950x-core.o it950x-drv.o IT9507.o eagleTuner.o modulatorUser.o
 
 obj-m += usb-it950x.o 
 
