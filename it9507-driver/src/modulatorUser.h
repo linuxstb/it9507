@@ -52,17 +52,6 @@ typedef enum {
 } HwFunction;
 
 
-typedef struct {
-    HwFunction          GPIO1;
-    HwFunction          GPIO2;
-    HwFunction          GPIO3;
-    HwFunction          GPIO4;
-	HwFunction          GPIO5;
-    HwFunction          GPIO6;
-    HwFunction          GPIO7;
-    HwFunction          GPIO8;
-} DeviceDescription;
-
 typedef enum {
 	EVB01v01 = 0,
 	DB0101v01,
