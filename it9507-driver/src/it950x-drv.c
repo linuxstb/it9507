@@ -6,7 +6,6 @@
 
 
 #define FW_VER         0x08060000
-#define TURN_OFF_UNUSED_OLD_POWER_CTRL
 
 int dvb_usb_it950x_debug;
 module_param_named(debug,dvb_usb_it950x_debug, int, 0644);
@@ -77,18 +76,8 @@ static DWORD DRV_NIMSuspend(
 static DWORD DRV_NIMReset(
 	void* handle);
 
-#ifndef TURN_OFF_UNUSED_OLD_POWER_CTRL
-static DWORD DL_NIMReset(
-	void* handle);
-#endif
-
 static DWORD DRV_InitNIMSuspendRegs(
 	void* handle);
-
-#ifndef TURN_OFF_UNUSED_OLD_POWER_CTRL
-static DWORD DL_InitNIMSuspendRegs(
-	void* handle);
-#endif
 
 static DWORD DRV_Initialize(
 	void* handle);
@@ -727,48 +716,6 @@ static DWORD DRV_SetBusTuner(
     	return(dwError); 
 }
 
-#ifndef TURN_OFF_UNUSED_OLD_POWER_CTRL
-//set tuner power control
-static DWORD DRV_TunerPowerCtrl(
-	void * handle, 
-	BYTE ucSlaveDemod,
-	Bool bPowerOn)
-{ 
-	DWORD dwError = Error_NO_ERROR;	
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	
-	deb_data("- Enter %s Function -chip = %d\n",__FUNCTION__, ucSlaveDemod);
-
-	//Omega has no GPIOH7
-
-	if (bPowerOn)	//up
-	{
-		//dwError = IT9507_writeRegisterBits((Demodulator*)&pdc->Demodulator, ucSlaveDemod, Processor_OFDM, p_reg_p_if_en, reg_p_if_en_pos, reg_p_if_en_len, 0x01);
-		mdelay(50);
-	}
-	else //down
-	{
-		//part1
-		//dwError = IT9507_writeRegisterBits((Demodulator*)&pdc->Demodulator, ucSlaveDemod, Processor_OFDM, p_reg_p_if_en, reg_p_if_en_pos, reg_p_if_en_len, 0x00);		
-		//mdelay(5);
-
-		//part2
-		dwError = IT9507_writeRegister((Modulator*)&pdc->modulator, Processor_OFDM, 0xEC02, 0x3F);
-		dwError = IT9507_writeRegister((Modulator*)&pdc->modulator,  Processor_OFDM, 0xEC03, 0x1F);//DCX, 110m
-		dwError = IT9507_writeRegister((Modulator*)&pdc->modulator,  Processor_OFDM, 0xEC04, 0x3F);//73m, 46m
-		dwError = IT9507_writeRegister((Modulator*)&pdc->modulator, Processor_OFDM, 0xEC05, 0x3F);//57m, 36m
-
-		//part3
-		dwError = IT9507_writeRegister((Modulator*)&pdc->modulator, Processor_OFDM, 0xEC3F, 0x01);
-		//mdelay(5);
-
-		if (ucSlaveDemod == 0) deb_data("--------------AP off last cmd -------------");
-	}
-
-	return(dwError);
-}
-#endif
-
 DWORD NIM_ResetSeq(IN  void *	handle)
 {
 	DWORD dwError = Error_NO_ERROR;
@@ -1051,134 +998,6 @@ static DWORD DRV_TunerWakeup(
 
 }
 
-/*
-DWORD DRV_TunerSuspend(
-	IN void * handle, 
-	IN BYTE ucChip, 
-	IN bool bOn)
-{
-	DWORD dwError = Error_NO_ERROR;
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
-	
-	deb_data("enter DRV_TunerSuspend, bOn=%d\n", bOn);	
-	
-	if (bOn) 
-	{
-//EC40 *		
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_p_if_en, reg_p_if_en_pos, reg_p_if_en_len, 0);
-		if(dwError) goto exit;
-#if 1
-//current = 190	 
-//EC02~EC0F
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_pd_a, reg_pd_a_pos, reg_pd_a_len, 0);
-		dwError = DRV_WriteRegister(pdc, ucChip, Processor_OFDM, 0xEC03, 0x0C);
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_pd_c, reg_pd_c_pos, reg_pd_c_len, 0);		
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_pd_d, reg_pd_d_pos, reg_pd_d_len, 0);				
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_tst_a, reg_tst_a_pos, reg_tst_a_len, 0);		
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_tst_b, reg_tst_b_pos, reg_tst_b_len, 0);
-		if(dwError) goto exit;
-
-//current = 172
-//KEY: p_reg_ctrl_a: 0 fail/ 7x/ 1x/ 2x/ 3x/ 4x/ 5/ 6
-		deb_data("aaa DRV_TunerSuspend::0xEC08 active");
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_ctrl_a, reg_ctrl_a_pos, reg_ctrl_a_len, 0);				
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_ctrl_b, reg_ctrl_b_pos, reg_ctrl_b_len, 0);						
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_cal_freq_a, reg_cal_freq_a_pos, reg_cal_freq_a_len, 0);			
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_cal_freq_b, reg_cal_freq_b_pos, reg_cal_freq_b_len, 0);					
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_cal_freq_c, reg_cal_freq_c_pos, reg_cal_freq_c_len, 0);					
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_lo_freq_a, reg_lo_freq_a_pos, reg_lo_freq_a_len, 0);							
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_lo_freq_b, reg_lo_freq_b_pos, reg_lo_freq_b_len, 0);											
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_lo_freq_c, reg_lo_freq_c_pos, reg_lo_freq_c_len, 0);
-		if(dwError) goto exit;
-
-//current=139
-//EC10~EC15		
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_lo_cap, reg_lo_cap_pos, reg_lo_cap_len, 0);		
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_clk02_select, reg_clk02_select_pos, reg_clk02_select_len, 0);				
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_clk01_select, reg_clk01_select_pos, reg_clk01_select_len, 0);						
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_lna_g, reg_lna_g_pos, reg_lna_g_len, 0);								
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_lna_cap, reg_lna_cap_pos, reg_lna_cap_len, 0);										
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_lna_band, reg_lna_band_pos, reg_lna_band_len, 0);												
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_pga, reg_pga_pos, reg_pga_len, 0);
-		if(dwError) goto exit;
-
-//current=119
-//EC17 -> EC1F
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_pgc, reg_pgc_pos, reg_pgc_len, 0);	
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_lpf_cap, reg_lpf_cap_pos, reg_lpf_cap_len, 0);
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_lpf_bw, reg_lpf_bw_pos, reg_lpf_bw_len, 0);		
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_ofsi, reg_ofsi_pos, reg_ofsi_len, 0);				
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_ofsq, reg_ofsq_pos, reg_ofsq_len, 0);						
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_dcxo_a, reg_dcxo_a_pos, reg_dcxo_a_len, 0);								
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_dcxo_b, reg_dcxo_b_pos, reg_dcxo_b_len, 0);								
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_tddo, reg_tddo_pos, reg_tddo_len, 0);										
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_strength_setting, reg_strength_setting_pos, reg_strength_setting_len, 0);
-		if(dwError) goto exit;
-//EC22~EC2B
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_gi, reg_gi_pos, reg_gi_len, 0);														
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_clk_del_sel, reg_clk_del_sel_pos, reg_clk_del_sel_len, 0);																
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_p2s_ck_sel, reg_p2s_ck_sel_pos, reg_p2s_ck_sel_len, 0);																
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_rssi_sel, reg_rssi_sel_pos, reg_rssi_sel_len, 0);																		
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_tst_sel, reg_tst_sel_pos, reg_tst_sel_len, 0);																				
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_ctrl_c, reg_ctrl_c_pos, reg_ctrl_c_len, 0);
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_ctrl_d, reg_ctrl_d_pos, reg_ctrl_d_len, 0);
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_ctrl_e, reg_ctrl_e_pos, reg_ctrl_e_len, 0);
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_ctrl_f, reg_ctrl_f_pos, reg_ctrl_f_len, 0);
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_lo_bias, reg_lo_bias_pos, reg_lo_bias_len, 0);
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_ext_lna_en, reg_ext_lna_en_pos, reg_ext_lna_en_len, 0);		
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_pga_bak, reg_pga_bak_pos, reg_pga_bak_len, 0);		
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_cpll_cap, reg_cpll_cap_pos, reg_cpll_cap_len, 0);
-		if(dwError) goto exit;
-//EC20
-		dwError = DRV_WriteRegister(pdc, ucChip, Processor_OFDM, 0xEC20, 0x00);
-		if(dwError) goto exit;
-
-//current=116
-#endif
-		dwError = DRV_WriteRegister(pdc, ucChip, Processor_OFDM, 0xEC3F, 0x01);
-		if(dwError) goto exit;
-	}
-	else 
-	{
-		dwError = DRV_WriteRegisterBits(pdc, ucChip, Processor_OFDM, p_reg_p_if_en, reg_p_if_en_pos, reg_p_if_en_len, 1);
-		mdelay(50);
-	}
-exit:
-	if(dwError) deb_data("DRV_TunerSuspend failed \n");
-
-	return(dwError);
-}
-*/
-
-#ifndef TURN_OFF_UNUSED_OLD_POWER_CTRL
-static DWORD DRV_USBSetup(
-    void*	handle
-)
-{
-    DWORD dwError = Error_NO_ERROR;
-
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
-    int i;
-
-    deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-
-
-    /*if (pdc->Demodulator.chipNumber == 2)
-    {
-	//timing
-	for (i=0; i<2; i++)
-	{
-	    //dwError = IT9507_writeRegisterBits ((Demodulator*) &pdc->Demodulator, Processor_OFDM, p_reg_dca_fpga_latch, reg_dca_fpga_latch_pos, reg_dca_fpga_latch_len, 0x66);
-	    if(dwError) return (dwError);
-	    //dwError = IT9507_writeRegisterBits ((Demodulator*) &pdc->Demodulator, Processor_OFDM, p_reg_dca_platch, reg_dca_platch_pos, reg_dca_platch_len, 1);
-	    if(dwError) return (dwError);
-	}
-    }*/
-    return(dwError);
-}
-#endif
-
 static DWORD DRV_NIMSuspend(
     void *      handle,
     bool        bSuspend
@@ -1246,110 +1065,7 @@ static DWORD DRV_NIMReset(
     return(dwError);
 }
 
-/*
-DWORD DRV_LoadIQtable_Fromfile(
-           IN    void *      handle
-) {
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	ssize_t error = Error_NO_ERROR;
-	BYTE FileName_buffer[200] = {0};
-	BYTE  Readbuf[20] = {0};
-	LONGLONG fileSize = 0;
-	int LoadingLength = 8;
-	int i = 0;
-	struct file *hTsFile;
-	struct inode *inode = NULL;  
-    mm_segment_t oldfs;
-	char Default_IQtable_Path[200] = "/lib/firmware/bin/IQtable000.bin";
-	
-
-	oldfs=get_fs();
-	set_fs(KERNEL_DS);
-	snprintf(FileName_buffer, 200,  "/lib/firmware/bin/IQtable00%d.bin", 1); 
-	hTsFile = filp_open(FileName_buffer, O_RDWR, 0644);
-	
-	if (IS_ERR(hTsFile)) {
-		//printk("Load IQtable fail with status %u \n", hTsFile);
-		//printk("Load Default TABLE: %s\n", Default_IQtable_Path);		   
-		hTsFile = filp_open(Default_IQtable_Path, O_RDWR, 0644);
-		if (IS_ERR(hTsFile)) {
-			   error = Error_OPEN_FILE_FAIL;
-			   printk("Load default IQtable fail with status %u !", error);
-			   goto exit;
-		}else
-			printk("Load default IQtable000 ");
-	}else
-		printk("Load IQtable00%d ", 1);		
-
-	inode = hTsFile->f_dentry->d_inode;
-	fileSize = inode->i_size;
-
-	if ( (hTsFile->f_op) == NULL ) {
-			deb_data("LoadIQtable : File Operation Method Error!\n");goto exit;}
-
-	hTsFile->f_pos=0x00;
-	vfs_read(hTsFile, Readbuf, LoadingLength*2, &hTsFile->f_pos);
-	fileSize -= LoadingLength*2;   //skip filename & index
-
-	while(fileSize >= 8){
-		vfs_read(hTsFile, Readbuf, LoadingLength, &hTsFile->f_pos);
-		pdc->modulator.ptrIQtableEx[i].frequency = (Readbuf[0] + Readbuf[1]*256 
-              									+ Readbuf[2]*256*256 + Readbuf[3]*256*256*256);
-		pdc->modulator.ptrIQtableEx[i].dAmp = (short)(Readbuf[4] + Readbuf[5]*256);
-		pdc->modulator.ptrIQtableEx[i].dPhi = (short)(Readbuf[6] + Readbuf[7]*256);                   
-
-		fileSize -= LoadingLength;
-		i++;
-	}
-	printk("remaining file size = %d", fileSize);
-		   
-//	for(i = 0; i < 91; i++) {
-//		 printk("IQ_tableEx[%d][0] = %d\n",i, pdc->modulator.ptrIQtableEx[i].frequency);
-//		 printk("IQ_tableEx[%d][1] = %d\n",i, pdc->modulator.ptrIQtableEx[i].dAmp);
-//		 printk("IQ_tableEx[%d][2] = %d\n",i, pdc->modulator.ptrIQtableEx[i].dPhi);
-//	}
-	if (hTsFile)        
-		filp_close(hTsFile, NULL);
-exit:
-
-    set_fs(oldfs);
-	return error;
-}
-*/
 //************** DL_ *************//
-#ifndef TURN_OFF_UNUSED_OLD_POWER_CTRL
-static DWORD DL_NIMReset(
-    void *      handle
-)
-{
-	DWORD dwError = Error_NO_ERROR;
-
-    mutex_lock(&mymutex);
-    
-    dwError = DRV_NIMReset(handle);
-
-    mutex_unlock(&mymutex);
-
-    return (dwError);
-}
-#endif
-
-#ifndef TURN_OFF_UNUSED_OLD_POWER_CTRL
-static DWORD DL_USBSetup(
-    void *      handle
-)
-{
-	DWORD dwError = Error_NO_ERROR;
-
-	mutex_lock(&mymutex);
-
-	dwError = DRV_USBSetup(handle);
-
-	mutex_unlock(&mymutex);
-
-    return (dwError);
-}
-#endif
 
 static DWORD DL_NIMSuspend(
     void *      handle,
@@ -1366,23 +1082,6 @@ static DWORD DL_NIMSuspend(
 
     return (dwError);
 }
-
-#ifndef TURN_OFF_UNUSED_OLD_POWER_CTRL
-static DWORD DL_InitNIMSuspendRegs(
-    void *      handle
-)
-{
-	DWORD dwError = Error_NO_ERROR;
-    
-	mutex_lock(&mymutex);
-
-    dwError = DRV_InitNIMSuspendRegs(handle);
-
-    mutex_unlock(&mymutex);
-
-    return (dwError);
-}
-#endif
 
 static DWORD DL_Initialize(
 	    void *      handle
