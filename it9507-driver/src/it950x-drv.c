@@ -56,36 +56,36 @@ module_param_named(debug,dvb_usb_it950x_debug, int, 0644);
 
 static DEFINE_MUTEX(mymutex);
 
-static DWORD DRV_NIMReset(
+static Dword DRV_NIMReset(
 	void* handle);
 
-static DWORD DRV_InitNIMSuspendRegs(
+static Dword DRV_InitNIMSuspendRegs(
 	void* handle);
 	
-DWORD DRV_TunerSuspend(
+Dword DRV_TunerSuspend(
 	void * handle,
-	BYTE ucChip,
+	Byte ucChip,
 	bool bOn);
 
-static DWORD DRV_NIMSuspend(
+static Dword DRV_NIMSuspend(
 	void * handle,
 	bool bSuspend);
 
-static DWORD DRV_NIMReset(
+static Dword DRV_NIMReset(
 	void* handle);
 
-static DWORD DRV_InitNIMSuspendRegs(
+static Dword DRV_InitNIMSuspendRegs(
 	void* handle);
 
-static DWORD DRV_Initialize(
+static Dword DRV_Initialize(
 	void* handle);
 
-static DWORD DL_Initialize(
+static Dword DL_Initialize(
 	void* handle);
   
-static DWORD DRV_IrTblDownload(IN void* handle)
+static Dword DRV_IrTblDownload(IN void* handle)
 {
-        DWORD dwError = Error_NO_ERROR;
+        Dword dwError = Error_NO_ERROR;
         PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
         struct file *filp;
         unsigned char b_buf[512] ;
@@ -129,29 +129,29 @@ exit:
 }
 
 
-static DWORD DRV_getFirmwareVersionFromFile( 
+static Dword DRV_getFirmwareVersionFromFile( 
 		void* handle,
 	 	Processor	processor, 
-		DWORD* 		version
+		Dword* 		version
 )
 {
 
 	
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	BYTE chip_version = 0;
-	DWORD chip_Type;
-	BYTE var[2];
-	DWORD error = Error_NO_ERROR;
+	Byte chip_version = 0;
+	Dword chip_Type;
+	Byte var[2];
+	Dword error = Error_NO_ERROR;
 
-	DWORD OFDM_VER1;
-    DWORD OFDM_VER2;
-    DWORD OFDM_VER3;
-    DWORD OFDM_VER4;
+	Dword OFDM_VER1;
+    Dword OFDM_VER2;
+    Dword OFDM_VER3;
+    Dword OFDM_VER4;
 
-    DWORD LINK_VER1;
-    DWORD LINK_VER2;
-    DWORD LINK_VER3;    
-    DWORD LINK_VER4;    
+    Dword LINK_VER1;
+    Dword LINK_VER2;
+    Dword LINK_VER3;    
+    Dword LINK_VER4;    
     
 
 	error = IT9507_readRegister((Modulator*) &pdc->modulator, processor, chip_version_7_0, &chip_version);
@@ -186,18 +186,18 @@ static DWORD DRV_getFirmwareVersionFromFile(
 	}
 
     if(processor == Processor_OFDM) {
-        *version = (DWORD)( (OFDM_VER1 << 24) + (OFDM_VER2 << 16) + (OFDM_VER3 << 8) + OFDM_VER4);
+        *version = (Dword)( (OFDM_VER1 << 24) + (OFDM_VER2 << 16) + (OFDM_VER3 << 8) + OFDM_VER4);
     }
     else { //LINK
-        *version = (DWORD)( (LINK_VER1 << 24) + (LINK_VER2 << 16) + (LINK_VER3 << 8) + LINK_VER4);    
+        *version = (Dword)( (LINK_VER1 << 24) + (LINK_VER2 << 16) + (LINK_VER3 << 8) + LINK_VER4);    
     }
     
     return *version;
 }
 
-DWORD DRV_getDeviceType(void *handle)
+Dword DRV_getDeviceType(void *handle)
 {
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
    	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
 
 	dwError =  EagleUser_getDeviceType((Modulator*) &PDC->modulator, &PDC->deviceType);
@@ -205,17 +205,17 @@ DWORD DRV_getDeviceType(void *handle)
     return(dwError);
 }
 
-static DWORD  DRV_Initialize(
+static Dword  DRV_Initialize(
 	    void *      handle
 )
 {
-	DWORD error = Error_NO_ERROR;
-	DWORD error_rx = Error_NO_ERROR;
+	Dword error = Error_NO_ERROR;
+	Dword error_rx = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	Byte temp = 0;
 	//Byte usb_dma_reg;
-	BYTE chip_version = 0; 
-	DWORD fileVersion, cmdVersion = 0; 
+	Byte chip_version = 0; 
+	Dword fileVersion, cmdVersion = 0; 
 	SystemConfig syscfg;
 	StreamType streamType_t;
 
@@ -418,12 +418,12 @@ static DWORD  DRV_Initialize(
 	
 }
 
-static DWORD DRV_InitDevInfo(
+static Dword DRV_InitDevInfo(
     	void *      handle,
-    	BYTE        ucSlaveDemod
+    	Byte        ucSlaveDemod
 )
 {
-    DWORD dwError = Error_NO_ERROR;    
+    Dword dwError = Error_NO_ERROR;    
    	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
     PDC->fc[ucSlaveDemod].ulCurrentFrequency = 0;  
     PDC->fc[ucSlaveDemod].ucCurrentBandWidth = 0;
@@ -448,13 +448,13 @@ static DWORD DRV_InitDevInfo(
 }	
 
 //get EEPROM_IRMODE/bIrTblDownload/bRAWIr/architecture config from EEPROM
-static DWORD DRV_GetEEPROMConfig(
+static Dword DRV_GetEEPROMConfig(
 	void* handle)
 {       
-    DWORD dwError = Error_NO_ERROR;
-	BYTE chip_version = 0;
-	DWORD chip_Type;
-	BYTE  var[2];
+    Dword dwError = Error_NO_ERROR;
+	Byte chip_version = 0;
+	Dword chip_Type;
+	Byte  var[2];
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	//bIrTblDownload option
     Byte btmp = 0;
@@ -603,7 +603,7 @@ static DWORD DRV_GetEEPROMConfig(
     }
 		//pdc->modulator.chipNumber = 1; 
 //init some device info
-	for(ucSlaveDemod = 0; ucSlaveDemod <= (BYTE)pdc->bDualTs; ucSlaveDemod++)
+	for(ucSlaveDemod = 0; ucSlaveDemod <= (Byte)pdc->bDualTs; ucSlaveDemod++)
 	{
 		dwError = DRV_InitDevInfo(handle, ucSlaveDemod);
 	}
@@ -612,86 +612,14 @@ exit:
     return(dwError);
 }
 
-
-/*
-static DWORD DRV_GetEEPROMConfig(    
-	void *      handle)
-{
-	DWORD dwError = Error_NO_ERROR;
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-    	BYTE ucSlaveDemod = 0;
-	BYTE btmp = 0;
-	int cnt;
-	
-	deb_data("- Enter %s Function -",__FUNCTION__);	
-   
-	//bIrTblDownload option
-	dwError =   IT9507_readRegisters((Demodulator*) &pdc->Demodulator,  Processor_LINK, EEPROM_IRMODE, 1, &btmp);
-	if (dwError) return(dwError);
-	PDC->bIrTblDownload = btmp ? true:false;
-	deb_data(	"EEPROM_IRMODE = 0x%02X, ", btmp);
-        deb_data("bIrTblDownload %s\n", PDC->bIrTblDownload?"ON":"OFF");
- 
-    	PDC->bDualTs = false;
-    	PDC->architecture = Architecture_DCA;
-    	PDC->IT950x.chipNumber = 1;   
-    	PDC->bDCAPIP = false;
-
-	//bDualTs option
-	dwError = IT9507_readRegisters((Demodulator*) &pdc->Demodulator,Processor_LINK,EEPROM_TSMODE, 1, &btmp);
-	if (dwError) return(dwError);
-	deb_data("EEPROM_TSMODE = 0x%02X", btmp);
-
-	if (btmp == 0)
-	    deb_data("TSMode = TS1 mode\n");
-	else if (btmp == 1)
-	{
-	    deb_data("TSMode = DCA+PIP mode\n");
-	    PDC->architecture = Architecture_DCA;
-	    PDC->Demodulator.chipNumber = 2;
-	    PDC->bDualTs = true;
-//	    PDC->bDCAPIP = true;
-	}
-	else if (btmp == 3)
-	{
-	     deb_data("TSMode = PIP mode\n");
-	     PDC->architecture = Architecture_PIP;
-	     PDC->Demodulator.chipNumber = 2;
-	     PDC->bDualTs = true;
-	}
-	else
-	{   
-	    deb_data("TSMode = DCA mode\n");
-	    PDC->architecture = Architecture_DCA;
-	    PDC->Demodulator.chipNumber = 2;
-	}
-
-	if(PDC->bDualTs) {
-	    cnt = 2;
-	}
-	else {
-	    cnt = 1;
-	}
-
-	for(ucSlaveDemod; ucSlaveDemod < cnt; ucSlaveDemod++)
-	{
-	    dwError = DRV_GetEEPROMConfig2(pdc, ucSlaveDemod);
-	    if (dwError) return(dwError);  
-	    dwError = DRV_InitDevInfo(pdc, ucSlaveDemod);
-	    if (dwError) return(dwError);
-	}
-    
-   	 return(dwError);     
-}   
-*/
-static DWORD DRV_SetBusTuner(
+static Dword DRV_SetBusTuner(
 	 void * handle, 
 	 Word busId, 
 	 Word tunerId
 )
 {
-	DWORD dwError = Error_NO_ERROR;
-	DWORD 	 version = 0;
+	Dword dwError = Error_NO_ERROR;
+	Dword 	 version = 0;
 
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 
@@ -717,14 +645,14 @@ static DWORD DRV_SetBusTuner(
     	return(dwError); 
 }
 
-DWORD NIM_ResetSeq(IN  void *	handle)
+Dword NIM_ResetSeq(IN  void *	handle)
 {
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	int i;
-	//BYTE ucValue = 0;
+	//Byte ucValue = 0;
 	
-	BYTE bootbuffer[6];
+	Byte bootbuffer[6];
 	//checksum = 0xFEDC
 	bootbuffer[0] = 0x05;
 	bootbuffer[1] = 0x00;
@@ -771,12 +699,12 @@ DWORD NIM_ResetSeq(IN  void *	handle)
 
 
 //set tuner power saving and control
-static DWORD DRV_ApCtrl(
+static Dword DRV_ApCtrl(
 	void* handle,
 	Byte ucSlaveDemod,
 	Bool bOn)
 {
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	int i;
     Dword version = 0;
@@ -927,13 +855,13 @@ static DWORD DRV_ApCtrl(
 
 
 /*
-static DWORD DRV_ApCtrl (
+static Dword DRV_ApCtrl (
       void *      handle,
       Byte        ucSlaveDemod,
       Bool        bOn
 )
 {
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
 
         PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 
@@ -954,12 +882,12 @@ static DWORD DRV_ApCtrl (
 */
 
 /*
-static DWORD DRV_ApReset(
+static Dword DRV_ApReset(
 	void* handle,
 	Byte ucSlaveDemod,
 	Bool bOn)
 {
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
@@ -982,11 +910,11 @@ static DWORD DRV_ApReset(
 }
 */
 
-static DWORD DRV_TunerWakeup(
+static Dword DRV_TunerWakeup(
       void *     handle
 )
 {   
-    	DWORD dwError = Error_NO_ERROR;
+    	Dword dwError = Error_NO_ERROR;
 
     	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
 
@@ -999,13 +927,13 @@ static DWORD DRV_TunerWakeup(
 
 }
 
-static DWORD DRV_NIMSuspend(
+static Dword DRV_NIMSuspend(
     void *      handle,
     bool        bSuspend
 
 )
 {
-    DWORD dwError = Error_NO_ERROR;
+    Dword dwError = Error_NO_ERROR;
 
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
 
@@ -1022,11 +950,11 @@ static DWORD DRV_NIMSuspend(
     return(dwError);
 }
 
-static DWORD DRV_InitNIMSuspendRegs(
+static Dword DRV_InitNIMSuspendRegs(
     void *      handle
 )
 {
-    DWORD dwError = Error_NO_ERROR;
+    Dword dwError = Error_NO_ERROR;
 
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
     deb_data("- Enter %s Function -\n",__FUNCTION__);
@@ -1042,13 +970,13 @@ static DWORD DRV_InitNIMSuspendRegs(
     return(dwError);
 }
 
-static DWORD DRV_NIMReset(
+static Dword DRV_NIMReset(
     void *      handle
 )
 {
 
 
-    DWORD   dwError = Error_NO_ERROR;
+    Dword   dwError = Error_NO_ERROR;
 
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
     deb_data("- Enter %s Function -\n",__FUNCTION__);
@@ -1068,12 +996,12 @@ static DWORD DRV_NIMReset(
 
 //************** DL_ *************//
 
-static DWORD DL_NIMSuspend(
+static Dword DL_NIMSuspend(
     void *      handle,
     bool	bSuspend
 )
 {
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
 
 	mutex_lock(&mymutex);
 
@@ -1084,11 +1012,11 @@ static DWORD DL_NIMSuspend(
     return (dwError);
 }
 
-static DWORD DL_Initialize(
+static Dword DL_Initialize(
 	    void *      handle
 )
 {
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
     mutex_lock(&mymutex);
 
     dwError = DRV_Initialize(handle);
@@ -1099,13 +1027,13 @@ static DWORD DL_Initialize(
     
 }
 
-static DWORD DL_SetBusTuner(
+static Dword DL_SetBusTuner(
 	 void * handle, 
 	 Word busId, 
 	 Word tunerId
 )
 {
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
 	
 	mutex_lock(&mymutex);
 
@@ -1117,11 +1045,11 @@ static DWORD DL_SetBusTuner(
 
 }
 
-static DWORD  DL_GetEEPROMConfig(
+static Dword  DL_GetEEPROMConfig(
 	 void *      handle
 )
 {   
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
     mutex_lock(&mymutex);
 
     dwError = DRV_GetEEPROMConfig(handle);
@@ -1131,11 +1059,11 @@ static DWORD  DL_GetEEPROMConfig(
     return(dwError);
 } 
 
-static DWORD DL_TunerWakeup(
+static Dword DL_TunerWakeup(
       void *     handle
 )
 {    
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
     mutex_lock(&mymutex);
 
     dwError = DRV_TunerWakeup(handle);
@@ -1144,11 +1072,11 @@ static DWORD DL_TunerWakeup(
    
     	return(dwError);
 }
-static DWORD  DL_IrTblDownload(
+static Dword  DL_IrTblDownload(
       void *     handle
 )
 {
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
 
     mutex_lock(&mymutex);
 
@@ -1160,10 +1088,10 @@ static DWORD  DL_IrTblDownload(
 }
 
 
-DWORD DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
+Dword DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
 {
-	DWORD dwError = Error_NO_ERROR;
-	BYTE    ucSlaveDemod=0;
+	Dword dwError = Error_NO_ERROR;
+	Byte    ucSlaveDemod=0;
   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
 
     mutex_lock(&mymutex);
@@ -1181,14 +1109,14 @@ DWORD DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
     return (dwError);
 }
 
-DWORD DL_ApPwCtrl (
+Dword DL_ApPwCtrl (
 	void* handle,
     Bool  bChipCtl,
     Bool  bOn
 )
 {
-    DWORD dwError = Error_NO_ERROR;
-	BYTE    i = 0;
+    Dword dwError = Error_NO_ERROR;
+	Byte    i = 0;
 	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT)handle;
 	
 	mutex_lock(&mymutex);
@@ -1245,14 +1173,14 @@ exit:
     	return(dwError);
 }
 
-DWORD DL_ApCtrl (
+Dword DL_ApCtrl (
 	void* handle,
     Byte  ucSlaveDemod,
     Bool  bOn
 )
 {
-    DWORD dwError = Error_NO_ERROR;
-	BYTE    i = 0;
+    Dword dwError = Error_NO_ERROR;
+	Byte    i = 0;
 	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT)handle;
 	
 	mutex_lock(&mymutex);
@@ -1307,12 +1235,12 @@ DWORD DL_ApCtrl (
 }
 
 
-DWORD DL_CheckTunerInited(
+Dword DL_CheckTunerInited(
 	void* handle,
-	BYTE ucSlaveDemod,
+	Byte ucSlaveDemod,
 	Bool *bOn )
 {
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	
     mutex_lock(&mymutex);
@@ -1326,9 +1254,9 @@ DWORD DL_CheckTunerInited(
     return(dwError);
 }
 
-DWORD DL_DemodIOCTLFun(Modulator *modulator, DWORD IOCTLCode, unsigned long pIOBuffer)
+Dword DL_DemodIOCTLFun(Modulator *modulator, Dword IOCTLCode, unsigned long pIOBuffer)
 {
-    DWORD dwError = Error_NO_ERROR;
+    Dword dwError = Error_NO_ERROR;
 
     mutex_lock(&mymutex);
 
@@ -1452,18 +1380,18 @@ DWORD DL_DemodIOCTLFun(Modulator *modulator, DWORD IOCTLCode, unsigned long pIOB
             //deb_data("IOCTL_ITE_DEMOD_GETDRIVERINFO %x, %x\n", pIOBuffer, handle);
 
             PTxModDriverInfo pDriverInfo = (PTxModDriverInfo)pIOBuffer;
-            DWORD dwFWVerionLink = 0;
-            DWORD dwFWVerionOFDM = 0;
+            Dword dwFWVerionLink = 0;
+            Dword dwFWVerionOFDM = 0;
             
             strcpy((char *)pDriverInfo->DriverVerion, DRIVER_RELEASE_VERSION);
-            sprintf((char *)pDriverInfo->APIVerion, "%X.%X.%X.%X", (BYTE)(Eagle_Version_NUMBER>>8), (BYTE)(Eagle_Version_NUMBER), Eagle_Version_DATE, Eagle_Version_BUILD);
+            sprintf((char *)pDriverInfo->APIVerion, "%X.%X.%X.%X", (Byte)(Eagle_Version_NUMBER>>8), (Byte)(Eagle_Version_NUMBER), Eagle_Version_DATE, Eagle_Version_BUILD);
 
             IT9507_getFirmwareVersion (modulator, Processor_LINK, &dwFWVerionLink);
-            sprintf((char *)pDriverInfo->FWVerionLink, "%X.%X.%X.%X", (BYTE)(dwFWVerionLink>>24), (BYTE)(dwFWVerionLink>>16), (BYTE)(dwFWVerionLink>>8), (BYTE)dwFWVerionLink);
+            sprintf((char *)pDriverInfo->FWVerionLink, "%X.%X.%X.%X", (Byte)(dwFWVerionLink>>24), (Byte)(dwFWVerionLink>>16), (Byte)(dwFWVerionLink>>8), (Byte)dwFWVerionLink);
             deb_data("Modulator_getFirmwareVersion Processor_LINK %s\n", (char *)pDriverInfo->FWVerionLink);
  
             IT9507_getFirmwareVersion (modulator, Processor_OFDM, &dwFWVerionOFDM);
-            sprintf((char *)pDriverInfo->FWVerionOFDM, "%X.%X.%X.%X", (BYTE)(dwFWVerionOFDM>>24), (BYTE)(dwFWVerionOFDM>>16), (BYTE)(dwFWVerionOFDM>>8), (BYTE)dwFWVerionOFDM);
+            sprintf((char *)pDriverInfo->FWVerionOFDM, "%X.%X.%X.%X", (Byte)(dwFWVerionOFDM>>24), (Byte)(dwFWVerionOFDM>>16), (Byte)(dwFWVerionOFDM>>8), (Byte)dwFWVerionOFDM);
             deb_data("Modulator_getFirmwareVersion Processor_OFDM %s\n", (char *)pDriverInfo->FWVerionOFDM);
 
             strcpy((char *)pDriverInfo->Company, "ITEtech");
@@ -1586,10 +1514,10 @@ DWORD DL_DemodIOCTLFun(Modulator *modulator, DWORD IOCTLCode, unsigned long pIOB
     return(dwError);
 }
 
-DWORD Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, Bool bBoot)
+Dword Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, Bool bBoot)
 {
-	DWORD error = Error_NO_ERROR;
-	BYTE filterIdx=0;
+	Dword error = Error_NO_ERROR;
+	Byte filterIdx=0;
 	int errcount=0;
 
 	PDC->modulator.userData = (void *)udev;

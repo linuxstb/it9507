@@ -28,7 +28,6 @@
 #include "userdef.h"
 #include "modulatorFirmware.h"
 #include "modulatorType.h"
-#include "Common.h"
 #include <linux/version.h>
 #include <linux/mutex.h>
 #include <linux/mm.h>
@@ -123,17 +122,17 @@ struct it950x_config {
 typedef struct _TUNER_INFO {
     Bool bTunerInited;
     Bool bSettingFreq;
-    BYTE TunerId;
+    Byte TunerId;
     Bool bTunerOK;
 	Bool bTunerLock;//AirHD
-    Tuner_struct MXL5005_Info;
+  //DAVE Tuner_struct MXL5005_Info;
 } TUNER_INFO, *PTUNER_INFO;
 
 typedef struct _FILTER_CONTEXT_HW {
-    DWORD ulCurrentFrequency;
-    WORD  ucCurrentBandWidth;  
-    DWORD ulDesiredFrequency;
-    WORD  ucDesiredBandWidth;   
+    Dword ulCurrentFrequency;
+    Word  ucCurrentBandWidth;  
+    Dword ulDesiredFrequency;
+    Word  ucDesiredBandWidth;   
     //ULONG ulBandWidth;   
     Bool bTimerOn;
    // PKSFILTER filter;
@@ -141,9 +140,9 @@ typedef struct _FILTER_CONTEXT_HW {
     TUNER_INFO tunerinfo; 
     //SIGNAL_STATISTICS ss;
     //SIGNAL_RETRAIN sr;  
-    //DWORD   gdwOrigFCW;        //move from AF901x.cpp [global variable]
-    //BYTE    gucOrigUnplugTh;   //move from AF901x.cpp [global variable]
-    //BYTE    gucPreShiftIdx;    //move from AF901x.cpp [global variable]    
+    //Dword   gdwOrigFCW;        //move from AF901x.cpp [global variable]
+    //Byte    gucOrigUnplugTh;   //move from AF901x.cpp [global variable]
+    //Byte    gucPreShiftIdx;    //move from AF901x.cpp [global variable]    
     // PKSFILTERFACTORY  pFilterFactory;
     int  bEnPID;
     //ULONG ulcPIDs;
@@ -179,14 +178,14 @@ typedef struct _DEVICE_CONTEXT {
     u32 TsFrameSize;
     u32 TsFrameSizeDw;
     u32 TsPacketCount;
-    //BYTE  ucDemod2WireAddr;
+    //Byte  ucDemod2WireAddr;
     //USB_IDLE_CALLBACK_INFO cbinfo;          // callback info for selective suspend          // our selective suspend IRP    
 
     Bool    bSelectiveSuspend;
     u32   ulActiveFilter;
-    //BYTE    ucSerialNo; 
+    //Byte    ucSerialNo; 
     Architecture architecture;
-    //BYTE Tuner_Id;
+    //Byte Tuner_Id;
     StreamType StreamType;
     Bool bDCAPIP;
     Bool bSwapFilter;
@@ -241,28 +240,28 @@ struct tuner_priv {
 //extern PDEVICE_CONTEXT PDC;
 extern int it950x_device_count;
 
-extern DWORD Device_init(struct usb_device *udev,PDEVICE_CONTEXT PDCs, Bool bBoot);
-extern DWORD DL_ApCtrl(void* handle, Byte ucSlaveDemod, Bool bOn);
-extern DWORD DL_ApPwCtrl(void* handle, Bool ucSlaveDemod, Bool bOn);
-extern DWORD DL_Tuner_SetFreqBw(void *handle, BYTE ucSlaveDemod,u32 ucFreq,u8 ucBw);
-extern DWORD DL_isLocked(void *handle,BYTE ucSlaveDemod, Bool *bLock);
-extern DWORD DL_getSignalStrength(void *handle,BYTE ucSlaveDemod, BYTE* strength);
-extern DWORD DL_getSignalStrengthDbm(void *handle, BYTE ucSlaveDemod, Long* strengthDbm);
-extern DWORD DL_getChannelStatistic(BYTE ucSlaveDemod, ChannelStatistic*  channelStatistic);
-extern DWORD DL_getChannelModulation(void *handle, BYTE ucSlaveDemod, ChannelModulation*    channelModulation);
-extern DWORD DL_getSNR(void *handle, BYTE ucSlaveDemod, Constellation* constellation, BYTE* snr);
-extern DWORD DL_ReSetInterval(void);
-extern DWORD DL_Reboot(void* handle);
-extern DWORD DL_CheckTunerInited(void *handle, BYTE ucSlaveDemod, Bool *bOn);
-extern DWORD DL_DemodIOCTLFun(Modulator* modulator, DWORD IOCTLCode, unsigned long pIOBuffer);
-extern DWORD DL_LoadIQtable_Fromfile(void *handle);
+extern Dword Device_init(struct usb_device *udev,PDEVICE_CONTEXT PDCs, Bool bBoot);
+extern Dword DL_ApCtrl(void* handle, Byte ucSlaveDemod, Bool bOn);
+extern Dword DL_ApPwCtrl(void* handle, Bool ucSlaveDemod, Bool bOn);
+extern Dword DL_Tuner_SetFreqBw(void *handle, Byte ucSlaveDemod,u32 ucFreq,u8 ucBw);
+extern Dword DL_isLocked(void *handle,Byte ucSlaveDemod, Bool *bLock);
+extern Dword DL_getSignalStrength(void *handle,Byte ucSlaveDemod, Byte* strength);
+extern Dword DL_getSignalStrengthDbm(void *handle, Byte ucSlaveDemod, Long* strengthDbm);
+extern Dword DL_getChannelStatistic(Byte ucSlaveDemod, ChannelStatistic*  channelStatistic);
+extern Dword DL_getChannelModulation(void *handle, Byte ucSlaveDemod, ChannelModulation*    channelModulation);
+extern Dword DL_getSNR(void *handle, Byte ucSlaveDemod, Constellation* constellation, Byte* snr);
+extern Dword DL_ReSetInterval(void);
+extern Dword DL_Reboot(void* handle);
+extern Dword DL_CheckTunerInited(void *handle, Byte ucSlaveDemod, Bool *bOn);
+extern Dword DL_DemodIOCTLFun(Modulator* modulator, Dword IOCTLCode, unsigned long pIOBuffer);
+extern Dword DL_LoadIQtable_Fromfile(void *handle);
 //extern Bool DevicePower, DeviceReboot;
 // TunerInited0, TunerInited1
-//extern DWORD DL_NIMSuspend(void* handle, bool bSuspend);
-//extern DWORD DL_SetArchitecture(void* handle, Architecture architecture);
-//extern DWORD DL_ApReset (void * handle, BYTE ucSlaveDemod, Bool bOn);
-//extern DWORD DL_WriteRegisters (void * handle, BYTE ucSlaveDemod, Processor	processor, DWORD wReg, BYTE ucpValueLength, BYTE* ucpValue);
-//extern DWORD DL_ReadRegisters (void * handle, BYTE ucSlaveDemod, Processor	processor, DWORD wReg, BYTE ucpValueLength, BYTE* ucpValue);
+//extern Dword DL_NIMSuspend(void* handle, bool bSuspend);
+//extern Dword DL_SetArchitecture(void* handle, Architecture architecture);
+//extern Dword DL_ApReset (void * handle, Byte ucSlaveDemod, Bool bOn);
+//extern Dword DL_WriteRegisters (void * handle, Byte ucSlaveDemod, Processor	processor, Dword wReg, Byte ucpValueLength, Byte* ucpValue);
+//extern Dword DL_ReadRegisters (void * handle, Byte ucSlaveDemod, Processor	processor, Dword wReg, Byte ucpValueLength, Byte* ucpValue);
 //extern void it9507_set_remote_config(struct usb_device *udev, struct dvb_usb_device_properties *props);
 
 #endif

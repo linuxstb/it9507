@@ -307,9 +307,9 @@ static int tx_stop_urb_transfer_cmd(struct it950x_dev *dev)
 	return 0;
 }
 
-DWORD fabs_self(DWORD a, DWORD b)
+Dword fabs_self(Dword a, Dword b)
 {
-	DWORD c = 0;
+	Dword c = 0;
 	
 	c = a - b;
 	if(c >= 0) return c;
@@ -322,7 +322,7 @@ DWORD fabs_self(DWORD a, DWORD b)
  * Successful submissions return 0(Error_NO_ERROR) and submised buffer length.
  * Otherwise this routine returns a negative error number.
  */
-DWORD Tx_RingBuffer(
+Dword Tx_RingBuffer(
 	struct it950x_dev *dev,
     Byte* pBuffer,
     Dword* pBufferLength)
@@ -406,15 +406,15 @@ DWORD Tx_RingBuffer(
 }
 
 /* AirHD low bitrate */
-DWORD Tx_RingBuffer_low_brate(
+Dword Tx_RingBuffer_low_brate(
 	struct it950x_dev *dev,
     Byte*  pBuffer,
     Dword* pBufferLength)
 {
-    DWORD dwBuffLen = 0;
-    DWORD dwCpBuffLen = *pBufferLength;
-    DWORD dwCurrBuffAddr = (*dev->pTxCurrBuffPointAddr_low_brate);
-    DWORD dwWriteBuffAddr = (*dev->pTxWriteBuffPointAddr_low_brate);
+    Dword dwBuffLen = 0;
+    Dword dwCpBuffLen = *pBufferLength;
+    Dword dwCurrBuffAddr = (*dev->pTxCurrBuffPointAddr_low_brate);
+    Dword dwWriteBuffAddr = (*dev->pTxWriteBuffPointAddr_low_brate);
     int ret = -ENOMEM;
     int i;
 
@@ -514,14 +514,14 @@ DWORD Tx_RingBuffer_low_brate(
 }
 
 /* AirHD_CMD */
-DWORD Tx_RingBuffer_cmd(
+Dword Tx_RingBuffer_cmd(
 	struct it950x_dev *dev,
     Byte* pBuffer,
     Dword* pBufferLength)
 {
-    DWORD dwCpBuffLen = *pBufferLength;
-    //DWORD dwCurrBuffAddr = (*dev->pTxCurrBuffPointAddr_cmd);
-    //DWORD dwWriteBuffAddr = (*dev->pTxWriteBuffPointAddr_cmd);
+    Dword dwCpBuffLen = *pBufferLength;
+    //Dword dwCurrBuffAddr = (*dev->pTxCurrBuffPointAddr_cmd);
+    //Dword dwWriteBuffAddr = (*dev->pTxWriteBuffPointAddr_cmd);
     int ret = -ENOMEM;
     //int i;
          
@@ -1027,7 +1027,7 @@ static int it950x_usb_tx_release(struct inode *inode, struct file *file)
 int SetLowBitRateTransfer(struct it950x_dev *dev, void *parg)
 {
 	//unsigned char b_buf[188];
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
 	int act_len;
 	
 	PSetLowBitRateTransferRequest pRequest = (PSetLowBitRateTransferRequest) parg;
@@ -1089,7 +1089,7 @@ long it950x_usb_tx_unlocked_ioctl(
 			SetLowBitRateTransfer(dev, (void*)parg);
 			return 0;
 	}
-	return DL_DemodIOCTLFun((void *)&dev->DC.modulator, (DWORD)cmd, parg);
+	return DL_DemodIOCTLFun((void *)&dev->DC.modulator, (Dword)cmd, parg);
 }
 
 
@@ -1102,7 +1102,7 @@ static ssize_t it950x_tx_write(
 	struct it950x_dev *dev;
 
 	Dword Len = count;
-	DWORD dwError = Error_NO_ERROR;
+	Dword dwError = Error_NO_ERROR;
 
 	/*AirHD RingBuffer*/
 	dev = (struct it950x_dev *)file->private_data;
