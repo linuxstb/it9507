@@ -1329,19 +1329,10 @@ DWORD DL_CheckTunerInited(
 DWORD DL_DemodIOCTLFun(void* demodulator, DWORD IOCTLCode, unsigned long pIOBuffer)
 {
     DWORD dwError = Error_NO_ERROR;
-	//int error;
 
-	mutex_lock(&mymutex);
-
-    //deb_data("- Enter %s Function -\n",__FUNCTION__);
-
+    mutex_lock(&mymutex);
 
     dwError = DemodIOCTLFun(demodulator, IOCTLCode, pIOBuffer);
-
-	//if (IOCTLCode == IOCTL_ITE_DEMOD_FINALIZE) {
-	//	error = DL_ApCtrl(0, 0);
-	//	error = DL_ApCtrl(1, 0);
-	//}
 
     mutex_unlock(&mymutex);
 
@@ -1359,59 +1350,10 @@ DWORD Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, Bool bBoot)
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
-// define in it950x-core.h
-#ifdef QuantaMID
-	printk("    === AfaDTV on Quanta  ===\n");
-#endif
-#ifdef EEEPC
-	printk("    === AfaDTV on EEEPC ===\n");
-#endif
-
-#ifdef DRIVER_RELEASE_VERSION
         printk("        DRIVER_RELEASE_VERSION  : %s\n", DRIVER_RELEASE_VERSION);
-#else
-	printk("        DRIVER_RELEASE_VERSION  : v0.0-0\n");
-#endif
-
-#ifdef __EAGLEFIRMWARE_H__
 	printk("        EAGLE_FW_RELEASE_LINK_VERSION: %d.%d.%d.%d\n", DVB_LL_VERSION1, DVB_LL_VERSION2, DVB_LL_VERSION3, DVB_LL_VERSION4);
 	printk("        EAGLE_FW_RELEASE_OFDM_VERSION: %d.%d.%d.%d\n", DVB_OFDM_VERSION1, DVB_OFDM_VERSION2, DVB_OFDM_VERSION3, DVB_OFDM_VERSION4);	
-#else
-	printk("        EAGLE_FW_RELEASE_LINK_VERSION: v0_0_0_0\n");	
-	printk("        EAGLE_FW_RELEASE_OFDM_VERSION: v0_0_0_0\n");		
-#endif
-
-#ifdef __FIRMWARE_H__
-	printk("        FW_RELEASE_LINK_VERSION: %d.%d.%d.%d\n", LL_VERSION1, LL_VERSION2, LL_VERSION3, LL_VERSION4);
-	printk("        FW_RELEASE_OFDM_VERSION: %d.%d.%d.%d\n", OFDM_VERSION1, OFDM_VERSION2, OFDM_VERSION3, OFDM_VERSION4);	
-#else
-	printk("        FW_RELEASE_LINK_VERSION: v0_0_0_0\n");	
-	printk("        FW_RELEASE_OFDM_VERSION: v0_0_0_0\n");		
-#endif
-
-#ifdef __FIRMWAREV2_H__
-	printk("        FW_V2_RELEASE_LINK_VERSION: %d.%d.%d.%d\n", DVB_V2_LL_VERSION1, DVB_V2_LL_VERSION2, DVB_V2_LL_VERSION3, DVB_V2_LL_VERSION4);
-	printk("        FW_V2_RELEASE_OFDM_VERSION: %d.%d.%d.%d\n", DVB_V2_OFDM_VERSION1, DVB_V2_OFDM_VERSION2, DVB_V2_OFDM_VERSION3, DVB_V2_OFDM_VERSION4);	
-#else
-	printk("        FW_V2_RELEASE_LINK_VERSION: v0_0_0_0\n");	
-	printk("        FW_V2_RELEASE_OFDM_VERSION: v0_0_0_0\n");		
-#endif
-
-#ifdef Eagle_Version_NUMBER 
 	printk("        API_TX_RELEASE_VERSION  : %X.%X.%X\n", Eagle_Version_NUMBER, Eagle_Version_DATE, Eagle_Version_BUILD);
-#else
-	printk("        API_TX_RELEASE_VERSION  :000.00000000.0\n");
-#endif
-
-#ifdef Version_NUMBER
-	printk("        API_RX_RELEASE_VERSION  : %X.%X.%X\n", Version_NUMBER, Version_DATE, Version_BUILD);
-#else
-	printk("        API_RX_RELEASE_VERSION  :000.00000000.0\n");
-#endif
-
-
-//	printk("	FW_RELEASE_VERSION : %s\n", FW_RELEASE_VERSION);
-//	printk("	API_RELEASE_VERSION : %X.%X.%X\n", Version_NUMBER, Version_DATE, Version_BUILD);
 
 
 	//************* Set Device init Info *************//
