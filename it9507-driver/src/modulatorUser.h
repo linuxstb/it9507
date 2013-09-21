@@ -5,7 +5,6 @@
 //#include <stdio.h>
 #include "IT9507.h"
 #include "modulatorType.h"
-#include "i2cimpl.h"
 #include "usb2impl.h"
 #include "af9035u2iimpl.h"
 
