@@ -21,544 +21,544 @@
 
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Dword			registerAddress;
-    Byte			bufferLength;
-    Byte			buffer[256];
-    Dword			error;
-    Byte			reserved[16];
+    u32			registerAddress;
+    u8			bufferLength;
+    u8			buffer[256];
+    u32			error;
+    u8			reserved[16];
 } WriteRegistersRequest, *PWriteRegistersRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Dword			registerAddress;
-    Byte			bufferLength;
-    Byte			buffer[256];
-    Dword			error;
-    Byte			reserved[16];
+    u32			registerAddress;
+    u8			bufferLength;
+    u8			buffer[256];
+    u32			error;
+    u8			reserved[16];
 } TxWriteRegistersRequest, *PTxWriteRegistersRequest;
 
 typedef struct {
-    Byte			chip;
-    Word			registerAddress;
-    Byte			bufferLength;
-    Byte			buffer[256];
-    Dword			error;
-    Byte			reserved[16];
+    u8			chip;
+    u16			registerAddress;
+    u8			bufferLength;
+    u8			buffer[256];
+    u32			error;
+    u8			reserved[16];
 } WriteEepromValuesRequest, *PWriteEepromValuesRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Dword			registerAddress;
-    Byte			position;
-    Byte			length;
-    Byte			value;
-    Dword			error;
-    Byte			reserved[16];
+    u32			registerAddress;
+    u8			position;
+    u8			length;
+    u8			value;
+    u32			error;
+    u8			reserved[16];
 } WriteRegisterBitsRequest, *PWriteRegisterBitsRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Dword			registerAddress;
-    Byte			position;
-    Byte			length;
-    Byte			value;
-    Dword			error;
-    Byte			reserved[16];
+    u32			registerAddress;
+    u8			position;
+    u8			length;
+    u8			value;
+    u32			error;
+    u8			reserved[16];
 } TxWriteRegisterBitsRequest, *PTxWriteRegisterBitsRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Word			variableIndex;
-    Byte			bufferLength;
-    Byte			buffer[256];
-    Dword			error;
-    Byte			reserved[16];
+    u16			variableIndex;
+    u8			bufferLength;
+    u8			buffer[256];
+    u32			error;
+    u8			reserved[16];
 } SetVariablesRequest, *PSetVariablesRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Word			variableIndex;
-    Byte			position;
-    Byte			length;
-    Byte			value;
-    Dword			error;
-    Byte			reserved[16];
+    u16			variableIndex;
+    u8			position;
+    u8			length;
+    u8			value;
+    u32			error;
+    u8			reserved[16];
 } SetVariableBitsRequest, *PSetVariableBitsRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Dword			registerAddress;
-    Byte			bufferLength;
-    Byte			buffer[256];
-    Dword			error;
-    Byte			reserved[16];
+    u32			registerAddress;
+    u8			bufferLength;
+    u8			buffer[256];
+    u32			error;
+    u8			reserved[16];
 } ReadRegistersRequest, *PReadRegistersRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Dword			registerAddress;
-    Byte			bufferLength;
-    Byte			buffer[256];
-    Dword			error;
-    Byte			reserved[16];
+    u32			registerAddress;
+    u8			bufferLength;
+    u8			buffer[256];
+    u32			error;
+    u8			reserved[16];
 } TxReadRegistersRequest, *PTxReadRegistersRequest;
 
 typedef struct {
-    Byte			chip;
-    Word			registerAddress;
-    Byte			bufferLength;
-    Byte			buffer[256];
-    Dword			error;
-    Byte			reserved[16];
+    u8			chip;
+    u16			registerAddress;
+    u8			bufferLength;
+    u8			buffer[256];
+    u32			error;
+    u8			reserved[16];
 } ReadEepromValuesRequest, *PReadEepromValuesRequest;
 
 typedef struct {
-    Byte			chip;
-    Word			registerAddress;
-    Byte			bufferLength;
-    Byte			buffer[256];
-    Dword			error;
-    Byte			reserved[16];
+    u8			chip;
+    u16			registerAddress;
+    u8			bufferLength;
+    u8			buffer[256];
+    u32			error;
+    u8			reserved[16];
 } TxReadEepromValuesRequest, *PTxReadEepromValuesRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Dword			registerAddress;
-    Byte			position;
-    Byte			length;
-    Byte*			value;
-    Dword			error;
-    Byte			reserved[16];
+    u32			registerAddress;
+    u8			position;
+    u8			length;
+    u8*			value;
+    u32			error;
+    u8			reserved[16];
 } ReadRegisterBitsRequest, *PReadRegisterBitsRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Dword			registerAddress;
-    Byte			position;
-    Byte			length;
-    Byte*			value;
-    Dword			error;
-    Byte			reserved[16];
+    u32			registerAddress;
+    u8			position;
+    u8			length;
+    u8*			value;
+    u32			error;
+    u8			reserved[16];
 } TxReadRegisterBitsRequest, *PTxReadRegisterBitsRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Word			variableIndex;
-    Byte			bufferLength;
-    Byte*			buffer;
-    Dword			error;
-    Byte			reserved[16];
+    u16			variableIndex;
+    u8			bufferLength;
+    u8*			buffer;
+    u32			error;
+    u8			reserved[16];
 } GetVariablesRequest, *PGetVariablesRequest;
 
 typedef struct {
-    Byte			chip;
+    u8			chip;
     Processor		processor;
-    Word			variableIndex;
-    Byte			position;
-    Byte			length;
-    Byte*			value;
-    Dword			error;
-    Byte			reserved[16];
+    u16			variableIndex;
+    u8			position;
+    u8			length;
+    u8*			value;
+    u32			error;
+    u8			reserved[16];
 } GetVariableBitsRequest, *PGetVariableBitsRequest;
 
 typedef struct {
-    Byte				chipNumber;
-    Word				sawBandwidth;
+    u8				chipNumber;
+    u16				sawBandwidth;
     StreamType			streamType;
     Architecture		architecture;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } InitializeRequest, *PInitializeRequest;
 
 
 typedef struct {
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } FinalizeRequest, *PFinalizeRequest;
 
 typedef struct {
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } TxFinalizeRequest, *PTxFinalizeRequest;
 
 typedef struct {
     StreamType*			streamType;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } GetStreamTypeRequest, *PGetStreamTypeRequest;
 
 typedef struct {
     Architecture*		architecture;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } GetArchitectureRequest, *PGetArchitectureRequest;
 
 typedef struct {
     StreamType			streamType;
     Architecture		architecture;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } ReinitializeRequest, *PReinitializeRequest;
 
 typedef struct {
     Processor			processor;
-	Dword*				version;
-    Dword				error;
-    Byte				reserved[16];
+	u32*				version;
+    u32				error;
+    u8				reserved[16];
 } GetFirmwareVersionRequest, *PGetFirmwareVersionRequest;
 
 typedef struct {
     Processor			processor;
-	Dword*				version;
-    Dword				error;
-    Byte				reserved[16];
+	u32*				version;
+    u32				error;
+    u8				reserved[16];
 } TxGetFirmwareVersionRequest, *PTxGetFirmwareVersionRequest;
 
 typedef struct {
-    Byte				chip;
-    Word				bandwidth;
-    Dword				frequency;
-    Dword				error;
-    Byte				reserved[16];
+    u8				chip;
+    u16				bandwidth;
+    u32				frequency;
+    u32				error;
+    u8				reserved[16];
 } AcquireChannelRequest, *PAcquireChannelRequest;
 
 typedef struct {
-    Byte				chip;
-    Byte 				transmissionMode;
-	Byte				constellation;
-	Byte				interval;
-	Byte				highCodeRate;
-    Dword				error;
-    Byte				reserved[16];
+    u8				chip;
+    u8 				transmissionMode;
+	u8				constellation;
+	u8				interval;
+	u8				highCodeRate;
+    u32				error;
+    u8				reserved[16];
 } SetModuleRequest, *PSetModuleRequest;
 
 typedef struct {
-    Byte				chip;
-    Word				bandwidth;
-    Dword				frequency;
-    Dword				error;
-    Byte				reserved[16];
+    u8				chip;
+    u16				bandwidth;
+    u32				frequency;
+    u32				error;
+    u8				reserved[16];
 } TxAcquireChannelRequest, *PTxAcquireChannelRequest;
 
 typedef struct {
-    Byte				OnOff;
-    Dword				error;
-    Byte				reserved[16];
+    u8				OnOff;
+    u32				error;
+    u8				reserved[16];
 } TxModeRequest, *PTxModeRequest;
 
 typedef struct {
-    Byte				DeviceType;
-    Dword				error;
-    Byte				reserved[16];
+    u8				DeviceType;
+    u32				error;
+    u8				reserved[16];
 } TxSetDeviceTypeRequest, *PTxSetDeviceTypeRequest;
 
 typedef struct {
-    Byte				DeviceType;
-    Dword				error;
-    Byte				reserved[16];
+    u8				DeviceType;
+    u32				error;
+    u8				reserved[16];
 } TxGetDeviceTypeRequest, *PTxGetDeviceTypeRequest;
 
 typedef struct {
     int				GainValue;
-    Dword				error;
+    u32				error;
 } SetGainRequest, *PSetGainRequest;
 
 typedef struct {
-    Byte				chip;
-    Bool*				locked;
-    Dword				error;
-    Byte				reserved[16];
+    u8				chip;
+    bool*				locked;
+    u32				error;
+    u8				reserved[16];
 } IsLockedRequest, *PIsLockedRequest;
 
 typedef struct {
-    Byte*				platformLength;
+    u8*				platformLength;
     Platform*			platforms;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } AcquirePlatformRequest, *PAcquirePlatformRequest;
 
 typedef struct {
     Platform*			platform;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } SetPlatformRequest, *PSetPlatformRequest;
 
 typedef struct {
     Ip					ip;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } AddIpRequest, *PAddIpRequest;
 
 typedef struct {
     Ip					ip;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } RemoveIpRequest, *PRemoveIpRequest;
 
 typedef struct {
-	Byte				chip;
-	Byte				index;
+	u8				chip;
+	u8				index;
     Pid					pid;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } AddPidAtRequest, *PAddPidAtRequest;
 
 typedef struct {
-	Byte				chip;
-	Byte				index;
+	u8				chip;
+	u8				index;
     Pid					pid;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } TxAddPidAtRequest, *PTxAddPidAtRequest;
 
 typedef struct {
-	Byte			chip;
-    Dword			error;
-    Byte			reserved[16];
+	u8			chip;
+    u32			error;
+    u8			reserved[16];
 } ResetPidRequest, *PResetPidRequest;
 
 typedef struct {
-	Byte			chip;
-    Dword			error;
-    Byte			reserved[16];
+	u8			chip;
+    u32			error;
+    u8			reserved[16];
 } TxResetPidRequest, *PTxResetPidRequest;
 
 typedef struct {
-    Word*				bufferLength;
-    Byte*				buffer;
-    Dword				error;
-    Byte				reserved[16];
+    u16*				bufferLength;
+    u8*				buffer;
+    u32				error;
+    u8				reserved[16];
 } GetSectionRequest, *PGetSectionRequest;
 
 typedef struct {
-    Byte				chip;
+    u8				chip;
     ChannelStatistic*	channelStatistic;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } GetChannelStatisticRequest, *PGetChannelStatisticRequest;
 
 typedef struct {
-    Byte				chip;
+    u8				chip;
     Statistic*			statistic;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } GetStatisticRequest, *PGetStatisticRequest;
 
 typedef struct {
-    Dword*				bufferLength;
-    Byte*				buffer;
-    Dword				error;
-    Byte				reserved[16];
+    u32*				bufferLength;
+    u8*				buffer;
+    u32				error;
+    u8				reserved[16];
 } GetDatagramRequest, *PGetDatagramRequest;
 
 typedef struct {
-    Byte			chip;
-	Byte			control;
-    Dword			error;
-    Byte			reserved[16];
+    u8			chip;
+	u8			control;
+    u32			error;
+    u8			reserved[16];
 } ControlPidFilterRequest, *PControlPidFilterRequest;
 
 typedef struct {
-    Byte			chip;
-	Byte			control;
-    Dword			error;
-    Byte			reserved[16];
+    u8			chip;
+	u8			control;
+    u32			error;
+    u8			reserved[16];
 } TxControlPidFilterRequest, *PTxControlPidFilterRequest;
 
 typedef struct {
-    Byte				chip;
-    Byte				control;
-    Dword				error;
-    Byte				reserved[16];
+    u8				chip;
+    u8				control;
+    u32				error;
+    u8				reserved[16];
 } ControlPowerSavingRequest, *PControlPowerSavingRequest;
 
 typedef struct {
-    Byte				chip;
-    Byte				control;
-    Dword				error;
-    Byte				reserved[16];
+    u8				chip;
+    u8				control;
+    u32				error;
+    u8				reserved[16];
 } TxControlPowerSavingRequest, *PTxControlPowerSavingRequest;
 
 typedef struct {
-    Byte			chip;
-    Dword			slaveAddress;
-    Byte			bufferLength;
-    Byte			buffer[256];
-    Dword			error;
-    Byte			reserved[16];
+    u8			chip;
+    u32			slaveAddress;
+    u8			bufferLength;
+    u8			buffer[256];
+    u32			error;
+    u8			reserved[16];
 } WriteGenericRegistersRequest, *PWriteGenericRegistersRequest;
 
 typedef struct {
-    Byte			chip;
-    Dword			slaveAddress;
-    Byte			bufferLength;
-    Byte			buffer[256];
-    Dword			error;
-    Byte			reserved[16];
+    u8			chip;
+    u32			slaveAddress;
+    u8			bufferLength;
+    u8			buffer[256];
+    u32			error;
+    u8			reserved[16];
 } ReadGenericRegistersRequest, *PReadGenericRegistersRequest;
 
 typedef struct {
-    Byte                DriverVerion[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
-    Byte                APIVerion[32];      /** XX.XX.XXXXXXXX.XX Ex., 1.2.3.4	*/
-    Byte                FWVerionLink[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
-    Byte                FWVerionOFDM[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
-    Byte                DateTime[24];       /** Ex.,"2004-12-20 18:30:00" or "DEC 20 2004 10:22:10" with compiler __DATE__ and __TIME__  definitions */
-    Byte                Company[8];         /** Ex.,"ITEtech"					*/
-    Byte                SupportHWInfo[32];  /** Ex.,"Jupiter DVBT/DVBH"			*/
-    Dword               error;
-    Byte                reserved[128];
+    u8                DriverVerion[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
+    u8                APIVerion[32];      /** XX.XX.XXXXXXXX.XX Ex., 1.2.3.4	*/
+    u8                FWVerionLink[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
+    u8                FWVerionOFDM[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
+    u8                DateTime[24];       /** Ex.,"2004-12-20 18:30:00" or "DEC 20 2004 10:22:10" with compiler __DATE__ and __TIME__  definitions */
+    u8                Company[8];         /** Ex.,"ITEtech"					*/
+    u8                SupportHWInfo[32];  /** Ex.,"Jupiter DVBT/DVBH"			*/
+    u32               error;
+    u8                reserved[128];
 } DemodDriverInfo, *PDemodDriverInfo;
 
 typedef struct {
-    Byte                DriverVerion[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
-    Byte                APIVerion[32];      /** XX.XX.XXXXXXXX.XX Ex., 1.2.3.4	*/
-    Byte                FWVerionLink[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
-    Byte                FWVerionOFDM[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
-    Byte                DateTime[24];       /** Ex.,"2004-12-20 18:30:00" or "DEC 20 2004 10:22:10" with compiler __DATE__ and __TIME__  definitions */
-    Byte                Company[8];         /** Ex.,"ITEtech"					*/
-    Byte                SupportHWInfo[32];  /** Ex.,"Jupiter DVBT/DVBH"			*/
-    Dword               error;
-    Byte                reserved[128];
+    u8                DriverVerion[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
+    u8                APIVerion[32];      /** XX.XX.XXXXXXXX.XX Ex., 1.2.3.4	*/
+    u8                FWVerionLink[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
+    u8                FWVerionOFDM[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
+    u8                DateTime[24];       /** Ex.,"2004-12-20 18:30:00" or "DEC 20 2004 10:22:10" with compiler __DATE__ and __TIME__  definitions */
+    u8                Company[8];         /** Ex.,"ITEtech"					*/
+    u8                SupportHWInfo[32];  /** Ex.,"Jupiter DVBT/DVBH"			*/
+    u32               error;
+    u8                reserved[128];
 } TxModDriverInfo, *PTxModDriverInfo;
 
 /**
  * Demodulator Stream control API commands
  */
 typedef struct {
-	Byte			chip;
-    Dword			error;
-    Byte			reserved[16];
+	u8			chip;
+    u32			error;
+    u8			reserved[16];
 } StartCaptureRequest, *PStartCaptureRequest;
 
 typedef struct {
-	Byte			chip;
-    Dword			error;
-    Byte			reserved[16];
+	u8			chip;
+    u32			error;
+    u8			reserved[16];
 } StartTransferRequest, *PStartTransferRequest;
 
 typedef struct {
-	Byte			chip;
-    Dword			error;
-    Byte			reserved[16];
+	u8			chip;
+    u32			error;
+    u8			reserved[16];
 } StopTransferRequest, *PStopTransferRequest;
 
 typedef struct {
-	Byte			chip;
-    Dword			error;
-    Byte			reserved[16];
+	u8			chip;
+    u32			error;
+    u8			reserved[16];
 } StopCaptureRequest, *PStopCaptureRequest;
 
 typedef struct {
-	Byte			chip;
-	Byte            I2CAddr;
-    Dword			error;
-    Byte			reserved[16];
+	u8			chip;
+	u8            I2CAddr;
+    u32			error;
+    u8			reserved[16];
 } GetEEPROMI2CAddrRequest, *PGetEEPROMI2CAddrRequest;
 
 typedef struct {
-	Byte			chip;
-	Dword           handle;
-    Dword			error;
-    Byte			reserved[16];
+	u8			chip;
+	u32           handle;
+    u32			error;
+    u8			reserved[16];
 } GetBufferEventRequest, *PGetBufferEventRequest;
 
 typedef struct {
-	Byte			chip;
-	Dword           length;
-    Dword			error;
-    Byte			reserved[16];
+	u8			chip;
+	u32           length;
+    u32			error;
+    u8			reserved[16];
 } GetTSBufferLenRequest, *PGetTSBufferLenRequest;
 
 typedef struct {
-	Byte			chip;
-    Dword			error;
-    Byte			reserved[16];
+	u8			chip;
+    u32			error;
+    u8			reserved[16];
 } CleanTSDataBufferRequest, *PCleanTSDataBufferRequest;
 
 typedef struct {
-	Dword*			len;
-    Byte*			cmd;
-    Byte			reserved[16];
+	u32*			len;
+    u8*			cmd;
+    u8			reserved[16];
 } CmdRequest, *PCmdRequest;
 
 typedef struct {
-    Dword			error;
-	Dword          frequency;
-	Word           bandwidth;    
+    u32			error;
+	u32          frequency;
+	u16           bandwidth;    
 	int*			maxGain;
 	int*			minGain;
-    Byte			reserved[16];	
+    u8			reserved[16];	
 } GetGainRangeRequest, *PGetGainRangeRequest;
 
 typedef struct {
-    Dword			error;
+    u32			error;
     pTPS           pTps;
-    Byte			reserved[16];	
+    u8			reserved[16];	
 } GetTPSRequest, *PGetTPSRequest;
 
 typedef struct {
-    Dword		   error;
+    u32		   error;
     TPS           tps;
-    Byte		   reserved[16];	
+    u8		   reserved[16];	
 } SetTPSRequest, *PSetTPSRequest;
 
 typedef struct {
-    Dword		   error;
+    u32		   error;
 	int			  *gain;	 
-    Byte		   reserved[16];	
+    u8		   reserved[16];	
 } GetOutputGainRequest, *PGetOutputGainRequest;
 
 typedef struct {
-    Dword		   error;
-	Byte         *pbuffer;
-    Byte		   reserved[16];	
+    u32		   error;
+	u8         *pbuffer;
+    u8		   reserved[16];	
 } SendHwPSITableRequest, *PSendHwPSITableRequest;
 
 typedef struct {
-    Dword		   error;
-	Byte		   psiTableIndex;
-	Byte         *pbuffer;
-    Byte		   reserved[16];	
+    u32		   error;
+	u8		   psiTableIndex;
+	u8         *pbuffer;
+    u8		   reserved[16];	
 } AccessFwPSITableRequest, *PAccessFwPSITableRequest;
 
 typedef struct {
-    Dword		   error;
-	Byte		   psiTableIndex;
-	Word           timer;
-    Byte		   reserved[16];	
+    u32		   error;
+	u8		   psiTableIndex;
+	u16           timer;
+    u8		   reserved[16];	
 } SetFwPSITableTimerRequest, *PSetFwPSITableTimerRequest;
 
 typedef struct {
-    Byte* 				pBuffer;
-    Dword 				pdwBufferLength;
-    Dword				error;
-    Byte				reserved[16];
+    u8* 				pBuffer;
+    u32 				pdwBufferLength;
+    u32				error;
+    u8				reserved[16];
 } SetLowBitRateTransferRequest, *PSetLowBitRateTransferRequest;
 
 typedef struct {
 	IQtable*           IQ_table_ptr;
-	Word				tableGroups;
-    Dword				error;
-    Byte				reserved[16];
+	u16				tableGroups;
+    u32				error;
+    u8				reserved[16];
 } TxSetIQTableRequest, *PTxSetIQTableRequest;
 
 typedef struct {
     int					dc_i;
 	int					dc_q;
-    Dword				error;
-    Byte				reserved[16];
+    u32				error;
+    u8				reserved[16];
 } TxSetDCCalibrationValueRequest, *PTxSetDCCalibrationValueRequest;
 
 /**
@@ -971,9 +971,9 @@ typedef struct {
 	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x12, SetLowBitRateTransferRequest)	
 
 
-Dword DemodIOCTLFun(
+u32 DemodIOCTLFun(
     void *       demodulator,
-    Dword        IOCTLCode,
+    u32        IOCTLCode,
     unsigned long        pIOBuffer);
 
 #endif

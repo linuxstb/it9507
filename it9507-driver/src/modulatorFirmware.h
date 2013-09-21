@@ -18,7 +18,7 @@
 #define EagleFirmware_SEGMENTLENGTH			0x00000060
 #define EagleFirmware_PARTITIONLENGTH		0x00000001
 
-static Byte EagleFirmware_codes[] = {
+static u8 EagleFirmware_codes[] = {
 	0x03,0x00,0x00,0x03,0x41,0x00,0x03,0x41,
 	0x80,0x0C,0x41,0x93,0x14,0x02,0x12,0xBF,
 	0x02,0x42,0x14,0x22,0x00,0x00,0x22,0x00,
@@ -786,7 +786,7 @@ static Segment EagleFirmware_segments[] = {
 	{	0x01,		0x00000022	}
 };
 
-static Word EagleFirmware_partitions[] = {
+static u16 EagleFirmware_partitions[] = {
 	0x60
 };
 
@@ -794,7 +794,7 @@ static Word EagleFirmware_partitions[] = {
 #define EagleFirmware_SCRIPTSETLENGTH	0x00000001
 
 
-static Word EagleFirmware_scriptSets[] = {
+static u16 EagleFirmware_scriptSets[] = {
 	0x0
 };
 

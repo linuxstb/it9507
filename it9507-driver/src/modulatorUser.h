@@ -80,52 +80,52 @@ typedef enum {
 	IndexEnd
 } PCBIndex;
 
-Dword EagleUser_getSystemConfig (
+u32 EagleUser_getSystemConfig (
     IN  Modulator*    modulator,
-    IN  Byte          pcbIndex,
+    IN  u8          pcbIndex,
 	IN  SystemConfig* Config  
 );
 
 
-Dword EagleUser_setSystemConfig (
+u32 EagleUser_setSystemConfig (
     IN  Modulator*    modulator,
 	IN  SystemConfig  systemConfig
 );
 
-Dword EagleUser_getTsInputType (
+u32 EagleUser_getTsInputType (
 	IN  Modulator*    modulator,
 	OUT  TsInterface*  tsInStreamType
 );
 
-Dword EagleUser_getDeviceType (
+u32 EagleUser_getDeviceType (
 	IN  Modulator*    modulator,
-	OUT  Byte*		  deviceType	   
+	OUT  u8*		  deviceType	   
 );
 
 /**
  * Memory copy Function
  */
-Dword EagleUser_memoryCopy (
+u32 EagleUser_memoryCopy (
     IN  Modulator*    modulator,
     IN  void*           dest,
     IN  void*           src,
-    IN  Dword           count
+    IN  u32           count
 );
 
 
 /**
  * Delay Function
  */
-Dword EagleUser_delay (
+u32 EagleUser_delay (
     IN  Modulator*    modulator,
-    IN  Dword           dwMs
+    IN  u32           dwMs
 );
 
 
 /**
  * Enter critical section
  */
-Dword EagleUser_enterCriticalSection (
+u32 EagleUser_enterCriticalSection (
     IN  Modulator*    modulator
 );
 
@@ -133,7 +133,7 @@ Dword EagleUser_enterCriticalSection (
 /**
  * Leave critical section
  */
-Dword EagleUser_leaveCriticalSection (
+u32 EagleUser_leaveCriticalSection (
     IN  Modulator*    modulator
 );
 
@@ -141,7 +141,7 @@ Dword EagleUser_leaveCriticalSection (
 /**
  * Config MPEG2 interface
  */
-Dword EagleUser_mpegConfig (
+u32 EagleUser_mpegConfig (
     IN  Modulator*    modulator
 );
 
@@ -151,10 +151,10 @@ Dword EagleUser_mpegConfig (
  * I2C mode : uc2WireAddr mean modulator chip address, the default value is 0x38
  * USB mode : uc2WireAddr is useless, don't have to send this data
  */
-Dword EagleUser_busTx (
+u32 EagleUser_busTx (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    IN  Byte*           buffer
+    IN  u32           bufferLength,
+    IN  u8*           buffer
 );
 
 
@@ -163,39 +163,39 @@ Dword EagleUser_busTx (
  * I2C mode : uc2WireAddr mean modulator chip address, the default value is 0x38
  * USB mode : uc2WireAddr is useless, don't have to send this data
  */
-Dword EagleUser_busRx (
+u32 EagleUser_busRx (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    OUT Byte*           buffer
+    IN  u32           bufferLength,
+    OUT u8*           buffer
 );
 
 
-Dword EagleUser_setBus (
+u32 EagleUser_setBus (
 	IN  Modulator*	modulator
 );
 
-Dword EagleUser_Initialization  (
+u32 EagleUser_Initialization  (
     IN  Modulator*    modulator
 ); 
 
-Dword EagleUser_Finalize  (
+u32 EagleUser_Finalize  (
     IN  Modulator*    modulator
 );
 
-Dword EagleUser_acquireChannel (
+u32 EagleUser_acquireChannel (
 	IN  Modulator*    modulator,
-	IN  Word          bandwidth,
-	IN  Dword         frequency
+	IN  u16          bandwidth,
+	IN  u32         frequency
 );
 
-Dword EagleUser_setTxModeEnable (
+u32 EagleUser_setTxModeEnable (
 	IN  Modulator*            modulator,
-	IN  Byte                    enable	
+	IN  u8                    enable	
 );
 
-Dword EagleUser_getChannelIndex (
+u32 EagleUser_getChannelIndex (
 	IN  Modulator*            modulator,
-	IN  Byte*                    index	
+	IN  u8*                    index	
 );
 
 

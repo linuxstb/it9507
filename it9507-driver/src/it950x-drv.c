@@ -56,36 +56,36 @@ module_param_named(debug,dvb_usb_it950x_debug, int, 0644);
 
 static DEFINE_MUTEX(mymutex);
 
-static Dword DRV_NIMReset(
+static u32 DRV_NIMReset(
 	void* handle);
 
-static Dword DRV_InitNIMSuspendRegs(
+static u32 DRV_InitNIMSuspendRegs(
 	void* handle);
 	
-Dword DRV_TunerSuspend(
+u32 DRV_TunerSuspend(
 	void * handle,
-	Byte ucChip,
+	u8 ucChip,
 	bool bOn);
 
-static Dword DRV_NIMSuspend(
+static u32 DRV_NIMSuspend(
 	void * handle,
 	bool bSuspend);
 
-static Dword DRV_NIMReset(
+static u32 DRV_NIMReset(
 	void* handle);
 
-static Dword DRV_InitNIMSuspendRegs(
+static u32 DRV_InitNIMSuspendRegs(
 	void* handle);
 
-static Dword DRV_Initialize(
+static u32 DRV_Initialize(
 	void* handle);
 
-static Dword DL_Initialize(
+static u32 DL_Initialize(
 	void* handle);
   
-static Dword DRV_IrTblDownload(IN void* handle)
+static u32 DRV_IrTblDownload(IN void* handle)
 {
-        Dword dwError = Error_NO_ERROR;
+        u32 dwError = Error_NO_ERROR;
         PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
         struct file *filp;
         unsigned char b_buf[512] ;
@@ -115,7 +115,7 @@ static Dword DRV_IrTblDownload(IN void* handle)
               //if (dwError) goto exit;
         }
 
-        dwError = IT9507_loadIrTable((Modulator*) &pdc->modulator, (Word)fileSize, b_buf);
+        dwError = IT9507_loadIrTable((Modulator*) &pdc->modulator, (u16)fileSize, b_buf);
         if (dwError) {deb_data("Demodulator_loadIrTable fail"); goto exit;}
 
         filp_close(filp, NULL);
@@ -129,29 +129,29 @@ exit:
 }
 
 
-static Dword DRV_getFirmwareVersionFromFile( 
+static u32 DRV_getFirmwareVersionFromFile( 
 		void* handle,
 	 	Processor	processor, 
-		Dword* 		version
+		u32* 		version
 )
 {
 
 	
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	Byte chip_version = 0;
-	Dword chip_Type;
-	Byte var[2];
-	Dword error = Error_NO_ERROR;
+	u8 chip_version = 0;
+	u32 chip_Type;
+	u8 var[2];
+	u32 error = Error_NO_ERROR;
 
-	Dword OFDM_VER1;
-    Dword OFDM_VER2;
-    Dword OFDM_VER3;
-    Dword OFDM_VER4;
+	u32 OFDM_VER1;
+    u32 OFDM_VER2;
+    u32 OFDM_VER3;
+    u32 OFDM_VER4;
 
-    Dword LINK_VER1;
-    Dword LINK_VER2;
-    Dword LINK_VER3;    
-    Dword LINK_VER4;    
+    u32 LINK_VER1;
+    u32 LINK_VER2;
+    u32 LINK_VER3;    
+    u32 LINK_VER4;    
     
 
 	error = IT9507_readRegister((Modulator*) &pdc->modulator, processor, chip_version_7_0, &chip_version);
@@ -186,18 +186,18 @@ static Dword DRV_getFirmwareVersionFromFile(
 	}
 
     if(processor == Processor_OFDM) {
-        *version = (Dword)( (OFDM_VER1 << 24) + (OFDM_VER2 << 16) + (OFDM_VER3 << 8) + OFDM_VER4);
+        *version = (u32)( (OFDM_VER1 << 24) + (OFDM_VER2 << 16) + (OFDM_VER3 << 8) + OFDM_VER4);
     }
     else { //LINK
-        *version = (Dword)( (LINK_VER1 << 24) + (LINK_VER2 << 16) + (LINK_VER3 << 8) + LINK_VER4);    
+        *version = (u32)( (LINK_VER1 << 24) + (LINK_VER2 << 16) + (LINK_VER3 << 8) + LINK_VER4);    
     }
     
     return *version;
 }
 
-Dword DRV_getDeviceType(void *handle)
+u32 DRV_getDeviceType(void *handle)
 {
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
    	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
 
 	dwError =  EagleUser_getDeviceType((Modulator*) &PDC->modulator, &PDC->deviceType);
@@ -205,17 +205,17 @@ Dword DRV_getDeviceType(void *handle)
     return(dwError);
 }
 
-static Dword  DRV_Initialize(
+static u32  DRV_Initialize(
 	    void *      handle
 )
 {
-	Dword error = Error_NO_ERROR;
-	Dword error_rx = Error_NO_ERROR;
+	u32 error = Error_NO_ERROR;
+	u32 error_rx = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	Byte temp = 0;
-	//Byte usb_dma_reg;
-	Byte chip_version = 0; 
-	Dword fileVersion, cmdVersion = 0; 
+	u8 temp = 0;
+	//u8 usb_dma_reg;
+	u8 chip_version = 0; 
+	u32 fileVersion, cmdVersion = 0; 
 	SystemConfig syscfg;
 	StreamType streamType_t;
 
@@ -240,16 +240,16 @@ static Dword  DRV_Initialize(
 
         	//use "Command_QUERYINFO" to get fw version 
         	error = IT9507_getFirmwareVersion((Modulator*) &pdc->modulator, Processor_OFDM, &cmdVersion);
-        	if(error) deb_data("DRV_Initialize : IT9507_getFirmwareVersion : error = 0x%08ld\n", error);
+        	if(error) deb_data("DRV_Initialize : IT9507_getFirmwareVersion : error = 0x%08u\n", error);
 
         	if(cmdVersion != fileVersion)
         	{
-            		deb_data("Reboot: Outside Fw = 0x%lx, Inside Fw = 0x%lx", fileVersion, cmdVersion);
+            		deb_data("Reboot: Outside Fw = 0x%x, Inside Fw = 0x%x", fileVersion, cmdVersion);
             		error = IT9507_TXreboot((Modulator*) &pdc->modulator);
             		pdc->bBootCode = true;
             		if(error) 
             		{
-                		deb_data("IT9507_reboot : error = 0x%08ld\n", error);
+                		deb_data("IT9507_reboot : error = 0x%08u\n", error);
                 		return error;
             		}
             		else {
@@ -313,7 +313,7 @@ static Dword  DRV_Initialize(
 				deb_data("    StreamType_DVBT_DATAGRAM\n");
 				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_DATAGRAM, 2, 0);
 				 
-				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08ld\n", error);
+				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
 
 				pdc->demodulator.userData = &pdc->modulator;
@@ -323,10 +323,10 @@ static Dword  DRV_Initialize(
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
 				else {
 					error = OMEGA_supportLNA((Demodulator*) &pdc->demodulator ,0);
-					if (error) deb_data("OMEGA_supportLNAfail : 0x%08ld\n", error);
+					if (error) deb_data("OMEGA_supportLNAfail : 0x%08x\n", error);
 					else deb_data("    OMEGA_supportLNA Ok\n");
 					error = Demodulator_initialize ((Demodulator*) &pdc->demodulator , StreamType_DVBT_DATAGRAM); 
-					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08ld\n", error);
+					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08x\n", error);
 					else deb_data("    Device initialize RX Ok\n");
 				}
 #endif
@@ -334,7 +334,7 @@ static Dword  DRV_Initialize(
 			case StreamType_DVBT_PARALLEL:
 				deb_data("    StreamType_DVBT_PARALLEL\n");
 				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_PARALLEL, 2, 0);			
-				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08ld\n", error);
+				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
 				
 				pdc->demodulator.userData = &pdc->modulator;
@@ -344,10 +344,10 @@ static Dword  DRV_Initialize(
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
 				else {
 					error = OMEGA_supportLNA((Demodulator*) &pdc->demodulator ,0);
-					if (error) deb_data("OMEGA_supportLNAfail : 0x%08ld\n", error);
+					if (error) deb_data("OMEGA_supportLNAfail : 0x%08x\n", error);
 					else deb_data("    OMEGA_supportLNA Ok\n");
 					error = Demodulator_initialize ((Demodulator*) &pdc->demodulator , StreamType_DVBT_PARALLEL); 
-					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08ld\n", error);
+					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08x\n", error);
 					else deb_data("    Device initialize RX Ok\n");
 				}
 #endif
@@ -356,7 +356,7 @@ static Dword  DRV_Initialize(
 				deb_data("    StreamType_DVBT_SERIAL\n"); 
 				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_SERIAL, Bus_USB, EagleUser_DEVICETYPE);
 				
-				if (error) deb_data("IT9507_initialize _Device initialize fail : 0x%08ld\n", error);
+				if (error) deb_data("IT9507_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
 				
 				pdc->demodulator.userData = &pdc->modulator;
@@ -366,10 +366,10 @@ static Dword  DRV_Initialize(
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
 				else {
 					error = OMEGA_supportLNA((Demodulator*) &pdc->demodulator ,0);
-					if (error) deb_data("OMEGA_supportLNAfail : 0x%08ld\n", error);
+					if (error) deb_data("OMEGA_supportLNAfail : 0x%08x\n", error);
 					else deb_data("    OMEGA_supportLNA Ok\n");
 					error = Demodulator_initialize ((Demodulator*) &pdc->demodulator , StreamType_DVBT_SERIAL); 
-					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08ld\n", error);
+					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08x\n", error);
 					else deb_data("    Device initialize RX Ok\n");
 				}
 #endif
@@ -378,7 +378,7 @@ static Dword  DRV_Initialize(
 				deb_data(" Set Default StreamType_DVBT_PARALLEL\n");
 
 				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_PARALLEL, Bus_USB, EagleUser_DEVICETYPE);
-				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08ld\n", error);
+				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
 
 				pdc->demodulator.userData = &pdc->modulator;
@@ -388,11 +388,11 @@ static Dword  DRV_Initialize(
 				if (error_rx) deb_data("    Device initialize RX Fail\n");
 				else {
 					error = OMEGA_supportLNA((Demodulator*) &pdc->demodulator ,0);
-					if (error) deb_data("OMEGA_supportLNAfail : 0x%08ld\n", error);
+					if (error) deb_data("OMEGA_supportLNAfail : 0x%08x\n", error);
 					else deb_data("    OMEGA_supportLNA Ok\n");
 					
 					error = Demodulator_initialize ((Demodulator*) &pdc->demodulator , StreamType_DVBT_PARALLEL);
-					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08ld\n", error);
+					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08x\n", error);
 					else deb_data("    Device initialize RX Ok\n");
 					//error_rx = Demodulator_writeRegister((Demodulator*) &pdc->demodulator, Processor_LINK, 0xd830, 1);			
 				}			
@@ -405,9 +405,9 @@ static Dword  DRV_Initialize(
 		return error;
 	}
     IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_OFDM, &cmdVersion);
-    deb_data("    FwVer OFDM = 0x%lx, ", cmdVersion);
+    deb_data("    FwVer OFDM = 0x%x, ", cmdVersion);
     IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_LINK, &cmdVersion);
-    deb_data("FwVer LINK = 0x%lx\n", cmdVersion);
+    deb_data("FwVer LINK = 0x%x\n", cmdVersion);
     
 	/* Solve 0-byte packet error. write Link 0xDD8D[3] = 1 */
 	//error = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, 0xdd8d, &usb_dma_reg);
@@ -418,12 +418,12 @@ static Dword  DRV_Initialize(
 	
 }
 
-static Dword DRV_InitDevInfo(
+static u32 DRV_InitDevInfo(
     	void *      handle,
-    	Byte        ucSlaveDemod
+    	u8        ucSlaveDemod
 )
 {
-    Dword dwError = Error_NO_ERROR;    
+    u32 dwError = Error_NO_ERROR;    
    	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
     PDC->fc[ucSlaveDemod].ulCurrentFrequency = 0;  
     PDC->fc[ucSlaveDemod].ucCurrentBandWidth = 0;
@@ -448,16 +448,16 @@ static Dword DRV_InitDevInfo(
 }	
 
 //get EEPROM_IRMODE/bIrTblDownload/bRAWIr/architecture config from EEPROM
-static Dword DRV_GetEEPROMConfig(
+static u32 DRV_GetEEPROMConfig(
 	void* handle)
 {       
-    Dword dwError = Error_NO_ERROR;
-	Byte chip_version = 0;
-	Dword chip_Type;
-	Byte  var[2];
+    u32 dwError = Error_NO_ERROR;
+	u8 chip_version = 0;
+	u32 chip_Type;
+	u8  var[2];
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	//bIrTblDownload option
-    Byte btmp = 0;
+    u8 btmp = 0;
 	int ucSlaveDemod;
 	
 	deb_data("- Enter %s Function -",__FUNCTION__);
@@ -603,7 +603,7 @@ static Dword DRV_GetEEPROMConfig(
     }
 		//pdc->modulator.chipNumber = 1; 
 //init some device info
-	for(ucSlaveDemod = 0; ucSlaveDemod <= (Byte)pdc->bDualTs; ucSlaveDemod++)
+	for(ucSlaveDemod = 0; ucSlaveDemod <= (u8)pdc->bDualTs; ucSlaveDemod++)
 	{
 		dwError = DRV_InitDevInfo(handle, ucSlaveDemod);
 	}
@@ -612,14 +612,14 @@ exit:
     return(dwError);
 }
 
-static Dword DRV_SetBusTuner(
+static u32 DRV_SetBusTuner(
 	 void * handle, 
-	 Word busId, 
-	 Word tunerId
+	 u16 busId, 
+	 u16 tunerId
 )
 {
-	Dword dwError = Error_NO_ERROR;
-	Dword 	 version = 0;
+	u32 dwError = Error_NO_ERROR;
+	u32 	 version = 0;
 
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 
@@ -635,24 +635,24 @@ static Dword DRV_SetBusTuner(
 
 	dwError = IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_LINK, &version);
     	if (version != 0) {
-        	pdc->modulator.booted = True;
+        	pdc->modulator.booted = true;
     	} 
     	else {
-        	pdc->modulator.booted = False;
+        	pdc->modulator.booted = false;
     	}
 	if (dwError) {deb_data("Demodulator_getFirmwareVersion  error\n");}
 
     	return(dwError); 
 }
 
-Dword NIM_ResetSeq(IN  void *	handle)
+u32 NIM_ResetSeq(IN  void *	handle)
 {
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	int i;
-	//Byte ucValue = 0;
+	//u8 ucValue = 0;
 	
-	Byte bootbuffer[6];
+	u8 bootbuffer[6];
 	//checksum = 0xFEDC
 	bootbuffer[0] = 0x05;
 	bootbuffer[1] = 0x00;
@@ -699,15 +699,15 @@ Dword NIM_ResetSeq(IN  void *	handle)
 
 
 //set tuner power saving and control
-static Dword DRV_ApCtrl(
+static u32 DRV_ApCtrl(
 	void* handle,
-	Byte ucSlaveDemod,
-	Bool bOn)
+	u8 ucSlaveDemod,
+	bool bOn)
 {
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	int i;
-    Dword version = 0;
+    u32 version = 0;
 	
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 	deb_data("ucSlaveDemod = %d, bOn = %s \n", ucSlaveDemod, bOn?"ON":"OFF");
@@ -779,7 +779,7 @@ static Dword DRV_ApCtrl(
 
 				deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
 				dwError = IT9507_controlPowerSaving((Modulator*) &pdc->modulator, bOn);
-				if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04ld", dwError);
+				if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x", dwError);
 			}
 		}
 		else
@@ -807,17 +807,17 @@ static Dword DRV_ApCtrl(
 			//CAP_KdPrint(("aaa DRV_TunerSuspend chip_%d", ucSlaveDemod));
 			//dwError = DRV_TunerSuspend(handle, ucSlaveDemod, !bOn);
 			//dwError = DRV_TunerPowerCtrl(handle, ucSlaveDemod, bOn);
-			//if(dwError) TUNER_KdPrint(("DRV_ApCtrl::DRV_TunerSuspend Fail: 0x%04X", dwError));
+			//if(dwError) TUNER_KdPrint(("DRV_ApCtrl::DRV_TunerSuspend Fail: 0x%04x", dwError));
 
 			deb_data("aaa IT9507_controlTunerPowerSaving chip_%d\n", ucSlaveDemod);
 	//		dwError = IT9507_controlTunerPower((Demodulator*) &pdc->Demodulator, bOn);
-			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04ld\n", dwError);
+			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04x\n", dwError);
 
 			deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
 			dwError = IT9507_controlPowerSaving((Modulator*) &pdc->modulator, bOn);
 //			mdelay(50);
 			msleep(50);
-			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04ld\n", dwError);
+			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
 		}
         deb_data("aaa Power On End-----------\n");		
     }
@@ -828,7 +828,7 @@ static Dword DRV_ApCtrl(
 			
 			//deb_data("aaa IT9507_controlTunerLeakage for Chip_1");
 			//dwError = IT9507_controlTunerLeakage((Demodulator*) &pdc->Demodulator, 1, bOn);
-			//if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerLeakage error = 0x%04ld", dwError);
+			//if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerLeakage error = 0x%04x", dwError);
 
 			//deb_data("aaa GPIOH5 on");
 			//dwError = DRV_NIMSuspend(handle, true);
@@ -837,15 +837,15 @@ static Dword DRV_ApCtrl(
 	
 		deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
 		dwError = IT9507_controlPowerSaving((Modulator*) &pdc->modulator, bOn);
-		if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04ld\n", dwError);
+		if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
 		
 		deb_data("aaa IT9507_controlTunerPowerSaving chip_%d", ucSlaveDemod);
 //		dwError = IT9507_controlTunerPower((Demodulator*) &pdc->Demodulator, bOn);
-		if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04ld\n", dwError);
+		if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04x\n", dwError);
 		//deb_data("aaa DRV_TunerSuspend chip_%d", ucSlaveDemod);
 		//dwError = DRV_TunerSuspend(handle, ucSlaveDemod, !bOn);
 		//dwError = DRV_TunerPowerCtrl(handle, ucSlaveDemod, bOn);		
-		//if(dwError) deb_data("DRV_ApCtrl::DRV_TunerSuspend Fail: 0x%04X", dwError);
+		//if(dwError) deb_data("DRV_ApCtrl::DRV_TunerSuspend Fail: 0x%04x", dwError);
 	
 		deb_data("aaa Power OFF End-----------\n");
     }
@@ -855,13 +855,13 @@ static Dword DRV_ApCtrl(
 
 
 /*
-static Dword DRV_ApCtrl (
+static u32 DRV_ApCtrl (
       void *      handle,
-      Byte        ucSlaveDemod,
-      Bool        bOn
+      u8        ucSlaveDemod,
+      bool        bOn
 )
 {
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
 
         PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 
@@ -882,12 +882,12 @@ static Dword DRV_ApCtrl (
 */
 
 /*
-static Dword DRV_ApReset(
+static u32 DRV_ApReset(
 	void* handle,
-	Byte ucSlaveDemod,
-	Bool bOn)
+	u8 ucSlaveDemod,
+	bool bOn)
 {
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
@@ -910,11 +910,11 @@ static Dword DRV_ApReset(
 }
 */
 
-static Dword DRV_TunerWakeup(
+static u32 DRV_TunerWakeup(
       void *     handle
 )
 {   
-    	Dword dwError = Error_NO_ERROR;
+    	u32 dwError = Error_NO_ERROR;
 
     	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
 
@@ -927,13 +927,13 @@ static Dword DRV_TunerWakeup(
 
 }
 
-static Dword DRV_NIMSuspend(
+static u32 DRV_NIMSuspend(
     void *      handle,
     bool        bSuspend
 
 )
 {
-    Dword dwError = Error_NO_ERROR;
+    u32 dwError = Error_NO_ERROR;
 
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
 
@@ -950,11 +950,11 @@ static Dword DRV_NIMSuspend(
     return(dwError);
 }
 
-static Dword DRV_InitNIMSuspendRegs(
+static u32 DRV_InitNIMSuspendRegs(
     void *      handle
 )
 {
-    Dword dwError = Error_NO_ERROR;
+    u32 dwError = Error_NO_ERROR;
 
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
     deb_data("- Enter %s Function -\n",__FUNCTION__);
@@ -970,13 +970,13 @@ static Dword DRV_InitNIMSuspendRegs(
     return(dwError);
 }
 
-static Dword DRV_NIMReset(
+static u32 DRV_NIMReset(
     void *      handle
 )
 {
 
 
-    Dword   dwError = Error_NO_ERROR;
+    u32   dwError = Error_NO_ERROR;
 
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
     deb_data("- Enter %s Function -\n",__FUNCTION__);
@@ -996,12 +996,12 @@ static Dword DRV_NIMReset(
 
 //************** DL_ *************//
 
-static Dword DL_NIMSuspend(
+static u32 DL_NIMSuspend(
     void *      handle,
     bool	bSuspend
 )
 {
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
 
 	mutex_lock(&mymutex);
 
@@ -1012,11 +1012,11 @@ static Dword DL_NIMSuspend(
     return (dwError);
 }
 
-static Dword DL_Initialize(
+static u32 DL_Initialize(
 	    void *      handle
 )
 {
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
     mutex_lock(&mymutex);
 
     dwError = DRV_Initialize(handle);
@@ -1027,13 +1027,13 @@ static Dword DL_Initialize(
     
 }
 
-static Dword DL_SetBusTuner(
+static u32 DL_SetBusTuner(
 	 void * handle, 
-	 Word busId, 
-	 Word tunerId
+	 u16 busId, 
+	 u16 tunerId
 )
 {
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
 	
 	mutex_lock(&mymutex);
 
@@ -1045,11 +1045,11 @@ static Dword DL_SetBusTuner(
 
 }
 
-static Dword  DL_GetEEPROMConfig(
+static u32  DL_GetEEPROMConfig(
 	 void *      handle
 )
 {   
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
     mutex_lock(&mymutex);
 
     dwError = DRV_GetEEPROMConfig(handle);
@@ -1059,11 +1059,11 @@ static Dword  DL_GetEEPROMConfig(
     return(dwError);
 } 
 
-static Dword DL_TunerWakeup(
+static u32 DL_TunerWakeup(
       void *     handle
 )
 {    
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
     mutex_lock(&mymutex);
 
     dwError = DRV_TunerWakeup(handle);
@@ -1072,11 +1072,11 @@ static Dword DL_TunerWakeup(
    
     	return(dwError);
 }
-static Dword  DL_IrTblDownload(
+static u32  DL_IrTblDownload(
       void *     handle
 )
 {
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
 
     mutex_lock(&mymutex);
 
@@ -1088,10 +1088,10 @@ static Dword  DL_IrTblDownload(
 }
 
 
-Dword DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
+u32 DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
 {
-	Dword dwError = Error_NO_ERROR;
-	Byte    ucSlaveDemod=0;
+	u32 dwError = Error_NO_ERROR;
+	u8    ucSlaveDemod=0;
   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
 
     mutex_lock(&mymutex);
@@ -1101,7 +1101,7 @@ Dword DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
 /*    for (ucSlaveDemod=0; ucSlaveDemod<PDC->modulator.chipNumber; ucSlaveDemod++)
     {
     	dwError = DRV_TunerPowerCtrl(PDC, ucSlaveDemod, bPowerOn);
-    	if(dwError) deb_data("  DRV_TunerPowerCtrl Fail: 0x%08ld\n", dwError);
+    	if(dwError) deb_data("  DRV_TunerPowerCtrl Fail: 0x%08x\n", dwError);
     }*/
 
     mutex_unlock(&mymutex);
@@ -1109,14 +1109,14 @@ Dword DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
     return (dwError);
 }
 
-Dword DL_ApPwCtrl (
+u32 DL_ApPwCtrl (
 	void* handle,
-    Bool  bChipCtl,
-    Bool  bOn
+    bool  bChipCtl,
+    bool  bOn
 )
 {
-    Dword dwError = Error_NO_ERROR;
-	Byte    i = 0;
+    u32 dwError = Error_NO_ERROR;
+	u8    i = 0;
 	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT)handle;
 	
 	mutex_lock(&mymutex);
@@ -1131,7 +1131,7 @@ Dword DL_ApPwCtrl (
 			dwError = IT9507_writeRegisterBits((Modulator*) &PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 			dwError = Demodulator_controlPowerSaving ((Demodulator*) &PDC->demodulator, bOn);				
 			if(dwError) { 
-				deb_data("ApCtrl::IT913x chip resume error = 0x%04ld\n", dwError); 
+				deb_data("ApCtrl::IT913x chip resume error = 0x%04x\n", dwError); 
 				goto exit;
 			}
 		} else {       // suspend
@@ -1139,7 +1139,7 @@ Dword DL_ApPwCtrl (
 			dwError = IT9507_writeRegisterBits((Modulator*) &PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
 			dwError = Demodulator_controlPowerSaving ((Demodulator*) &PDC->demodulator, bOn);	
 			if(dwError) { 
-				deb_data("ApCtrl::IT913x chip suspend error = 0x%04ld\n", dwError); 
+				deb_data("ApCtrl::IT913x chip suspend error = 0x%04x\n", dwError); 
 				goto exit;
 			}			
 		}
@@ -1149,20 +1149,20 @@ Dword DL_ApPwCtrl (
 			deb_data("IT950x Power ON\n");				
 			dwError = IT9507_controlPowerSaving ((Modulator*) &PDC->modulator, bOn);				
 			if(dwError) { 
-				deb_data("ApCtrl::IT9507_controlPowerSaving error = 0x%04ld\n", dwError); 
+				deb_data("ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError); 
 				goto exit;
 			}
 		} else {      // suspend
 			//deb_data("IT950x TxMode RF OFF\n");				
 			dwError = IT9507_setTxModeEnable((Modulator*) &PDC->modulator, 0);
 			if(dwError) {
-				deb_data("ApCtrl::IT9507_setTxModeEnable error = 0x%04ld\n", dwError);
+				deb_data("ApCtrl::IT9507_setTxModeEnable error = 0x%04x\n", dwError);
 				goto exit;				
 			}
 			deb_data("IT950x Power OFF\n");							
 			dwError = IT9507_controlPowerSaving ((Modulator*) &PDC->modulator, bOn);			
 			if(dwError) {
-				deb_data("ApCtrl::IT9507_controlPowerSaving error = 0x%04ld\n", dwError);
+				deb_data("ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
 				goto exit;
 			}
 		}			
@@ -1173,14 +1173,14 @@ exit:
     	return(dwError);
 }
 
-Dword DL_ApCtrl (
+u32 DL_ApCtrl (
 	void* handle,
-    Byte  ucSlaveDemod,
-    Bool  bOn
+    u8  ucSlaveDemod,
+    bool  bOn
 )
 {
-    Dword dwError = Error_NO_ERROR;
-	Byte    i = 0;
+    u32 dwError = Error_NO_ERROR;
+	u8    i = 0;
 	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT)handle;
 	
 	mutex_lock(&mymutex);
@@ -1223,10 +1223,10 @@ Dword DL_ApCtrl (
 
 			PDC->fc[ucSlaveDemod].GraphBuilt = 0;
 
-			if (PDC->bTunerPowerOff != True) dwError = DRV_ApCtrl (PDC, ucSlaveDemod, bOn);
+			if (PDC->bTunerPowerOff != true) dwError = DRV_ApCtrl (PDC, ucSlaveDemod, bOn);
 
-			if (PDC->fc[0].GraphBuilt == 0 && PDC->fc[1].GraphBuilt == 0 && PDC->bTunerPowerOff == True)
-			dwError = DL_NIMSuspend(PDC, True);
+			if (PDC->fc[0].GraphBuilt == 0 && PDC->fc[1].GraphBuilt == 0 && PDC->bTunerPowerOff == true)
+			dwError = DL_NIMSuspend(PDC, true);
 		}
     }
     mutex_unlock(&mymutex);
@@ -1235,12 +1235,12 @@ Dword DL_ApCtrl (
 }
 
 
-Dword DL_CheckTunerInited(
+u32 DL_CheckTunerInited(
 	void* handle,
-	Byte ucSlaveDemod,
-	Bool *bOn )
+	u8 ucSlaveDemod,
+	bool *bOn )
 {
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	
     mutex_lock(&mymutex);
@@ -1254,9 +1254,9 @@ Dword DL_CheckTunerInited(
     return(dwError);
 }
 
-Dword DL_DemodIOCTLFun(Modulator *modulator, Dword IOCTLCode, unsigned long pIOBuffer)
+u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffer)
 {
-    Dword dwError = Error_NO_ERROR;
+    u32 dwError = Error_NO_ERROR;
 
     mutex_lock(&mymutex);
 
@@ -1380,18 +1380,18 @@ Dword DL_DemodIOCTLFun(Modulator *modulator, Dword IOCTLCode, unsigned long pIOB
             //deb_data("IOCTL_ITE_DEMOD_GETDRIVERINFO %x, %x\n", pIOBuffer, handle);
 
             PTxModDriverInfo pDriverInfo = (PTxModDriverInfo)pIOBuffer;
-            Dword dwFWVerionLink = 0;
-            Dword dwFWVerionOFDM = 0;
+            u32 dwFWVerionLink = 0;
+            u32 dwFWVerionOFDM = 0;
             
             strcpy((char *)pDriverInfo->DriverVerion, DRIVER_RELEASE_VERSION);
-            sprintf((char *)pDriverInfo->APIVerion, "%X.%X.%X.%X", (Byte)(Eagle_Version_NUMBER>>8), (Byte)(Eagle_Version_NUMBER), Eagle_Version_DATE, Eagle_Version_BUILD);
+            sprintf((char *)pDriverInfo->APIVerion, "%X.%X.%X.%X", (u8)(Eagle_Version_NUMBER>>8), (u8)(Eagle_Version_NUMBER), Eagle_Version_DATE, Eagle_Version_BUILD);
 
             IT9507_getFirmwareVersion (modulator, Processor_LINK, &dwFWVerionLink);
-            sprintf((char *)pDriverInfo->FWVerionLink, "%X.%X.%X.%X", (Byte)(dwFWVerionLink>>24), (Byte)(dwFWVerionLink>>16), (Byte)(dwFWVerionLink>>8), (Byte)dwFWVerionLink);
+            sprintf((char *)pDriverInfo->FWVerionLink, "%X.%X.%X.%X", (u8)(dwFWVerionLink>>24), (u8)(dwFWVerionLink>>16), (u8)(dwFWVerionLink>>8), (u8)dwFWVerionLink);
             deb_data("Modulator_getFirmwareVersion Processor_LINK %s\n", (char *)pDriverInfo->FWVerionLink);
  
             IT9507_getFirmwareVersion (modulator, Processor_OFDM, &dwFWVerionOFDM);
-            sprintf((char *)pDriverInfo->FWVerionOFDM, "%X.%X.%X.%X", (Byte)(dwFWVerionOFDM>>24), (Byte)(dwFWVerionOFDM>>16), (Byte)(dwFWVerionOFDM>>8), (Byte)dwFWVerionOFDM);
+            sprintf((char *)pDriverInfo->FWVerionOFDM, "%X.%X.%X.%X", (u8)(dwFWVerionOFDM>>24), (u8)(dwFWVerionOFDM>>16), (u8)(dwFWVerionOFDM>>8), (u8)dwFWVerionOFDM);
             deb_data("Modulator_getFirmwareVersion Processor_OFDM %s\n", (char *)pDriverInfo->FWVerionOFDM);
 
             strcpy((char *)pDriverInfo->Company, "ITEtech");
@@ -1514,10 +1514,10 @@ Dword DL_DemodIOCTLFun(Modulator *modulator, Dword IOCTLCode, unsigned long pIOB
     return(dwError);
 }
 
-Dword Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, Bool bBoot)
+u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 {
-	Dword error = Error_NO_ERROR;
-	Byte filterIdx=0;
+	u32 error = Error_NO_ERROR;
+	u8 filterIdx=0;
 	int errcount=0;
 
 	PDC->modulator.userData = (void *)udev;
@@ -1590,7 +1590,7 @@ Dword Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, Bool bBoot)
         	error = DL_SetBusTuner (PDC, Bus_USB, 0x38);
         	if (error)
         	{ 
-            		deb_data("First DL_SetBusTuner fail : 0x%08ld\n",error );
+            		deb_data("First DL_SetBusTuner fail : 0x%08x\n",error );
 			errcount++;
             		goto Exit; 
         	}
@@ -1598,7 +1598,7 @@ Dword Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, Bool bBoot)
         	error =DL_GetEEPROMConfig(PDC);
         	if (error)
         	{
-            		deb_data("DL_GetEEPROMConfig fail : 0x%08ld\n", error);
+            		deb_data("DL_GetEEPROMConfig fail : 0x%08x\n", error);
 			errcount++;
             		goto Exit;
         	}
@@ -1634,7 +1634,7 @@ Dword Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, Bool bBoot)
 
 	error = DL_Initialize(PDC);
 	if (error) {
-		deb_data("DL_Initialize fail! 0x%08ld\n", error);
+		deb_data("DL_Initialize fail! 0x%08x\n", error);
 		errcount++;
 		goto Exit;
 	}

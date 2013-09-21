@@ -2,15 +2,15 @@
 #define _EAGLETUNER_H_
 
 
-Dword EagleTuner_setIQCalibration(
+u32 EagleTuner_setIQCalibration(
 	IN  Modulator*    modulator,
-    IN  Dword         frequency	
+    IN  u32         frequency	
 );
 
-Dword EagleTuner_calIQCalibrationValue(
+u32 EagleTuner_calIQCalibrationValue(
 	IN  Modulator*    modulator,
-    IN  Dword         frequency,
-	IN  Byte*		  val
+    IN  u32         frequency,
+	IN  u8*		  val
 );
 
 

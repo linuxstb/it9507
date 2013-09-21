@@ -1,21 +1,21 @@
 #include "IT9507.h"
 
-Dword ADF4351_busInit (Modulator*    modulator);
-Dword ADF4351_writeData (
+u32 ADF4351_busInit (Modulator*    modulator);
+u32 ADF4351_writeData (
 		Modulator*  modulator,
-		Byte		count,
-		Byte*		buf		
+		u8		count,
+		u8*		buf		
 );
 
-Dword ADF4351_test (
+u32 ADF4351_test (
 		Modulator*  modulator		
 );
 
-Dword ADF4351_setFrequency (
+u32 ADF4351_setFrequency (
 		Modulator*  modulator,
-		Dword freq_KHz	//KHz
+		u32 freq_KHz	//KHz
 );
 
-void ADF4351_setRcounter(Modulator*  modulator, Word Rcounter);
-void ADF4351_setTdiv2(Modulator*  modulator, Byte Tdiv2);
-void ADF4351_setLDF(Modulator*  modulator, Byte LDF);
+void ADF4351_setRcounter(Modulator*  modulator, u16 Rcounter);
+void ADF4351_setTdiv2(Modulator*  modulator, u8 Tdiv2);
+void ADF4351_setLDF(Modulator*  modulator, u8 LDF);

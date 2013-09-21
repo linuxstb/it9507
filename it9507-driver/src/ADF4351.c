@@ -10,12 +10,12 @@
 
 #define PFD	26	//PFD = 26MHz
 
-Dword ADF4351_Reg0 = default_Reg0;	
-Dword ADF4351_Reg1 = default_Reg1;	
-Dword ADF4351_Reg2 = default_Reg2;	
-Dword ADF4351_Reg3 = default_Reg3;	
-Dword ADF4351_Reg4 = default_Reg4;	
-Dword ADF4351_Reg5 = default_Reg5;	
+u32 ADF4351_Reg0 = default_Reg0;	
+u32 ADF4351_Reg1 = default_Reg1;	
+u32 ADF4351_Reg2 = default_Reg2;	
+u32 ADF4351_Reg3 = default_Reg3;	
+u32 ADF4351_Reg4 = default_Reg4;	
+u32 ADF4351_Reg5 = default_Reg5;	
 
 void SET_LE(Modulator*    modulator){
 	if(modulator->systemConfig.loLe != UNUSED){
@@ -52,8 +52,8 @@ void CLR_DATA(Modulator*    modulator){
 
 
 
-Dword ADF4351_busInit (Modulator*    modulator) {
-    Dword error = ModulatorError_NO_ERROR;
+u32 ADF4351_busInit (Modulator*    modulator) {
+    u32 error = ModulatorError_NO_ERROR;
 	if(modulator->systemConfig.loClk != UNUSED){ //output
 		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.loClk+2, 1);//gpiox_en
 		if (error) goto exit;
@@ -79,12 +79,12 @@ exit:
 }
 
 
-Dword ADF4351_writeData (
+u32 ADF4351_writeData (
 		Modulator*  modulator,
-		Byte		count,
-		Byte*		buf		
+		u8		count,
+		u8*		buf		
 ) {
-    Dword error = ModulatorError_NO_ERROR;
+    u32 error = ModulatorError_NO_ERROR;
 	unsigned	char	ValueToWrite = 0;
     unsigned	char	i = 0;
 	unsigned	char	j = 0;
@@ -124,77 +124,77 @@ Dword ADF4351_writeData (
 }
 
 
-Dword ADF4351_test (
+u32 ADF4351_test (
 		Modulator*  modulator		
 ) {
 
-    Dword error = ModulatorError_NO_ERROR;
-	Dword reg;
-	Byte buf[4];
+    u32 error = ModulatorError_NO_ERROR;
+	u32 reg;
+	u8 buf[4];
 
 	reg = default_Reg5;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);				
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);				
 	ADF4351_writeData(modulator, 4,buf);		
 
 	reg = default_Reg4;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);				
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);				
 	ADF4351_writeData(modulator, 4,buf);
 
 	reg = default_Reg3;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);				
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);				
 	ADF4351_writeData(modulator, 4,buf);		
 
 	reg = default_Reg2;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);				
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);				
 	ADF4351_writeData(modulator, 4,buf);	
 
 	reg = default_Reg1;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);				
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);				
 	ADF4351_writeData(modulator, 4,buf);		
 
 	reg = default_Reg0;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);				
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);				
 	ADF4351_writeData(modulator, 4,buf);		
 	return error;
 }
 
 
-Dword ADF4351_setFrequency (
+u32 ADF4351_setFrequency (
 		Modulator*  modulator,
-		Dword freq_KHz	//KHz
+		u32 freq_KHz	//KHz
 ) {
-    Dword error = ModulatorError_NO_ERROR;
-	Dword reg;
-	Byte buf[4];
-	Dword VCO_KHz;
-	Dword DividerSelect;
-	Dword DividerValue;
-	Dword INTvalue;
-	Dword MOD;
-	Dword FRAC;
+    u32 error = ModulatorError_NO_ERROR;
+	u32 reg;
+	u8 buf[4];
+	u32 VCO_KHz;
+	u32 DividerSelect;
+	u32 DividerValue;
+	u32 INTvalue;
+	u32 MOD;
+	u32 FRAC;
 
-	Word Rcounter = 130;
-	Byte Tdiv2 = 0;
-	Byte LDF = 1;
-	Dword Fpfd;
+	u16 Rcounter = 130;
+	u8 Tdiv2 = 0;
+	u8 LDF = 1;
+	u32 Fpfd;
 
 	//---set Divider Select
 	if((4400000>=freq_KHz) && (freq_KHz>2200000)){
@@ -252,46 +252,46 @@ Dword ADF4351_setFrequency (
 	}
 
 	reg = ADF4351_Reg5;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);	
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);	
 	
 	ADF4351_writeData(modulator, 4,buf);		
 
 	reg = (ADF4351_Reg4 & 0x008FFFFF) | (DividerSelect<<20) | 4;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);
 	ADF4351_writeData(modulator, 4,buf);
 
 	reg = ADF4351_Reg3 ;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);
 	ADF4351_writeData(modulator, 4,buf);		
 
 	reg = ADF4351_Reg2;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);
 	ADF4351_writeData(modulator, 4,buf);	
 
 	reg = (ADF4351_Reg1 & 0x1FFFC000) | (MOD<<3) | 1;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);	
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);	
 	ADF4351_writeData(modulator, 4,buf);		
 
 	reg = (ADF4351_Reg0 & 0) | (INTvalue<<15) | (FRAC<<3) | 0;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);
 	ADF4351_writeData(modulator, 4,buf);		
 
 exit:
@@ -300,67 +300,67 @@ exit:
 
 void ADF4351_setRcounter(
 	Modulator*  modulator,
-	Word Rcounter
+	u16 Rcounter
 ){
-	Dword reg;
-	Byte buf[4];
+	u32 reg;
+	u8 buf[4];
 	ADF4351_Reg2 = (ADF4351_Reg2 & 0xFF003FFF) + (Rcounter<<14);
 	reg = ADF4351_Reg2;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);
 	ADF4351_writeData(modulator, 4,buf);	
 
 	reg = ADF4351_Reg0;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);
 	ADF4351_writeData(modulator, 4,buf);	
 
 }
 
 void ADF4351_setTdiv2(
 	  Modulator*  modulator,
-	  Byte Tdiv2
+	  u8 Tdiv2
 ) {
-	Dword reg;
-	Byte buf[4];
+	u32 reg;
+	u8 buf[4];
 	ADF4351_Reg2 = (ADF4351_Reg2 & 0xFEFFFFFF) + (Tdiv2<<24);
 	reg = ADF4351_Reg2;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);
 	ADF4351_writeData(modulator, 4,buf);	
 
 	reg = ADF4351_Reg0;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);
 	ADF4351_writeData(modulator, 4,buf);	
 }
 
 void ADF4351_setLDF(
 	Modulator*  modulator,
-	Byte LDF
+	u8 LDF
 ){
-	Dword reg;
-	Byte buf[4];
+	u32 reg;
+	u8 buf[4];
 	ADF4351_Reg2 = (ADF4351_Reg2 & 0xFFFFFEFF) + (LDF<<8);
 	reg = ADF4351_Reg2;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);
 	ADF4351_writeData(modulator, 4,buf);	
 
 	reg = ADF4351_Reg0;
-	buf[3] = (Byte)(reg>>24);
-	buf[2] = (Byte)(reg>>16);
-	buf[1] = (Byte)(reg>>8);				
- 	buf[0] = (Byte)(reg);
+	buf[3] = (u8)(reg>>24);
+	buf[2] = (u8)(reg>>16);
+	buf[1] = (u8)(reg>>8);				
+ 	buf[0] = (u8)(reg);
 	ADF4351_writeData(modulator, 4,buf);	
 }

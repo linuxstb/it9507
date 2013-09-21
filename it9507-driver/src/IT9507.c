@@ -1,9 +1,9 @@
 #include "IT9507.h"
 
-Byte IT9507Cmd_sequence = 0;
-//Byte CmdSequence_EagleSlaveIIC = 0;
+u8 IT9507Cmd_sequence = 0;
+//u8 CmdSequence_EagleSlaveIIC = 0;
 
-const Byte Eagle_bitMask[Eagle_MAX_BIT] = {
+const u8 Eagle_bitMask[Eagle_MAX_BIT] = {
 	0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF
 };
 
@@ -80,80 +80,80 @@ unsigned int IT9507_getLoFreq(unsigned int rf_freq_kHz)
 }
 
 
-Dword IT9507Cmd_addChecksum (
+u32 IT9507Cmd_addChecksum (
     IN  Modulator*    modulator,
-    OUT Dword*          bufferLength,
-    OUT Byte*           buffer
+    OUT u32*          bufferLength,
+    OUT u8*           buffer
 ) {
-    Dword error  = ModulatorError_NO_ERROR;
-    Dword loop   = (*bufferLength - 1) / 2;
-    Dword remain = (*bufferLength - 1) % 2;
-    Dword i;
-    Word  checksum = 0;
+    u32 error  = ModulatorError_NO_ERROR;
+    u32 loop   = (*bufferLength - 1) / 2;
+    u32 remain = (*bufferLength - 1) % 2;
+    u32 i;
+    u16  checksum = 0;
 
 	if(modulator == NULL)
 		return (ModulatorError_NULL_HANDLE_PTR);
 
     for (i = 0; i < loop; i++)
-        checksum = checksum + (Word) (buffer[2 * i + 1] << 8) + (Word) (buffer[2 * i + 2]);
+        checksum = checksum + (u16) (buffer[2 * i + 1] << 8) + (u16) (buffer[2 * i + 2]);
     if (remain)
-        checksum = checksum + (Word) (buffer[*bufferLength - 1] << 8);
+        checksum = checksum + (u16) (buffer[*bufferLength - 1] << 8);
     
     checksum = ~checksum;
-    buffer[*bufferLength]     = (Byte) ((checksum & 0xFF00) >> 8);
-    buffer[*bufferLength + 1] = (Byte) (checksum & 0x00FF);
-    buffer[0]                 = (Byte) (*bufferLength + 1);
+    buffer[*bufferLength]     = (u8) ((checksum & 0xFF00) >> 8);
+    buffer[*bufferLength + 1] = (u8) (checksum & 0x00FF);
+    buffer[0]                 = (u8) (*bufferLength + 1);
     *bufferLength            += 2;
 
     return (error);
 }
 
 
-Dword IT9507Cmd_removeChecksum (
+u32 IT9507Cmd_removeChecksum (
     IN  Modulator*    modulator,
-    OUT Dword*          bufferLength,
-    OUT Byte*           buffer
+    OUT u32*          bufferLength,
+    OUT u8*           buffer
 ) {
-    Dword error    = ModulatorError_NO_ERROR;
-    Dword loop     = (*bufferLength - 3) / 2;
-    Dword remain   = (*bufferLength - 3) % 2;
-    Dword i;
-    Word  checksum = 0;
+    u32 error    = ModulatorError_NO_ERROR;
+    u32 loop     = (*bufferLength - 3) / 2;
+    u32 remain   = (*bufferLength - 3) % 2;
+    u32 i;
+    u16  checksum = 0;
 	if(modulator == NULL)
 		return (ModulatorError_NULL_HANDLE_PTR);
 
     for (i = 0; i < loop; i++)
-        checksum = checksum + (Word) (buffer[2 * i + 1] << 8) + (Word) (buffer[2 * i + 2]);
+        checksum = checksum + (u16) (buffer[2 * i + 1] << 8) + (u16) (buffer[2 * i + 2]);
     if (remain)
-        checksum = checksum + (Word) (buffer[*bufferLength - 3] << 8);    
+        checksum = checksum + (u16) (buffer[*bufferLength - 3] << 8);    
     
     checksum = ~checksum;
-    if (((Word)(buffer[*bufferLength - 2] << 8) + (Word)(buffer[*bufferLength - 1])) != checksum) {
+    if (((u16)(buffer[*bufferLength - 2] << 8) + (u16)(buffer[*bufferLength - 1])) != checksum) {
         error = ModulatorError_WRONG_CHECKSUM;
         goto exit;
     }
     if (buffer[2])
         error = ModulatorError_FIRMWARE_STATUS | buffer[2];
     
-    buffer[0]      = (Byte) (*bufferLength - 3);
+    buffer[0]      = (u8) (*bufferLength - 3);
     *bufferLength -= 2;
 
 exit :
     return (error);
 }
 
-Dword IT9507Cmd_reboot (
+u32 IT9507Cmd_reboot (
     IN  Modulator*    modulator
 ) {
-    Dword       error = ModulatorError_NO_ERROR;
-    Word        command;
-    Byte        buffer[255];
-    Dword       bufferLength,cnt;
+    u32       error = ModulatorError_NO_ERROR;
+    u16        command;
+    u8        buffer[255];
+    u32       bufferLength,cnt;
        
     command   = IT9507Cmd_buildCommand (Command_REBOOT, Processor_LINK);
-    buffer[1] = (Byte) (command >> 8);
-    buffer[2] = (Byte) command;
-    buffer[3] = (Byte) IT9507Cmd_sequence++;
+    buffer[1] = (u8) (command >> 8);
+    buffer[2] = (u8) command;
+    buffer[3] = (u8) IT9507Cmd_sequence++;
     bufferLength = 4;
     error = IT9507Cmd_addChecksum (modulator, &bufferLength, buffer);
     if (error) goto exit;
@@ -170,23 +170,23 @@ exit :
     return (error);
 }
 
-Dword IT9507Cmd_sendCommand (
+u32 IT9507Cmd_sendCommand (
     IN  Modulator*    modulator,
-    IN  Word            command,
+    IN  u16            command,
     IN  Processor       processor,
-    IN  Dword           writeBufferLength,
-    IN  Byte*           writeBuffer,
-    IN  Dword           readBufferLength,
-    OUT Byte*           readBuffer
+    IN  u32           writeBufferLength,
+    IN  u8*           writeBuffer,
+    IN  u32           readBufferLength,
+    OUT u8*           readBuffer
 ) {
-    Dword       error = ModulatorError_NO_ERROR;
-    Byte        buffer[255];
-    Dword       bufferLength;
-    Dword       remainLength;
-    Dword       sendLength;
-    Dword       i, k, cnt;
+    u32       error = ModulatorError_NO_ERROR;
+    u8        buffer[255];
+    u32       bufferLength;
+    u32       remainLength;
+    u32       sendLength;
+    u32       i, k, cnt;
     
-    Dword       maxFrameSize = EagleUser_MAXFRAMESIZE;
+    u32       maxFrameSize = EagleUser_MAXFRAMESIZE;
     
     if ((writeBufferLength + 6) > maxFrameSize) {
         error = ModulatorError_INVALID_DATA_LENGTH;
@@ -206,9 +206,9 @@ Dword IT9507Cmd_sendCommand (
 
     if (writeBufferLength == 0) {
         command   = IT9507Cmd_buildCommand (command, processor);
-        buffer[1] = (Byte) (command >> 8);
-        buffer[2] = (Byte) command;
-        buffer[3] = (Byte) IT9507Cmd_sequence++;
+        buffer[1] = (u8) (command >> 8);
+        buffer[2] = (u8) command;
+        buffer[3] = (u8) IT9507Cmd_sequence++;
         bufferLength = 4;
         error = IT9507Cmd_addChecksum (modulator, &bufferLength, buffer);
         if (error) goto exit;
@@ -232,9 +232,9 @@ Dword IT9507Cmd_sendCommand (
         }
     } else {
         command   = IT9507Cmd_buildCommand (command, processor);
-        buffer[1] = (Byte) (command >> 8);
-        buffer[2] = (Byte) command;
-        buffer[3] = (Byte) IT9507Cmd_sequence++;
+        buffer[1] = (u8) (command >> 8);
+        buffer[2] = (u8) command;
+        buffer[3] = (u8) IT9507Cmd_sequence++;
         for (k = 0; k < writeBufferLength; k++)
             buffer[k + 4] = writeBuffer[k];
         
@@ -286,12 +286,12 @@ exit :
     return (error);
 }
 
-Dword IT9507_calOutputGain (
+u32 IT9507_calOutputGain (
 	IN  Modulator*    modulator,
-	IN  Byte		  *defaultValue,
+	IN  u8		  *defaultValue,
 	IN  int			  *gain	   
 ) {
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 	int amp_mul;
 	int c1value = 0;
 	int c2value = 0;
@@ -300,15 +300,15 @@ Dword IT9507_calOutputGain (
 	int c2value_default;
 	int c3value_default;	
 	
-	Dword amp_mul_max1 = 0;
-	Dword amp_mul_max2 = 0;
-	Dword amp_mul_max3 = 0;
+	u32 amp_mul_max1 = 0;
+	u32 amp_mul_max2 = 0;
+	u32 amp_mul_max3 = 0;
 	int amp_mul_max = 0;
 	int i = 0;
 	
 	int gain_X10 = *gain * 10;
 	
-	Bool overflow = False;
+	bool overflow = false;
 	
 	if(modulator == NULL){
 		error = ModulatorError_NULL_HANDLE_PTR;
@@ -355,12 +355,12 @@ Dword IT9507_calOutputGain (
 			}
 			if(c1value>0x03ff){
 				c1value=0x03ff;
-				overflow = True;				
+				overflow = true;				
 			}
 			
 			if(c3value>0x03ff){
 				c3value=0x03ff;
-				overflow = True;				
+				overflow = true;				
 			}
 
 			if(overflow)
@@ -381,11 +381,11 @@ Dword IT9507_calOutputGain (
 				c3value = (c3value_default * amp_mul)/10000;
 			}
 			if(c1value==0){
-				overflow = True;
+				overflow = true;
 			}
 			
 			if(c3value==0){
-				overflow = True;
+				overflow = true;
 			}
 
 			if(overflow)
@@ -410,16 +410,16 @@ exit:
 }
 
 
-Dword IT9507_selectBandwidth (
+u32 IT9507_selectBandwidth (
 	IN  Modulator*    modulator,
-	IN  Word          bandwidth          /** KHz              */
+	IN  u16          bandwidth          /** KHz              */
 ) {
-	Dword error ;
-	Byte temp1 ;
-	Byte temp2 ;
-	Byte temp3 ;
-	Byte temp4 ;
-	Byte temp5 ;
+	u32 error ;
+	u8 temp1 ;
+	u8 temp2 ;
+	u8 temp3 ;
+	u8 temp4 ;
+	u8 temp5 ;
 
 	error = ModulatorError_NO_ERROR;
 	temp1 = 0;
@@ -569,15 +569,15 @@ exit :
 }
 
 
-Dword IT9507_setFrequency (
+u32 IT9507_setFrequency (
 	IN  Modulator*    modulator,
-	IN  Dword           frequency
+	IN  u32           frequency
 ) {
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 	
 	unsigned int tmp;
-	Byte freq_code_H,freq_code_L;
-	Word TABLE_NROW = modulator->calibrationInfo.tableGroups;
+	u8 freq_code_H,freq_code_L;
+	u16 TABLE_NROW = modulator->calibrationInfo.tableGroups;
 	
 	if(modulator->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<frequency 
 		|| modulator->calibrationInfo.ptrIQtableEx[0].frequency>frequency 
@@ -620,20 +620,20 @@ exit :
 
 
 
-Dword IT9507_loadFirmware (
+u32 IT9507_loadFirmware (
 	IN  Modulator*    modulator,
-	IN  Byte*           firmwareCodes,
+	IN  u8*           firmwareCodes,
 	IN  Segment*        firmwareSegments,
-	IN  Word*           firmwarePartitions
+	IN  u16*           firmwarePartitions
 ) {
-	Dword error = ModulatorError_NO_ERROR;
-	Dword beginPartition = 0;
-	Dword endPartition = 0;
-	Dword version;
-	Dword firmwareLength;
-	Byte* firmwareCodesPointer;
-	Dword i;
-	Byte temp;
+	u32 error = ModulatorError_NO_ERROR;
+	u32 beginPartition = 0;
+	u32 endPartition = 0;
+	u32 version;
+	u32 firmwareLength;
+	u8* firmwareCodesPointer;
+	u32 i;
+	u8 temp;
 	
 	/** Set I2C master clock speed. */
 	temp = EagleUser_IIC_SPEED;
@@ -676,19 +676,19 @@ exit :
 	return (error);
 }
 
-Dword IT9507_loadScript (
+u32 IT9507_loadScript (
 	IN  Modulator*    modulator,
-	IN  Word*           scriptSets,
+	IN  u16*           scriptSets,
 	IN  ValueSet*       scripts
 ) {
-	Dword error = ModulatorError_NO_ERROR;
-	Word beginScript;
-	Word endScript;
-	Byte i, supportRelay = 0, chipNumber = 0, bufferLens = 1;
-	Word j;
-	Byte temp;
-	Byte buffer[20] = {0,};
-	Dword tunerAddr, tunerAddrTemp;
+	u32 error = ModulatorError_NO_ERROR;
+	u16 beginScript;
+	u16 endScript;
+	u8 i, supportRelay = 0, chipNumber = 0, bufferLens = 1;
+	u16 j;
+	u8 temp;
+	u8 buffer[20] = {0,};
+	u32 tunerAddr, tunerAddrTemp;
 	
 	/** Querry SupportRelayCommandWrite **/
 	error = IT9507_readRegisters (modulator, Processor_OFDM, 0x004D, 1, &supportRelay);
@@ -740,34 +740,34 @@ exit :
 	return (error);
 }
 
-Dword IT9507_writeRegister (
+u32 IT9507_writeRegister (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    IN  Byte            value
+    IN  u32           registerAddress,
+    IN  u8            value
 ) {
    	return (IT9507_writeRegisters(modulator, processor, registerAddress, 1, &value));
 }
 
 
-Dword IT9507_writeRegisters (
+u32 IT9507_writeRegisters (
     IN  Modulator*    modulator,
     IN  Processor     processor,
-    IN  Dword         registerAddress,
-    IN  Byte          writeBufferLength,
-    IN  Byte*         writeBuffer
+    IN  u32         registerAddress,
+    IN  u8          writeBufferLength,
+    IN  u8*         writeBuffer
 ) {
-  	Dword error = ModulatorError_NO_ERROR;
+  	u32 error = ModulatorError_NO_ERROR;
 
-	Byte registerAddressLength;
-	Word        command;
-    Byte        buffer[255];
-    Dword       bufferLength;
-    Dword       remainLength;
-    Dword       sendLength;
-    Dword       i,cnt;
+	u8 registerAddressLength;
+	u16        command;
+    u8        buffer[255];
+    u32       bufferLength;
+    u32       remainLength;
+    u32       sendLength;
+    u32       i,cnt;
    
-    Byte       maxFrameSize = EagleUser_MAXFRAMESIZE;
+    u8       maxFrameSize = EagleUser_MAXFRAMESIZE;
 
 	if (processor == Processor_LINK) {
 		if (registerAddress > 0x000000FF) {
@@ -795,15 +795,15 @@ Dword IT9507_writeRegisters (
 
     /** add frame header */
     command   = IT9507Cmd_buildCommand (Command_REG_DEMOD_WRITE, processor);
-    buffer[1] = (Byte) (command >> 8);
-    buffer[2] = (Byte) command;
-    buffer[3] = (Byte) IT9507Cmd_sequence++;
-    buffer[4] = (Byte) writeBufferLength;
-    buffer[5] = (Byte) registerAddressLength;
-    buffer[6] = (Byte) ((registerAddress) >> 24); /** Get first byte of reg. address  */
-    buffer[7] = (Byte) ((registerAddress) >> 16); /** Get second byte of reg. address */
-    buffer[8] = (Byte) ((registerAddress) >> 8);  /** Get third byte of reg. address  */
-    buffer[9] = (Byte) (registerAddress );        /** Get fourth byte of reg. address */
+    buffer[1] = (u8) (command >> 8);
+    buffer[2] = (u8) command;
+    buffer[3] = (u8) IT9507Cmd_sequence++;
+    buffer[4] = (u8) writeBufferLength;
+    buffer[5] = (u8) registerAddressLength;
+    buffer[6] = (u8) ((registerAddress) >> 24); /** Get first byte of reg. address  */
+    buffer[7] = (u8) ((registerAddress) >> 16); /** Get second byte of reg. address */
+    buffer[8] = (u8) ((registerAddress) >> 8);  /** Get third byte of reg. address  */
+    buffer[9] = (u8) (registerAddress );        /** Get fourth byte of reg. address */
 
     /** add frame data */
     for (i = 0; i < writeBufferLength; i++) {    
@@ -854,14 +854,14 @@ return (error);
 
 
 
-Dword IT9507_writeGenericRegisters (
+u32 IT9507_writeGenericRegisters (
     IN  Modulator*    modulator,
-    IN  Byte            slaveAddress,
-    IN  Byte            bufferLength,
-    IN  Byte*           buffer
+    IN  u8            slaveAddress,
+    IN  u8            bufferLength,
+    IN  u8*           buffer
 ) {
-    Byte writeBuffer[256];
-	Byte i;
+    u8 writeBuffer[256];
+	u8 i;
 	
 	writeBuffer[0] = bufferLength;
 	writeBuffer[1] = 2;
@@ -874,23 +874,23 @@ Dword IT9507_writeGenericRegisters (
 }
 
 
-Dword IT9507_writeEepromValues (
+u32 IT9507_writeEepromValues (
     IN  Modulator*    modulator,
-    IN  Word            registerAddress,
-    IN  Byte            writeBufferLength,
-    IN  Byte*           writeBuffer
+    IN  u16            registerAddress,
+    IN  u8            writeBufferLength,
+    IN  u8*           writeBuffer
 ) {
-    Dword       error = ModulatorError_NO_ERROR;
-    Word        command;
-    Byte        buffer[255];
-    Dword       bufferLength;
-    Dword       remainLength;
-    Dword       sendLength;
-    Dword       i;
+    u32       error = ModulatorError_NO_ERROR;
+    u16        command;
+    u8        buffer[255];
+    u32       bufferLength;
+    u32       remainLength;
+    u32       sendLength;
+    u32       i;
    
-    Dword       maxFrameSize;
-	Byte eepromAddress = 0x01;	
-	Byte registerAddressLength = 0x01;
+    u32       maxFrameSize;
+	u8 eepromAddress = 0x01;	
+	u8 registerAddressLength = 0x01;
 
     EagleUser_enterCriticalSection (modulator);
 
@@ -898,21 +898,21 @@ Dword IT9507_writeEepromValues (
 
     maxFrameSize = EagleUser_MAXFRAMESIZE; 
 
-    if ((Dword)(writeBufferLength + 11) > maxFrameSize) {
+    if ((u32)(writeBufferLength + 11) > maxFrameSize) {
         error = ModulatorError_INVALID_DATA_LENGTH;
         goto exit;
     }
 
     /** add frame header */
     command   = IT9507Cmd_buildCommand (Command_REG_EEPROM_WRITE, Processor_LINK);
-    buffer[1] = (Byte) (command >> 8);
-    buffer[2] = (Byte) command;
-    buffer[3] = (Byte) IT9507Cmd_sequence++;
-    buffer[4] = (Byte) writeBufferLength;
-    buffer[5] = (Byte) eepromAddress;
-    buffer[6] = (Byte) registerAddressLength;
-    buffer[7] = (Byte) (registerAddress >> 8);  /** Get high byte of reg. address */
-    buffer[8] = (Byte) registerAddress;         /** Get low byte of reg. address  */
+    buffer[1] = (u8) (command >> 8);
+    buffer[2] = (u8) command;
+    buffer[3] = (u8) IT9507Cmd_sequence++;
+    buffer[4] = (u8) writeBufferLength;
+    buffer[5] = (u8) eepromAddress;
+    buffer[6] = (u8) registerAddressLength;
+    buffer[7] = (u8) (registerAddress >> 8);  /** Get high byte of reg. address */
+    buffer[8] = (u8) registerAddress;         /** Get low byte of reg. address  */
 
     /** add frame data */
     for (i = 0; i < writeBufferLength; i++) {
@@ -952,18 +952,18 @@ exit :
 }
 
 
-Dword IT9507_writeRegisterBits (
+u32 IT9507_writeRegisterBits (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    IN  Byte            position,
-    IN  Byte            length,
-    IN  Byte            value
+    IN  u32           registerAddress,
+    IN  u8            position,
+    IN  u8            length,
+    IN  u8            value
 )
 {
-    Dword error = ModulatorError_NO_ERROR;
+    u32 error = ModulatorError_NO_ERROR;
 
-	Byte temp;
+	u8 temp;
 
 	if (length == 8) {
 		error = IT9507_writeRegisters (modulator, processor, registerAddress, 1, &value);
@@ -973,7 +973,7 @@ Dword IT9507_writeRegisterBits (
 		if (error) goto exit;
 		
 
-		temp = (Byte)REG_CREATE (value, temp, position, length);
+		temp = (u8)REG_CREATE (value, temp, position, length);
 
 		error = IT9507_writeRegisters (modulator, processor, registerAddress, 1, &temp);
 		if (error) goto exit;
@@ -985,34 +985,34 @@ exit:
 }
 
 
-Dword IT9507_readRegister (
+u32 IT9507_readRegister (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    OUT Byte*           value
+    IN  u32           registerAddress,
+    OUT u8*           value
 ) {
     return (IT9507_readRegisters (modulator, processor, registerAddress, 1, value));
 }
 
 
-Dword IT9507_readRegisters (
+u32 IT9507_readRegisters (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    IN  Byte            readBufferLength,
-    OUT Byte*           readBuffer
+    IN  u32           registerAddress,
+    IN  u8            readBufferLength,
+    OUT u8*           readBuffer
 ) {
-    Dword error = ModulatorError_NO_ERROR;
+    u32 error = ModulatorError_NO_ERROR;
 	
-	Byte registerAddressLength;
-	Word        command;
-    Byte        buffer[255];
-    Dword       bufferLength;
-    Dword       sendLength;
-    Dword       remainLength;
-    Dword       i, k, cnt;
+	u8 registerAddressLength;
+	u16        command;
+    u8        buffer[255];
+    u32       bufferLength;
+    u32       sendLength;
+    u32       remainLength;
+    u32       i, k, cnt;
     
-    Byte       maxFrameSize = EagleUser_MAXFRAMESIZE;
+    u8       maxFrameSize = EagleUser_MAXFRAMESIZE;
 		
 	if (processor == Processor_LINK) {
 		if (registerAddress > 0x000000FF) {
@@ -1044,15 +1044,15 @@ Dword IT9507_readRegisters (
 
     /** add frame header */
     command   = IT9507Cmd_buildCommand (Command_REG_DEMOD_READ, processor);
-    buffer[1] = (Byte) (command >> 8);
-    buffer[2] = (Byte) command;
-    buffer[3] = (Byte) IT9507Cmd_sequence++;
-    buffer[4] = (Byte) readBufferLength;
-    buffer[5] = (Byte) registerAddressLength;
-    buffer[6] = (Byte) (registerAddress >> 24); /** Get first byte of reg. address  */
-    buffer[7] = (Byte) (registerAddress >> 16); /** Get second byte of reg. address */
-    buffer[8] = (Byte) (registerAddress >> 8);  /** Get third byte of reg. address  */
-    buffer[9] = (Byte) (registerAddress);       /** Get fourth byte of reg. address */
+    buffer[1] = (u8) (command >> 8);
+    buffer[2] = (u8) command;
+    buffer[3] = (u8) IT9507Cmd_sequence++;
+    buffer[4] = (u8) readBufferLength;
+    buffer[5] = (u8) registerAddressLength;
+    buffer[6] = (u8) (registerAddress >> 24); /** Get first byte of reg. address  */
+    buffer[7] = (u8) (registerAddress >> 16); /** Get second byte of reg. address */
+    buffer[8] = (u8) (registerAddress >> 8);  /** Get third byte of reg. address  */
+    buffer[9] = (u8) (registerAddress);       /** Get fourth byte of reg. address */
 
     /** add frame check-sum */
     bufferLength = 10;
@@ -1100,13 +1100,13 @@ exit:
 }
 
 
-Dword IT9507_readGenericRegisters (
+u32 IT9507_readGenericRegisters (
     IN  Modulator*    modulator,
-    IN  Byte            slaveAddress,
-    IN  Byte            bufferLength,
-    IN  Byte*           buffer
+    IN  u8            slaveAddress,
+    IN  u8            bufferLength,
+    IN  u8*           buffer
 ) {
-    Byte writeBuffer[3];
+    u8 writeBuffer[3];
 
 	writeBuffer[0] = bufferLength;
 	writeBuffer[1] = 2;
@@ -1116,24 +1116,24 @@ Dword IT9507_readGenericRegisters (
 }
 
 
-Dword IT9507_readEepromValues (
+u32 IT9507_readEepromValues (
     IN  Modulator*    modulator,
-    IN  Word            registerAddress,
-    IN  Byte            readBufferLength,
-    OUT Byte*           readBuffer
+    IN  u16            registerAddress,
+    IN  u8            readBufferLength,
+    OUT u8*           readBuffer
 ) {
-    Dword       error = ModulatorError_NO_ERROR;
-    Word        command;
-    Byte        buffer[255];
-    Dword       bufferLength;
-    Dword       remainLength;
-    Dword       sendLength;
-    Dword       i, k;
+    u32       error = ModulatorError_NO_ERROR;
+    u16        command;
+    u8        buffer[255];
+    u32       bufferLength;
+    u32       remainLength;
+    u32       sendLength;
+    u32       i, k;
     
-    Dword   maxFrameSize;
-	Byte	eepromAddress = 0x01;
+    u32   maxFrameSize;
+	u8	eepromAddress = 0x01;
 
-	Byte	registerAddressLength = 0x01;
+	u8	registerAddressLength = 0x01;
 
     EagleUser_enterCriticalSection (modulator);
 
@@ -1142,26 +1142,26 @@ Dword IT9507_readEepromValues (
     
     maxFrameSize = EagleUser_MAXFRAMESIZE; 
 
-    if ((Dword)(readBufferLength + 5) > EagleUser_MAX_PKT_SIZE) {
+    if ((u32)(readBufferLength + 5) > EagleUser_MAX_PKT_SIZE) {
         error  = ModulatorError_INVALID_DATA_LENGTH;
         goto exit;
     }
         
-    if ((Dword)(readBufferLength + 5) > maxFrameSize) {
+    if ((u32)(readBufferLength + 5) > maxFrameSize) {
         error  = ModulatorError_INVALID_DATA_LENGTH;
         goto exit;
     }
 
     /** add command header */
     command   = IT9507Cmd_buildCommand (Command_REG_EEPROM_READ, Processor_LINK);
-    buffer[1] = (Byte) (command >> 8);
-    buffer[2] = (Byte) command;
-    buffer[3] = (Byte) IT9507Cmd_sequence++;
-    buffer[4] = (Byte) readBufferLength;
-    buffer[5] = (Byte) eepromAddress;
-    buffer[6] = (Byte) registerAddressLength;
-    buffer[7] = (Byte) (registerAddress >> 8);  /** Get high byte of reg. address */
-    buffer[8] = (Byte) registerAddress;         /** Get low byte of reg. address  */
+    buffer[1] = (u8) (command >> 8);
+    buffer[2] = (u8) command;
+    buffer[3] = (u8) IT9507Cmd_sequence++;
+    buffer[4] = (u8) readBufferLength;
+    buffer[5] = (u8) eepromAddress;
+    buffer[6] = (u8) registerAddressLength;
+    buffer[7] = (u8) (registerAddress >> 8);  /** Get high byte of reg. address */
+    buffer[8] = (u8) registerAddress;         /** Get low byte of reg. address  */
 
     /** add frame check-sum */
     bufferLength = 9;
@@ -1200,17 +1200,17 @@ exit :
 }
 
 
-Dword IT9507_readRegisterBits (
+u32 IT9507_readRegisterBits (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    IN  Byte            position,
-    IN  Byte            length,
-    OUT Byte*           value
+    IN  u32           registerAddress,
+    IN  u8            position,
+    IN  u8            length,
+    OUT u8*           value
 ) {
-        Dword error = ModulatorError_NO_ERROR;
+        u32 error = ModulatorError_NO_ERROR;
 	
-	Byte temp = 0;
+	u8 temp = 0;
 	error = IT9507_readRegisters (modulator, processor, registerAddress, 1, &temp);
 	if (error) goto exit;
 
@@ -1226,22 +1226,22 @@ exit :
 }
 
 
-Dword IT9507_getFirmwareVersion (
+u32 IT9507_getFirmwareVersion (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    OUT Dword*          version
+    OUT u32*          version
 ) {
-    Dword error = ModulatorError_NO_ERROR;
+    u32 error = ModulatorError_NO_ERROR;
 
-	Byte writeBuffer[1] = {0,};
-	Byte readBuffer[4] = {0,};
+	u8 writeBuffer[1] = {0,};
+	u8 readBuffer[4] = {0,};
 
 	/** Check chip version */
 	writeBuffer[0] = 1;
 	error = IT9507Cmd_sendCommand (modulator, Command_QUERYINFO, processor, 1, writeBuffer, 4, readBuffer);
 	if (error) goto exit;
 	
-	*version = (Dword) (((Dword) readBuffer[0] << 24) + ((Dword) readBuffer[1] << 16) + ((Dword) readBuffer[2] << 8) + (Dword) readBuffer[3]);
+	*version = (u32) (((u32) readBuffer[0] << 24) + ((u32) readBuffer[1] << 16) + ((u32) readBuffer[2] << 8) + (u32) readBuffer[3]);
 
 exit :
 	return (error);
@@ -1249,23 +1249,23 @@ exit :
 
 
 
-Dword IT9507_loadIrTable (
+u32 IT9507_loadIrTable (
     IN  Modulator*    modulator,
-    IN  Word            tableLength,
-    IN  Byte*           table
+    IN  u16            tableLength,
+    IN  u8*           table
 ) {
-	Dword error = ModulatorError_NO_ERROR;
-	Byte baseHigh;
-	Byte baseLow;
-	Word registerBase;
-	Word i;
+	u32 error = ModulatorError_NO_ERROR;
+	u8 baseHigh;
+	u8 baseLow;
+	u16 registerBase;
+	u16 i;
 
 	error = IT9507_readRegister (modulator, Processor_LINK, ir_table_start_15_8, &baseHigh);
 	if (error) goto exit;
 	error = IT9507_readRegister (modulator, Processor_LINK, ir_table_start_7_0, &baseLow);
 	if (error) goto exit;
 
-	registerBase = (Word) (baseHigh << 8) + (Word) baseLow;
+	registerBase = (u16) (baseHigh << 8) + (u16) baseLow;
 
 	if (registerBase) {
 		for (i = 0; i < tableLength; i++) {
@@ -1279,17 +1279,17 @@ exit :
 }
 
 
-Dword IT9507_initialize (
+u32 IT9507_initialize (
     IN  Modulator*    modulator,
     IN  TsInterface   streamType,
-	IN  Byte            busId,
-	IN  Byte            i2cAddr
+	IN  u8            busId,
+	IN  u8            i2cAddr
 ) {
 
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 
-	Dword version = 0;
-	Byte c1_default_value[2],c2_default_value[2],c3_default_value[2];
+	u32 version = 0;
+	u8 c1_default_value[2],c2_default_value[2],c3_default_value[2];
 
 	modulator->frequency = 642000;	
 	modulator->calibrationInfo.ptrIQtableEx =  IQ_fixed_table0;
@@ -1308,9 +1308,9 @@ Dword IT9507_initialize (
 	error = IT9507_getFirmwareVersion (modulator, Processor_LINK, &version);
 	if (error) goto exit;
 	if (version != 0) {
-		modulator->booted = True;
+		modulator->booted = true;
 	} else {
-		modulator->booted = False;	
+		modulator->booted = false;	
 	}
 
 	modulator->firmwareCodes = EagleFirmware_codes;
@@ -1329,10 +1329,10 @@ Dword IT9507_initialize (
 	
 	/** Load firmware */
 	if (modulator->firmwareCodes != NULL) {
-		if (modulator->booted == False) {
+		if (modulator->booted == false) {
 			error = IT9507_loadFirmware (modulator, modulator->firmwareCodes, modulator->firmwareSegments, modulator->firmwarePartitions);
 			if (error) goto exit;
-			modulator->booted = True;
+			modulator->booted = true;
 		}
 	}
 	error = IT9507_writeRegister (modulator, Processor_LINK, 0xD924, 0);//set UART -> GPIOH4
@@ -1407,10 +1407,10 @@ exit:
 }
 
 
-Dword IT9507_finalize (
+u32 IT9507_finalize (
     IN  Modulator*    modulator
 ) {
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 
 	error = EagleUser_Finalize(modulator);
 
@@ -1418,13 +1418,13 @@ Dword IT9507_finalize (
 }
 
 
-Dword IT9507_reset (
+u32 IT9507_reset (
     IN  Modulator*    modulator
 ) {
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 
-	Byte value;
-	Byte j;
+	u8 value;
+	u8 j;
 	/** Enable OFDM reset */
 	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, I2C_eagle_reg_ofdm_rst_en, eagle_reg_ofdm_rst_en_pos, eagle_reg_ofdm_rst_en_len, 0x01);
 	if (error) goto exit;
@@ -1460,39 +1460,39 @@ exit :
 
 
 
-Dword IT9507_setTXChannelModulation (
+u32 IT9507_setTXChannelModulation (
     IN  Modulator*            modulator,
     IN  ChannelModulation*      channelModulation
 ) {
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 
-	Byte temp;
+	u8 temp;
 
-	//Byte temp;
+	//u8 temp;
 	error = IT9507_setTxModeEnable(modulator,0);
 	if (error) goto exit;
 	/** Set constellation type */
-	temp=(Byte)channelModulation->constellation;
+	temp=(u8)channelModulation->constellation;
 
 	modulator->channelModulation.constellation=channelModulation->constellation;
 	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xf721, temp);
 	if (error) goto exit;
 
 	modulator->channelModulation.highCodeRate=channelModulation->highCodeRate;
-	temp=(Byte)channelModulation->highCodeRate;
+	temp=(u8)channelModulation->highCodeRate;
 	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xf723, temp);
 	if (error) goto exit;
 	/** Set low code rate */
 
 	/** Set guard interval */
 	modulator->channelModulation.interval=channelModulation->interval;
-	temp=(Byte)channelModulation->interval;
+	temp=(u8)channelModulation->interval;
 
 	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_tps_gi, temp);
 	if (error) goto exit;
 	/** Set FFT mode */
 	modulator->channelModulation.transmissionMode=channelModulation->transmissionMode;
-	temp=(Byte)channelModulation->transmissionMode;
+	temp=(u8)channelModulation->transmissionMode;
 	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xf726, temp);
 	if (error) goto exit;
 
@@ -1530,11 +1530,11 @@ exit :
 	return (error);
 }
 
-Dword IT9507_setTxModeEnable (
+u32 IT9507_setTxModeEnable (
     IN  Modulator*            modulator,
-    IN  Byte                    enable
+    IN  u8                    enable
 ) {
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 
 	if(enable){
 
@@ -1573,13 +1573,13 @@ exit :
 	return (error);
 }
 
-Dword IT9507_acquireTxChannel (
+u32 IT9507_acquireTxChannel (
 	IN  Modulator*            modulator,
-    IN  Word            bandwidth,
-    IN  Dword           frequency
+    IN  u16            bandwidth,
+    IN  u32           frequency
 ) {
-	Dword error = ModulatorError_NO_ERROR;
-	Word TABLE_NROW = modulator->calibrationInfo.tableGroups;
+	u32 error = ModulatorError_NO_ERROR;
+	u16 TABLE_NROW = modulator->calibrationInfo.tableGroups;
 	if(modulator->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<frequency 
 		|| modulator->calibrationInfo.ptrIQtableEx[0].frequency>frequency 
 	){
@@ -1602,11 +1602,11 @@ exit :
 }
 
 
-Dword IT9507_resetPSBBuffer (
+u32 IT9507_resetPSBBuffer (
 	IN  Modulator*    modulator
 ){
-	Dword error = ModulatorError_NO_ERROR;
-	Dword temp;
+	u32 error = ModulatorError_NO_ERROR;
+	u32 temp;
 
 	if(modulator->tsInterfaceType == PARALLEL_TS_INPUT)
 		temp = 0xF9CC;
@@ -1633,14 +1633,14 @@ exit :
 }
 
 
-Dword IT9507_setTsInterface (
+u32 IT9507_setTsInterface (
     IN  Modulator*    modulator,
     IN  TsInterface   streamType
 ) {
-    Dword error = ModulatorError_NO_ERROR;
-	Word frameSize;
-	Byte packetSize;
-	Byte buffer[2];
+    u32 error = ModulatorError_NO_ERROR;
+	u16 frameSize;
+	u8 packetSize;
+	u8 buffer[2];
 
 	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_dvbt_inten, eagle_reg_dvbt_inten_pos, eagle_reg_dvbt_inten_len, 1);
 	if (error) goto exit;
@@ -1664,7 +1664,7 @@ Dword IT9507_setTsInterface (
 	if (error) goto exit;
 
 	frameSize = EagleUser_USB20_FRAME_SIZE_DW;
-	packetSize = (Byte) (EagleUser_USB20_MAX_PACKET_SIZE / 4);
+	packetSize = (u8) (EagleUser_USB20_MAX_PACKET_SIZE / 4);
 
 	
 	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mp2_sw_rst, eagle_reg_mp2_sw_rst_pos, eagle_reg_mp2_sw_rst_len, 1);
@@ -1689,8 +1689,8 @@ Dword IT9507_setTsInterface (
 	if (error) goto exit;
 
 	/** Set EP5 transfer length */
-	buffer[p_eagle_reg_ep5_tx_len_7_0 - p_eagle_reg_ep5_tx_len_7_0] = (Byte) frameSize;
-	buffer[p_eagle_reg_ep5_tx_len_15_8 - p_eagle_reg_ep5_tx_len_7_0] = (Byte) (frameSize >> 8);
+	buffer[p_eagle_reg_ep5_tx_len_7_0 - p_eagle_reg_ep5_tx_len_7_0] = (u8) frameSize;
+	buffer[p_eagle_reg_ep5_tx_len_15_8 - p_eagle_reg_ep5_tx_len_7_0] = (u8) (frameSize >> 8);
 	error = IT9507_writeRegisters (modulator, Processor_LINK, p_eagle_reg_ep5_tx_len_7_0, 2, buffer);
 
 	/** Set EP5 packet size */
@@ -1768,29 +1768,29 @@ exit :
 	return (error);
 }
 
-Dword IT9507_getIrCode (
+u32 IT9507_getIrCode (
     IN  Modulator*    modulator,
-    OUT Dword*          code
+    OUT u32*          code
 )  {
-	Dword error = ModulatorError_NO_ERROR;
-	Byte readBuffer[4];
+	u32 error = ModulatorError_NO_ERROR;
+	u8 readBuffer[4];
 
 	error = IT9507Cmd_sendCommand (modulator, Command_IR_GET, Processor_LINK, 0, NULL, 4, readBuffer);
 	if (error) goto exit;
 
-	*code = (Dword) ((readBuffer[0] << 24) + (readBuffer[1] << 16) + (readBuffer[2] << 8) + readBuffer[3]);
+	*code = (u32) ((readBuffer[0] << 24) + (readBuffer[1] << 16) + (readBuffer[2] << 8) + readBuffer[3]);
 
 exit :
 	return (error);
 }
 
 
-Dword IT9507_TXreboot (
+u32 IT9507_TXreboot (
     IN  Modulator*    modulator
 )  {
-	Dword error = ModulatorError_NO_ERROR;
-	Dword version;
-	Byte i;
+	u32 error = ModulatorError_NO_ERROR;
+	u32 version;
+	u8 i;
 	
 	error = IT9507_getFirmwareVersion (modulator, Processor_LINK, &version);
 	if (error) goto exit;
@@ -1819,18 +1819,18 @@ Dword IT9507_TXreboot (
 			error = ModulatorError_REBOOT_FAIL;
 	}
 
-	modulator->booted = False;
+	modulator->booted = false;
 
 exit :
 	return (error);
 }
 
 
-Dword IT9507_controlPowerSaving (
+u32 IT9507_controlPowerSaving (
     IN  Modulator*    modulator,
-    IN  Byte            control
+    IN  u8            control
 ) {
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 
 	if (control) {
 		/** Power up case */
@@ -1880,12 +1880,12 @@ exit :
 
 
 
-Dword IT9507_controlPidFilter (
+u32 IT9507_controlPidFilter (
     IN  Modulator*    modulator,
-    IN  Byte            control,
-	IN  Byte            enable
+    IN  u8            control,
+	IN  u8            enable
 ) {
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 
 	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_mp2if_pid_complement, mp2if_pid_complement_pos, mp2if_pid_complement_len, control);
 	if(error) goto exit;
@@ -1896,10 +1896,10 @@ exit:
 }
 
 
-Dword IT9507_resetPidFilter (
+u32 IT9507_resetPidFilter (
     IN  Modulator*    modulator
 ) {
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 
 	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_mp2if_pid_rst, mp2if_pid_rst_pos, mp2if_pid_rst_len, 1);
 	if (error) goto exit;
@@ -1909,19 +1909,19 @@ exit :
 }
 
 
-Dword IT9507_addPidToFilter (
+u32 IT9507_addPidToFilter (
     IN  Modulator*    modulator,
-    IN  Byte            index,
+    IN  u8            index,
     IN  Pid             pid
 ) {
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 
-	Byte writeBuffer[2];
+	u8 writeBuffer[2];
 	
 	/** Enable pid filter */
 	if((index>0)&&(index<32)){
-		writeBuffer[0] = (Byte) pid.value;
-		writeBuffer[1] = (Byte) (pid.value >> 8);
+		writeBuffer[0] = (u8) pid.value;
+		writeBuffer[1] = (u8) (pid.value >> 8);
 
 		error = IT9507_writeRegisters (modulator, Processor_OFDM, p_mp2if_pid_dat_l, 2, writeBuffer);
 		if (error) goto exit;
@@ -1940,14 +1940,14 @@ exit :
 	return (error);
 }
 
-Dword IT9507_sendHwPSITable (
+u32 IT9507_sendHwPSITable (
 	IN  Modulator*    modulator,
-	IN  Byte*            pbuffer
+	IN  u8*            pbuffer
 ) {
- 	Dword error = ModulatorError_NO_ERROR;
-	Byte temp_timer[5];
-	Byte tempbuf[10] ;
-	Byte i,temp;
+ 	u32 error = ModulatorError_NO_ERROR;
+	u8 temp_timer[5];
+	u8 tempbuf[10] ;
+	u8 i,temp;
 	
 	error = IT9507_readRegisters (modulator, Processor_OFDM, psi_table1_timer_H, 10, temp_timer);		//save pei table timer	
 	if (error) goto exit;
@@ -1988,14 +1988,14 @@ exit :
 	return (error);
 }
 
-Dword IT9507_accessFwPSITable (
+u32 IT9507_accessFwPSITable (
 	IN  Modulator*    modulator,
-	IN  Byte		  psiTableIndex,
-	IN  Byte*         pbuffer
+	IN  u8		  psiTableIndex,
+	IN  u8*         pbuffer
 ) {
-	Dword error ;
-	Byte i;
-	Byte temp[2];
+	u32 error ;
+	u8 i;
+	u8 temp[2];
 	error = ModulatorError_NO_ERROR;
 	
 	temp[0] = 0;
@@ -2020,17 +2020,17 @@ exit :
 	return (error);
 }
 
-Dword IT9507_setFwPSITableTimer (
+u32 IT9507_setFwPSITableTimer (
 	IN  Modulator*    modulator,
-	IN  Byte		  psiTableIndex,
-	IN  Word          timer_ms
+	IN  u8		  psiTableIndex,
+	IN  u16          timer_ms
 ) {
-    Dword error ;
-	Byte temp[2];
+    u32 error ;
+	u8 temp[2];
 	error = ModulatorError_NO_ERROR;
 
-	temp[0] = (Byte)(timer_ms>>8);
-	temp[1] = (Byte)timer_ms;
+	temp[0] = (u8)(timer_ms>>8);
+	temp[1] = (u8)timer_ms;
 	
 
 
@@ -2043,11 +2043,11 @@ Dword IT9507_setFwPSITableTimer (
 }
 
 
-Dword IT9507_setSlaveIICAddress (
+u32 IT9507_setSlaveIICAddress (
     IN  Modulator*    modulator,
-	IN  Byte          SlaveAddress
+	IN  u8          SlaveAddress
 ){
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 
 	if(modulator != NULL)
 		modulator->slaveIICAddr = SlaveAddress;
@@ -2056,13 +2056,13 @@ Dword IT9507_setSlaveIICAddress (
     return (error);
 }
 
-Dword IT9507_runTxCalibration (
+u32 IT9507_runTxCalibration (
 	IN  Modulator*    modulator,
-	IN  Word            bandwidth,
-    IN  Dword           frequency
+	IN  u16            bandwidth,
+    IN  u32           frequency
 ){
-	Dword error = ModulatorError_NO_ERROR;
-	Byte c1_default_value[2],c2_default_value[2],c3_default_value[2];
+	u32 error = ModulatorError_NO_ERROR;
+	u8 c1_default_value[2],c2_default_value[2],c3_default_value[2];
 
 	if((bandwidth !=0) && (frequency !=0)){
 		error = EagleTuner_setIQCalibration(modulator,frequency);		
@@ -2088,11 +2088,11 @@ exit:
 }
 
 
-Dword IT9507_adjustOutputGain (
+u32 IT9507_adjustOutputGain (
 	IN  Modulator*    modulator,
 	IN  int			  *gain	   
 ){
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 	int amp_mul;
 	int c1value = 0;
 	int c2value = 0;
@@ -2101,14 +2101,14 @@ Dword IT9507_adjustOutputGain (
 	int c2value_default;
 	int c3value_default;	
 	
-	Dword amp_mul_max1 = 0;
-	Dword amp_mul_max2 = 0;
-	Dword amp_mul_max3 = 0;
+	u32 amp_mul_max1 = 0;
+	u32 amp_mul_max2 = 0;
+	u32 amp_mul_max3 = 0;
 	int amp_mul_max = 0;
 	int i = 0;
 	
 	int gain_X10 = *gain * 10;
-	Bool overflow = False;
+	bool overflow = false;
 
 	c1value_default = modulator->calibrationInfo.c1DefaultValue;
 	c2value_default = modulator->calibrationInfo.c2DefaultValue;
@@ -2150,16 +2150,16 @@ Dword IT9507_adjustOutputGain (
 			}
 			if(c1value>0x03ff){
 				c1value=0x03ff;
-				overflow = True;				
+				overflow = true;				
 			}
 			/*if(c2value>0x03ff){
 				c2value=0x03ff;
-				overflow = True;
+				overflow = true;
 				
 			}*/
 			if(c3value>0x03ff){
 				c3value=0x03ff;
-				overflow = True;				
+				overflow = true;				
 			}
 
 			if(overflow)
@@ -2180,13 +2180,13 @@ Dword IT9507_adjustOutputGain (
 			c3value = (c3value_default * amp_mul)/10000;
 			}
 			if(c1value==0){
-				overflow = True;
+				overflow = true;
 			}
 			/*if(c2value==0){
-				overflow = True;
+				overflow = true;
 			}*/
 			if(c3value==0){
-				overflow = True;
+				overflow = true;
 			}
 
 			if(overflow)
@@ -2208,17 +2208,17 @@ Dword IT9507_adjustOutputGain (
 	*gain = i/10;
 	modulator->calibrationInfo.outputGain = *gain;
 	
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, (Byte)(c1value&0x00ff));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, (u8)(c1value&0x00ff));
 	if (error) goto exit;		
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_10_8, (Byte)(c1value>>8));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_10_8, (u8)(c1value>>8));
 	if (error) goto exit;		
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, (Byte)(c2value&0x00ff));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, (u8)(c2value&0x00ff));
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_10_8, (Byte)(c2value>>8));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_10_8, (u8)(c2value>>8));
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, (Byte)(c3value&0x00ff));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, (u8)(c3value&0x00ff));
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_10_8, (Byte)(c3value>>8));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_10_8, (u8)(c3value>>8));
 	if (error) goto exit;
 
 exit:
@@ -2226,16 +2226,16 @@ exit:
 	return (error);
 }
 
-Dword IT9507_getGainRange (
+u32 IT9507_getGainRange (
 	IN  Modulator*    modulator,
-	IN  Dword           frequency,
-	IN  Word            bandwidth,    
+	IN  u32           frequency,
+	IN  u16            bandwidth,    
 	OUT int*			maxGain,
 	OUT int*			minGain
 ){
-	Dword error = ModulatorError_NO_ERROR;
-	Byte val[6];
-	Word TABLE_NROW = modulator->calibrationInfo.tableGroups;
+	u32 error = ModulatorError_NO_ERROR;
+	u8 val[6];
+	u16 TABLE_NROW = modulator->calibrationInfo.tableGroups;
 	if(modulator->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<frequency 
 		|| modulator->calibrationInfo.ptrIQtableEx[0].frequency>frequency 
 	){
@@ -2259,7 +2259,7 @@ exit:
 	return (error);
 }
 
-Dword IT9507_getOutputGain (
+u32 IT9507_getOutputGain (
 	IN  Modulator*    modulator,
 	OUT  int			  *gain	   
 ){
@@ -2269,13 +2269,13 @@ Dword IT9507_getOutputGain (
     return(ModulatorError_NO_ERROR);
 }
 
-Dword IT9507_suspendMode (
+u32 IT9507_suspendMode (
     IN  Modulator*    modulator,
-    IN  Byte          enable
+    IN  u8          enable
 ){
-	Dword   error = ModulatorError_NO_ERROR;
+	u32   error = ModulatorError_NO_ERROR;
 
-	Byte temp;
+	u8 temp;
 	error = IT9507_readRegister (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, &temp);//get power setting
 
 	if(error == ModulatorError_NO_ERROR){
@@ -2292,32 +2292,32 @@ Dword IT9507_suspendMode (
 }
 
 
-Dword IT9507_setTPS (
+u32 IT9507_setTPS (
     IN  Modulator*    modulator,
     IN  TPS           tps
 ){
-	Dword   error = ModulatorError_NO_ERROR;
+	u32   error = ModulatorError_NO_ERROR;
 	//---- set TPS Cell ID
 	
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xF727, (Byte)(tps.cellid>>8));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xF727, (u8)(tps.cellid>>8));
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xF728, (Byte)(tps.cellid));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xF728, (u8)(tps.cellid));
 		
 exit:	
 	return (error);
 
 }
 
-Dword IT9507_getTPS (
+u32 IT9507_getTPS (
     IN  Modulator*    modulator,
     IN  pTPS           pTps
 ){
-	Dword   error = ModulatorError_NO_ERROR;
+	u32   error = ModulatorError_NO_ERROR;
 	//---- get TPS Cell ID
-	Byte temp;
-	Word cellID = 0;
+	u8 temp;
+	u16 cellID = 0;
 
 	error = IT9507_readRegister (modulator, Processor_OFDM, 0xF727, &temp);//get cell id
 	if (error) goto exit;
@@ -2331,12 +2331,12 @@ exit:
 	return (error);
 }
 
-Dword IT9507_setIQtable (
+u32 IT9507_setIQtable (
 	IN  Modulator*    modulator,
     IN  IQtable *IQ_table_ptr,
-	IN  Word tableGroups
+	IN  u16 tableGroups
 ){
-	Dword   error = ModulatorError_NO_ERROR;
+	u32   error = ModulatorError_NO_ERROR;
 
 	if(IQ_table_ptr == NULL){
 		error = ModulatorError_NULL_PTR;
@@ -2350,54 +2350,54 @@ Dword IT9507_setIQtable (
 }
 
 
-Dword IT9507_setDCCalibrationValue (
+u32 IT9507_setDCCalibrationValue (
 	IN  Modulator*	modulator,
     IN	int			dc_i,
 	IN	int			dc_q
 ){
-	Dword   error = ModulatorError_NO_ERROR;
-	Word	dc_i_temp,dc_q_temp;
+	u32   error = ModulatorError_NO_ERROR;
+	u16	dc_i_temp,dc_q_temp;
 	if(dc_i<0)
-		dc_i_temp = (Word)(512 + dc_i) & 0x01FF;
+		dc_i_temp = (u16)(512 + dc_i) & 0x01FF;
 	else
-		dc_i_temp = ((Word)dc_i) & 0x01FF;
+		dc_i_temp = ((u16)dc_i) & 0x01FF;
 	
 
 	if(dc_q<0)
-		dc_q_temp = (Word)(512 + dc_q) & 0x01FF;
+		dc_q_temp = (u16)(512 + dc_q) & 0x01FF;
 	else
-		dc_q_temp = ((Word)dc_q) & 0x01FF;
+		dc_q_temp = ((u16)dc_q) & 0x01FF;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_i_7_0, (Byte)(dc_i_temp));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_i_7_0, (u8)(dc_i_temp));
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_i_8, (Byte)(dc_i_temp>>8));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_i_8, (u8)(dc_i_temp>>8));
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_q_7_0, (Byte)(dc_q_temp));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_q_7_0, (u8)(dc_q_temp));
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_q_8, (Byte)(dc_q_temp>>8));
+	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_q_8, (u8)(dc_q_temp>>8));
 	if (error) goto exit;
 exit:
 	return (error);
 }
 
-Dword IT9507_isTsBufferOverflow (
+u32 IT9507_isTsBufferOverflow (
 	IN  Modulator*	modulator,
-    IN	Bool		*overflow	
+    IN	bool		*overflow	
 ){
-	Dword   error = ModulatorError_NO_ERROR;
-	Byte	temp = 0;
+	u32   error = ModulatorError_NO_ERROR;
+	u8	temp = 0;
 	error = IT9507_readRegister (modulator, Processor_OFDM, eagle_reg_tx_fifo_overflow, &temp);
 	if (error) goto exit;
 
 	if(temp) {
-		*overflow = True;
+		*overflow = true;
 		error = IT9507_writeRegister (modulator, Processor_OFDM, eagle_reg_tx_fifo_overflow, 1); //clear
 		if (error) goto exit;
 	} else {
-		*overflow = False;
+		*overflow = false;
 	}
 
 exit:

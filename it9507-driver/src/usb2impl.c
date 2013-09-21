@@ -30,7 +30,7 @@
 Handle Usb2_handle = NULL;
 
 
-Dword Usb2_getDriver (
+u32 Usb2_getDriver (
     IN  Modulator*    modulator,
     OUT Handle*         handle
 ) {
@@ -38,35 +38,35 @@ Dword Usb2_getDriver (
 }
 
 
-Dword Usb2_exitDriver (
+u32 Usb2_exitDriver (
     IN  Modulator*    modulator
 ) {
     return (Error_NO_ERROR);
 }
 
 
-Dword Usb2_writeControlBus (
+u32 Usb2_writeControlBus (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    IN  Byte*           buffer
+    IN  u32           bufferLength,
+    IN  u8*           buffer
 ) {
     return (Error_NO_ERROR);
 }
 
 
-Dword Usb2_readControlBus (
+u32 Usb2_readControlBus (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    OUT Byte*           buffer
+    IN  u32           bufferLength,
+    OUT u8*           buffer
 ) {
     return (Error_NO_ERROR);
 }
 
 
-Dword Usb2_readDataBus (
+u32 Usb2_readDataBus (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    OUT Byte*           buffer
+    IN  u32           bufferLength,
+    OUT u8*           buffer
 ) {
     return (Error_NO_ERROR);
 }
@@ -81,33 +81,33 @@ Handle Usb2_handle = 0;
 
 
 
-Dword Usb2_getDriver (
+u32 Usb2_getDriver (
     IN  Modulator*    modulator,
     OUT Handle*         handle
 ) {
-    Dword error = ModulatorError_NO_ERROR;
+    u32 error = ModulatorError_NO_ERROR;
 
     return (error);
 }
 
 
-Dword Usb2_exitDriver (
+u32 Usb2_exitDriver (
     IN  Modulator*    modulator
 ) {
-    Dword error = ModulatorError_NO_ERROR;
+    u32 error = ModulatorError_NO_ERROR;
 
     return (error);
 }
 
 
-Dword Usb2_writeControlBus (
+u32 Usb2_writeControlBus (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    IN  Byte*           buffer
+    IN  u32           bufferLength,
+    IN  u8*           buffer
 ) {
-    Dword     ret;
+    u32     ret;
     int		  act_len;
-	Byte *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
+	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
 	ret = 0;
 
 	if (pTmpBuffer) 
@@ -120,20 +120,20 @@ Dword Usb2_writeControlBus (
 			&act_len,
 			1000000);
    
-	if (ret) deb_data(" Usb2_writeControlBus fail : 0x%08lx\n", ret);
+	if (ret) deb_data(" Usb2_writeControlBus fail : 0x%08x\n", ret);
 
 	return (Error_NO_ERROR);
 }
 
 
-Dword Usb2_readControlBus (
+u32 Usb2_readControlBus (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    OUT Byte*           buffer
+    IN  u32           bufferLength,
+    OUT u8*           buffer
 ) {
-	Dword     ret;
-	int       nBytesRead;
-	Byte *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
+	u32     ret;
+	int       nu8sRead;
+	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
 	ret = 0;
 
 //deb_data(" ---------Usb2_readControlBus----------\n", ret);			
@@ -141,21 +141,21 @@ Dword Usb2_readControlBus (
 				usb_rcvbulkpipe(usb_get_dev(modulator->userData),129),
 				pTmpBuffer,
 				bufferLength,
-				&nBytesRead,
+				&nu8sRead,
 				1000000);
 	if (pTmpBuffer)
 		memcpy(buffer, pTmpBuffer, bufferLength);   
 	 
-	if (ret) 	deb_data(" Usb2_readControlBus fail : 0x%08lx\n", ret);
+	if (ret) 	deb_data(" Usb2_readControlBus fail : 0x%08x\n", ret);
 
 	return (Error_NO_ERROR);
 }
 
 
-Dword Usb2_readDataBus (
+u32 Usb2_readDataBus (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    OUT Byte*           buffer
+    IN  u32           bufferLength,
+    OUT u8*           buffer
 ) {
 
     return (Error_NO_ERROR);

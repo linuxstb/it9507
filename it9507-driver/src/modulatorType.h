@@ -2,32 +2,10 @@
 #define __MODULATOR_TYPE_H__
 
 #define EagleUser_INTERNAL	 1
-/* *
-
- * for Linux 
-
- */
-
-/* define NULL, true, flase */
 
 #include <linux/stddef.h>
-
-/* define bool */
-
 #include <linux/types.h>
-
-/* include Linux delay */
-
 #include <linux/delay.h>
-/* define BYTE ,WORD....*/
-//#include "Common.h"
-
-
-
-
-
-#ifndef UNDER_CE
-#endif
 
 
 #ifdef __cplusplus
@@ -50,7 +28,7 @@
 #define Bus_I2C             1
 #define Bus_USB             2
 #define Bus_9035U2I         3  /** I2C bus for Ganymede USB */
-#define IT9507Cmd_buildCommand(command, processor)  (command + (Word) (processor << 12))
+#define IT9507Cmd_buildCommand(command, processor)  (command + (u16) (processor << 12))
 #define Eagle_MAX_BIT               8
 #define IQ_TABLE_NROW 92
 #define Command_REG_DEMOD_READ          0x0000
@@ -71,78 +49,27 @@
  */
 typedef void* Handle;
 
-
-/**
- * The type defination of 8-bits unsigned type.
- */
-typedef unsigned char Byte;
-
-
-/**
- * The type defination of 16-bits unsigned type.
- */
-typedef unsigned short Word;
-
-
-/**
- * The type defination of 32-bits unsigned type.
- */
-typedef unsigned long Dword;
-
-/**
- * The type defination of 64-bits unsigned type.
- */
-typedef long long LONGLONG;
-
-/**
- * The type defination of 16-bits signed type.
- */
-typedef short Short;
-
-
-/**
- * The type defination of 32-bits signed type.
- */
-typedef long Long;
-
-
 /**
  * The type defination of ValueSet.
  */
 typedef struct {
-    Dword frequency;      /**  */
+    u32 frequency;      /**  */
     int  dAmp;			  /**  */
 	int  dPhi;	
 } IQtable;
 
 typedef struct {
     IQtable *ptrIQtableEx;
-	Word tableGroups;		//Number of IQtable groups;
+	u16 tableGroups;		//Number of IQtable groups;
 	int	outputGain;	
-    Word c1DefaultValue;
-	Word c2DefaultValue;
-	Word c3DefaultValue;
+    u16 c1DefaultValue;
+	u16 c2DefaultValue;
+	u16 c3DefaultValue;
 } CalibrationInfo;
 
-/**
- * The type defination of Bool
- */
-
-typedef enum {
-    False = 0,
-    True = 1
-} Bool
-#ifndef __cplusplus
-//,bool
-#endif
-;
-
-//typedef enum {False=0, True} bool;
-
-
 typedef struct {
-    Byte segmentType;           /** 0:Firmware download 1:Rom copy 2:Direct command */
-    Dword segmentLength;
+    u8 segmentType;           /** 0:Firmware download 1:Rom copy 2:Direct command */
+    u32 segmentLength;
 } Segment;
 
 
@@ -251,15 +178,15 @@ typedef enum {
  *
  */
 typedef struct {
-    Byte subchannelId;                  /** The ID of subchannel.                                                 */
-    Word subchannelSize;                /** The size of subchannel.                                               */
-    Word bitRate;                       /** The bit rate of subchannel.                                           */
-    Byte transmissionMode;              /** The transmission mode of subchannel, possible values are: 1, 2, 3, 4. */
+    u8 subchannelId;                  /** The ID of subchannel.                                                 */
+    u16 subchannelSize;                /** The size of subchannel.                                               */
+    u16 bitRate;                       /** The bit rate of subchannel.                                           */
+    u8 transmissionMode;              /** The transmission mode of subchannel, possible values are: 1, 2, 3, 4. */
     ProtectionLevel protectionLevel;    /** The protection level of subchannel.                                   */
     SubchannelType subchannelType;      /** The type of subchannel                                                */
-    Byte conditionalAccess;             /** If a conditional access exist                                         */
-    Byte tiiPrimary;                    /** TII primary                                                           */
-    Byte tiiCombination;                /** TII combination                                                       */
+    u8 conditionalAccess;             /** If a conditional access exist                                         */
+    u8 tiiPrimary;                    /** TII primary                                                           */
+    u8 tiiCombination;                /** TII combination                                                       */
 } SubchannelModulation;
 
 /**
@@ -276,8 +203,8 @@ typedef enum {
 typedef struct {
     IpVersion version;          /** The version of IP. See the defination of IpVersion.                                               */
     Priority priority;          /** The priority of IP. See the defination of Priority.                                               */
-    Bool cache;                 /** True: IP datagram will be cached in device's buffer. Fasle: IP datagram will be transfer to host. */
-    Byte address[16];           /** The byte array to store IP address.                                                               */
+    bool cache;                 /** True: IP datagram will be cached in device's buffer. Fasle: IP datagram will be transfer to host. */
+    u8 address[16];           /** The byte array to store IP address.                                                               */
 } Ip;
 
 
@@ -286,15 +213,15 @@ typedef struct {
  * Mostly used is in DVB-H standard
  */
 typedef struct {
-    Dword platformId;           /** The ID of platform.                                    */
+    u32 platformId;           /** The ID of platform.                                    */
     char iso639LanguageCode[3]; /** The ISO 639 language code for platform name.           */
-    Byte platformNameLength;    /** The length of platform name.                           */
+    u8 platformNameLength;    /** The length of platform name.                           */
     char platformName[32];      /** The char array to store platform name.                 */
-    Word bandwidth;             /** The operating channel bandwith of this platform.       */
-    Dword frequency;            /** The operating channel frequency of this platform.      */
-    Byte* information;          /** The extra information about this platform.             */
-    Word informationLength;     /** The length of information.                             */
-    Bool hasInformation;        /** The flag to indicate if there exist extra information. */
+    u16 bandwidth;             /** The operating channel bandwith of this platform.       */
+    u32 frequency;            /** The operating channel frequency of this platform.      */
+    u8* information;          /** The extra information about this platform.             */
+    u16 informationLength;     /** The length of information.                             */
+    bool hasInformation;        /** The flag to indicate if there exist extra information. */
     IpVersion ipVersion;        /** The IP version of this platform.                       */
 } Platform;
 
@@ -303,9 +230,9 @@ typedef struct {
  * The type defination of Label.
  */
 typedef struct {
-    Byte charSet;
-    Word charFlag;
-    Byte string[16];
+    u8 charSet;
+    u16 charFlag;
+    u8 string[16];
 } Label;
 
 
@@ -313,9 +240,9 @@ typedef struct {
  * The type defination of Ensemble.
  */
 typedef struct {
-    Word ensembleId;
+    u16 ensembleId;
     Label ensembleLabel;
-    Byte totalServices;
+    u8 totalServices;
 } Ensemble;
 
 
@@ -324,11 +251,11 @@ typedef struct {
  * Mostly used is in T-DMB standard
  */
 typedef struct {
-    Byte serviceType;       /** Service Type(P/D): 0x00: Program, 0x80: Data */
-    Dword serviceId;
-    Dword frequency;
+    u8 serviceType;       /** Service Type(P/D): 0x00: Program, 0x80: Data */
+    u32 serviceId;
+    u32 frequency;
     Label serviceLabel;
-    Byte totalComponents;
+    u8 totalComponents;
 } Service;
 
 
@@ -336,16 +263,16 @@ typedef struct {
  * The type defination of Service Component.
  */
 typedef struct {
-    Byte serviceType;           /** Service Type(P/D): 0x00: Program, 0x80: Data         */
-    Dword serviceId;            /** Service ID                                           */
-    Word componentId;           /** Stream audio/data is subchid, packet mode is SCId    */
-    Byte componentIdService;    /** Component ID within Service                          */
+    u8 serviceType;           /** Service Type(P/D): 0x00: Program, 0x80: Data         */
+    u32 serviceId;            /** Service ID                                           */
+    u16 componentId;           /** Stream audio/data is subchid, packet mode is SCId    */
+    u8 componentIdService;    /** Component ID within Service                          */
     Label componentLabel;       /** The label of component. See the defination of Label. */
-    Byte language;              /** Language code                                        */
-    Byte primary;               /** Primary/Secondary                                    */
-    Byte conditionalAccess;     /** Conditional Access flag                              */
-    Byte componentType;         /** Component Type (A/D)                                 */
-    Byte transmissionId;        /** Transmission Mechanism ID                            */
+    u8 language;              /** Language code                                        */
+    u8 primary;               /** Primary/Secondary                                    */
+    u8 conditionalAccess;     /** Conditional Access flag                              */
+    u8 componentType;         /** Component Type (A/D)                                 */
+    u8 transmissionId;        /** Transmission Mechanism ID                            */
 } Component;
 
 /**
@@ -378,14 +305,14 @@ typedef enum {
  * as sectionType = SectionType_MPE: except table all other fields is valid.
  */
 typedef struct {
-    Byte table;                 /** The table ID. Which is used to filter specific SI/PSI table.                                  */
-    Byte duration;              /** The maximum burst duration. It can be specify to 0xFF if user don't know the exact value.     */
+    u8 table;                 /** The table ID. Which is used to filter specific SI/PSI table.                                  */
+    u8 duration;              /** The maximum burst duration. It can be specify to 0xFF if user don't know the exact value.     */
     FrameRow frameRow;          /** The frame row of MPE-FEC. It means the exact number of rows for each column in MPE-FEC frame. */
     SectionType sectionType;    /** The section type of pid. See the defination of SectionType.                                   */
     Priority priority;          /** The priority of MPE data. Only valid when sectionType is set to SectionType_MPE.              */
     IpVersion version;          /** The IP version of MPE data. Only valid when sectionType is set to SectionType_MPE.            */
-    Bool cache;                 /** True: MPE data will be cached in device's buffer. Fasle: MPE will be transfer to host.        */
-    Word value;                 /** The 13 bits Packet ID.                                                                        */
+    bool cache;                 /** True: MPE data will be cached in device's buffer. Fasle: MPE will be transfer to host.        */
+    u16 value;                 /** The 13 bits Packet ID.                                                                        */
 } Pid;
 
 
@@ -393,16 +320,16 @@ typedef struct {
  * The type defination of ValueSet.
  */
 typedef struct {
-    Dword address;      /** The address of target register */
-    Byte value;         /** The value of target register   */
+    u32 address;      /** The address of target register */
+    u8 value;         /** The value of target register   */
 } ValueSet;
 
 /**
  * The type defination of tuner group.
  */
 typedef struct {
-    Word tunerId;       /** The id of tuner */
-    Byte groupIndex;    /** The index of group */
+    u16 tunerId;       /** The id of tuner */
+    u8 groupIndex;    /** The index of group */
 } TunerGroup;
 
 
@@ -410,12 +337,12 @@ typedef struct {
  * The type defination of Datetime.
  */
 typedef struct {
-    Dword mjd;              /** The mjd of datetime           */
-    Byte configuration;     /** The configuration of datetime */
-    Byte hours;             /** The hours of datetime         */
-    Byte minutes;           /** The minutes of datetime       */
-    Byte seconds;           /** The seconds of datetime       */
-    Word milliseconds;      /** The milli seconds of datetime */
+    u32 mjd;              /** The mjd of datetime           */
+    u8 configuration;     /** The configuration of datetime */
+    u8 hours;             /** The hours of datetime         */
+    u8 minutes;           /** The minutes of datetime       */
+    u8 seconds;           /** The seconds of datetime       */
+    u16 milliseconds;      /** The milli seconds of datetime */
 } Datetime;
 
 
@@ -478,8 +405,8 @@ typedef enum {
  * The type defination of ClockTable.
  */
 typedef struct {
-    Dword crystalFrequency;     /** The frequency of crystal. */
-    Dword adcFrequency;         /** The frequency of ADC.     */
+    u32 crystalFrequency;     /** The frequency of crystal. */
+    u32 adcFrequency;         /** The frequency of ADC.     */
 } ClockTable;
 
 
@@ -487,8 +414,8 @@ typedef struct {
  * The type defination of BandTable.
  */
 typedef struct {
-    Dword minimum;          /** The minimum frequency of this band */
-    Dword maximum;          /** The maximum frequency of this band */
+    u32 minimum;          /** The minimum frequency of this band */
+    u32 maximum;          /** The maximum frequency of this band */
 } BandTable;
 
 
@@ -496,8 +423,8 @@ typedef struct {
  * The type defination of MeanTable.
  */
 typedef struct {
-    Dword mean;
-    Dword errorCount;
+    u32 mean;
+    u32 errorCount;
 } MeanTable;
 
 
@@ -533,7 +460,7 @@ typedef enum {
  * The defination of ChannelInformation.
  */
 typedef struct {
-    Dword frequency;                    /** Channel frequency in KHz.                                */
+    u32 frequency;                    /** Channel frequency in KHz.                                */
     TransmissionModes transmissionMode; /** Number of carriers used for OFDM signal                  */
     Constellation constellation;        /** Constellation scheme (FFT mode) in use                   */
     Interval interval;                  /** Fraction of symbol length used as guard (Guard Interval) */
@@ -548,35 +475,35 @@ typedef struct {
  * The type defination of Statistic.
  */
 typedef struct {
-    Word abortCount;
-    Dword postVitBitCount;
-    Dword postVitErrorCount;
+    u16 abortCount;
+    u32 postVitBitCount;
+    u32 postVitErrorCount;
     /** float point */
-    Dword softBitCount;
-    Dword softErrorCount;
-    Dword preVitBitCount;
-    Dword preVitErrorCount;
-    Byte snr;
+    u32 softBitCount;
+    u32 softErrorCount;
+    u32 preVitBitCount;
+    u32 preVitErrorCount;
+    u8 snr;
 } ChannelStatistic;
 
 /**
  * The type defination of Statistic.
  */
 typedef struct {
-    Bool signalPresented;       /** Signal is presented.                                                                         */
-    Bool signalLocked;          /** Signal is locked.                                                                            */
-    Byte signalQuality;         /** Signal quality, from 0 (poor) to 100 (good).                                                 */
-    Byte signalStrength;        /** Signal strength from 0 (weak) to 100 (strong).                                               */
+    bool signalPresented;       /** Signal is presented.                                                                         */
+    bool signalLocked;          /** Signal is locked.                                                                            */
+    u8 signalQuality;         /** Signal quality, from 0 (poor) to 100 (good).                                                 */
+    u8 signalStrength;        /** Signal strength from 0 (weak) to 100 (strong).                                               */
 } Statistic;
 
 typedef struct _TPS{
 
-    Byte highCodeRate;
-    Byte lowCodeRate;
-    Byte transmissionMode;
-    Byte constellation; 
-    Byte interval;
-    Word cellid;
+    u8 highCodeRate;
+    u8 lowCodeRate;
+    u8 transmissionMode;
+    u8 constellation; 
+    u8 interval;
+    u16 cellid;
 
 } TPS, *pTPS;
 
@@ -595,7 +522,7 @@ typedef struct {
  * @param demodulator the handle of demodulator.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-typedef Dword (*OpenTuner) (
+typedef u32 (*OpenTuner) (
     IN  Demodulator*    demodulator
 );
 
@@ -606,7 +533,7 @@ typedef Dword (*OpenTuner) (
  * @param demodulator the handle of demodulator.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-typedef Dword (*CloseTuner) (
+typedef u32 (*CloseTuner) (
     IN  Demodulator*    demodulator
 );
 
@@ -617,10 +544,10 @@ typedef Dword (*CloseTuner) (
  * @param demodulator the handle of demodulator.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-typedef Dword (*SetTuner) (
+typedef u32 (*SetTuner) (
     IN  Demodulator*    demodulator,
-    IN  Word            bandwidth,
-    IN  Dword           frequency
+    IN  u16            bandwidth,
+    IN  u32           frequency
 );
 /**
  * The type defination of TunerDescription
@@ -630,12 +557,12 @@ typedef struct {
     CloseTuner      closeTunerFunc;
     SetTuner        setTunerFunc;
     ValueSet*       tunerScriptTable;
-    Word*           tunerScriptSetsTable;
-    Byte            tunerAddress;
-    Byte            registerAddressLength;
-    Dword           ifFrequency;
-    Bool            inversion;
-    Word            tunerId;
+    u16*           tunerScriptSetsTable;
+    u8            tunerAddress;
+    u8            registerAddressLength;
+    u32           ifFrequency;
+    bool            inversion;
+    u16            tunerId;
 } TunerDescription;
 
 
@@ -646,24 +573,24 @@ typedef struct {
     /** Basic structure */
     Handle userData;
 	Handle driver;
-    Byte* firmwareCodes;
+    u8* firmwareCodes;
     Segment* firmwareSegments;
-    Byte* firmwarePartitions;
-    Word* scriptSets;
+    u8* firmwarePartitions;
+    u16* scriptSets;
     ValueSet* scripts;
-    Dword crystalFrequency;
-    Dword adcFrequency;
+    u32 crystalFrequency;
+    u32 adcFrequency;
     StreamType streamType;
-    Word bandwidth;
-    Dword frequency;
-    Dword fcw;
+    u16 bandwidth;
+    u32 frequency;
+    u32 fcw;
     Statistic statistic;
-    Byte hostInterface;
-    Bool booted;
-    Bool initialized;
-    Byte pidCounter;
-    Byte demodAddr;       /** Demodulator I2C Address */
-    Bool Clkout_en;       /** Clock output enable */
+    u8 hostInterface;
+    bool booted;
+    bool initialized;
+    u8 pidCounter;
+    u8 demodAddr;       /** Demodulator I2C Address */
+    bool Clkout_en;       /** Clock output enable */
 	ChannelStatistic channelStatistic;
 } DefaultDemodulator;
 //--------------------------
@@ -707,31 +634,31 @@ typedef struct _SystemConfig{
 typedef struct {
     /** Basic structure */
     Handle userData;
-    Byte busId;
-	Byte i2cAddr;
-    Byte* firmwareCodes;
+    u8 busId;
+	u8 i2cAddr;
+    u8* firmwareCodes;
     Segment* firmwareSegments;
-    Word*  firmwarePartitions;
-    Word* scriptSets;
+    u16*  firmwarePartitions;
+    u16* scriptSets;
     ValueSet* scripts;
     TsInterface tsInterfaceType;
-    Word bandwidth;
-    Dword frequency;    
-    Bool booted;
-	Byte slaveIICAddr;  
+    u16 bandwidth;
+    u32 frequency;    
+    bool booted;
+	u8 slaveIICAddr;  
 	ChannelModulation channelModulation;
 	CalibrationInfo calibrationInfo;
 	SystemConfig systemConfig;
 } Modulator;
 
 
-extern const Byte Eagle_bitMask[8];
+extern const u8 Eagle_bitMask[8];
 #define REG_MASK(pos, len)                (Eagle_bitMask[len-1] << pos)
 #define REG_CLEAR(temp, pos, len)         (temp & (~REG_MASK(pos, len)))
 #define REG_CREATE(val, temp, pos, len)   ((val << pos) | (REG_CLEAR(temp, pos, len)))
 #define REG_GET(value, pos, len)          ((value & REG_MASK(pos, len)) >> pos)
-#define LOWBYTE(w)      ((Byte)((w) & 0xff))
-#define HIGHBYTE(w)     ((Byte)((w >> 8) & 0xff))
+#define LOWBYTE(w)      ((u8)((w) & 0xff))
+#define HIGHBYTE(w)     ((u8)((w >> 8) & 0xff))
 #define OMEGA_NORMAL                    0x00
 #define OMEGA_LNA_Config_1              0x01
 #define OMEGA_LNA_Config_2              0x02

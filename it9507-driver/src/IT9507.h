@@ -23,7 +23,7 @@
  * @param value the value to be written.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
+ *     u32 error = Error_NO_ERROR;
  *     Eagle eagle;
  *
  *     // Set the value of register 0xA000 in modulator to 0.
@@ -34,11 +34,11 @@
  *         printf ("Success");
  * </pre>
  */
-Dword IT9507_writeRegister (
+u32 IT9507_writeRegister (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    IN  Byte            value
+    IN  u32           registerAddress,
+    IN  u8            value
 );
 
 
@@ -57,8 +57,8 @@ Dword IT9507_writeRegister (
  * @param buffer a byte array which is used to store values to be written.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
- *     Byte buffer[3] = { 0x00, 0x01, 0x02 };
+ *     u32 error = Error_NO_ERROR;
+ *     u8 buffer[3] = { 0x00, 0x01, 0x02 };
  *     Eagle eagle;
  *
  *     // Set the value of register 0xA000 in modulator to 0.
@@ -71,12 +71,12 @@ Dword IT9507_writeRegister (
  *         printf ("Success");
  * </pre>
  */
-Dword IT9507_writeRegisters (
+u32 IT9507_writeRegisters (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    IN  Byte            bufferLength,
-    IN  Byte*           buffer
+    IN  u32           registerAddress,
+    IN  u8            bufferLength,
+    IN  u8*           buffer
 );
 
 
@@ -95,11 +95,11 @@ Dword IT9507_writeRegisters (
  * @param buffer a byte array which is used to store values to be read.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_writeGenericRegisters (
+u32 IT9507_writeGenericRegisters (
     IN  Modulator*    modulator,
-    IN  Byte            slaveAddress,
-    IN  Byte            bufferLength,
-    IN  Byte*           buffer
+    IN  u8            slaveAddress,
+    IN  u8            bufferLength,
+    IN  u8*           buffer
 );
 
 
@@ -116,8 +116,8 @@ Dword IT9507_writeGenericRegisters (
  * @param buffer a byte array which is used to store values to be written.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
- *     Byte buffer[3] = { 0x00, 0x01, 0x02 };
+ *     u32 error = Error_NO_ERROR;
+ *     u8 buffer[3] = { 0x00, 0x01, 0x02 };
  *     Eagle eagle;
  *
  *     // Set the value of cell 0x0000 in EEPROM to 0.
@@ -130,11 +130,11 @@ Dword IT9507_writeGenericRegisters (
  *         printf ("Success");
  * </pre>
  */
-Dword IT9507_writeEepromValues (
+u32 IT9507_writeEepromValues (
     IN  Modulator*    modulator,
-    IN  Word            registerAddress,
-    IN  Byte            bufferLength,
-    IN  Byte*           buffer
+    IN  u16            registerAddress,
+    IN  u8            bufferLength,
+    IN  u8*           buffer
 );
 
 
@@ -151,7 +151,7 @@ Dword IT9507_writeEepromValues (
  * @param length the length of bits.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
+ *     u32 error = Error_NO_ERROR;
  *     Eagle eagle;
  *
  *     // Modify the LSB of register 0xA000 in modulator to 0.
@@ -162,13 +162,13 @@ Dword IT9507_writeEepromValues (
  *         printf ("Success");
  * </pre>
  */
-Dword IT9507_writeRegisterBits (
+u32 IT9507_writeRegisterBits (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    IN  Byte            position,
-    IN  Byte            length,
-    IN  Byte            value
+    IN  u32           registerAddress,
+    IN  u8            position,
+    IN  u8            length,
+    IN  u8            value
 );
 
 
@@ -184,8 +184,8 @@ Dword IT9507_writeRegisterBits (
  *        register.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
- *     Byte value;
+ *     u32 error = Error_NO_ERROR;
+ *     u8 value;
  *     Eagle eagle;
  *
  *     // Get the value of register 0xA000 in modulator.
@@ -197,11 +197,11 @@ Dword IT9507_writeRegisterBits (
  *     printf ("The value of 0xA000 is %2x", value);
  * </pre>
  */
-Dword IT9507_readRegister (
+u32 IT9507_readRegister (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    OUT Byte*           value
+    IN  u32           registerAddress,
+    OUT u8*           value
 );
 
 
@@ -220,8 +220,8 @@ Dword IT9507_readRegister (
  * @param buffer a byte array which is used to store values to be read.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
- *     Byte buffer[3];
+ *     u32 error = Error_NO_ERROR;
+ *     u8 buffer[3];
  *     Eagle eagle;
  *
  *     // Get the value of register 0xA000, 0xA001, 0xA002 in modulator.
@@ -235,12 +235,12 @@ Dword IT9507_readRegister (
  *     printf ("The value of 0xA002 is %2x", buffer[2]);
  * </pre>
  */
-Dword IT9507_readRegisters (
+u32 IT9507_readRegisters (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    IN  Byte            bufferLength,
-    OUT Byte*           buffer
+    IN  u32           registerAddress,
+    IN  u8            bufferLength,
+    OUT u8*           buffer
 );
 
 
@@ -257,11 +257,11 @@ Dword IT9507_readRegisters (
  * @param buffer a byte array which is used to store values to be read.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_readGenericRegisters (
+u32 IT9507_readGenericRegisters (
     IN  Modulator*    modulator,
-    IN  Byte            slaveAddress,
-    IN  Byte            bufferLength,
-    IN  Byte*           buffer
+    IN  u8            slaveAddress,
+    IN  u8            bufferLength,
+    IN  u8*           buffer
 );
 
 
@@ -277,8 +277,8 @@ Dword IT9507_readGenericRegisters (
  * @param buffer a byte array which is used to store values to be read.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
- *     Byte buffer[3];
+ *     u32 error = Error_NO_ERROR;
+ *     u8 buffer[3];
  *     Eagle eagle;
  *
  *     // Get the value of cell 0x0000, 0x0001, 0x0002 in EEPROM.
@@ -292,11 +292,11 @@ Dword IT9507_readGenericRegisters (
  *     printf ("The value of 0x0002 is %2x", buffer[2]);
  * </pre>
  */
-Dword IT9507_readEepromValues (
+u32 IT9507_readEepromValues (
     IN  Modulator*    modulator,
-    IN  Word            registerAddress,
-    IN  Byte            bufferLength,
-    OUT Byte*           buffer
+    IN  u16            registerAddress,
+    IN  u8            bufferLength,
+    OUT u8*           buffer
 );
 
 
@@ -313,8 +313,8 @@ Dword IT9507_readEepromValues (
  * @param length the length of bits.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
- *     Byte value;
+ *     u32 error = Error_NO_ERROR;
+ *     u8 value;
  *     Eagle eagle;
  *
  *     // Read the LSB of register 0xA000 in modulator.
@@ -326,13 +326,13 @@ Dword IT9507_readEepromValues (
  *     printf ("The value of LSB of 0xA000 is %2x", value);
  * </pre>
  */
-Dword IT9507_readRegisterBits (
+u32 IT9507_readRegisterBits (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    IN  Dword           registerAddress,
-    IN  Byte            position,
-    IN  Byte            length,
-    OUT Byte*           value
+    IN  u32           registerAddress,
+    IN  u8            position,
+    IN  u8            length,
+    OUT u8*           value
 );
 
 
@@ -343,8 +343,8 @@ Dword IT9507_readRegisterBits (
  * @param version the version of firmware.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
- *     Dword version;
+ *     u32 error = Error_NO_ERROR;
+ *     u32 version;
  *     Eagle eagle;
  *
  *     // Get the version of Link layer firmware.
@@ -355,10 +355,10 @@ Dword IT9507_readRegisterBits (
  *         printf ("The version of firmware is : %X", version);
  * </pre>
  */
-Dword IT9507_getFirmwareVersion (
+u32 IT9507_getFirmwareVersion (
     IN  Modulator*    modulator,
     IN  Processor       processor,
-    OUT Dword*          version
+    OUT u32*          version
 );
 
 
@@ -373,10 +373,10 @@ Dword IT9507_getFirmwareVersion (
  * @example <pre>
  * </pre>
  */
-Dword IT9507_loadIrTable (
+u32 IT9507_loadIrTable (
     IN  Modulator*    modulator,
-    IN  Word            tableLength,
-    IN  Byte*           table
+    IN  u16            tableLength,
+    IN  u8*           table
 );
 
 
@@ -392,7 +392,7 @@ Dword IT9507_loadIrTable (
  * @param i2cAddr The address of i2c bus.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
+ *     u32 error = Error_NO_ERROR;
  *     Modulator eagle;
  *
  *     // Initialize demodulators.
@@ -405,11 +405,11 @@ Dword IT9507_loadIrTable (
  *         printf ("Success");
  * </pre>
  */
-Dword IT9507_initialize (
+u32 IT9507_initialize (
     IN  Modulator*    modulator,
     IN  TsInterface   streamType,
-	IN  Byte            busId,
-	IN  Byte            i2cAddr
+	IN  u8            busId,
+	IN  u8            i2cAddr
 );
 
 
@@ -419,7 +419,7 @@ Dword IT9507_initialize (
  * @param modulator the handle of modulator.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
+ *     u32 error = Error_NO_ERROR;
  *     Modulator eagle;
  *
  *     // Finalize demodulators.
@@ -430,7 +430,7 @@ Dword IT9507_initialize (
  *         printf ("Success");
  * </pre>
  */
-Dword IT9507_finalize (
+u32 IT9507_finalize (
     IN  Modulator*    modulator
 );
 
@@ -441,7 +441,7 @@ Dword IT9507_finalize (
  * @param modulator the handle of modulator.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
+ *     u32 error = Error_NO_ERROR;
  *     Modulator eagle;
  *
  *     // Reset modulator.
@@ -452,7 +452,7 @@ Dword IT9507_finalize (
  *         printf ("Success");
  * </pre>
  */
-Dword IT9507_reset (
+u32 IT9507_reset (
     IN  Modulator*    modulator
 );
 
@@ -467,7 +467,7 @@ Dword IT9507_reset (
  * @example <pre>
  * </pre>
  */
-Dword IT9507_setTXChannelModulation (
+u32 IT9507_setTXChannelModulation (
     IN  Modulator*            modulator,
     IN  ChannelModulation*      channelModulation
 );
@@ -479,9 +479,9 @@ Dword IT9507_setTXChannelModulation (
  * @param enable The flag of enable(1:on / 0:off).
  * @return Error_NO_ERROR: successful, other non-zero error code otherwise.
  */
-Dword IT9507_setTxModeEnable (
+u32 IT9507_setTxModeEnable (
     IN  Modulator*            modulator,
-    IN  Byte                    enable
+    IN  u8                    enable
 );
 
 /**
@@ -500,7 +500,7 @@ Dword IT9507_setTxModeEnable (
  * @param frequency the channel frequency in KHz.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
+ *     u32 error = Error_NO_ERROR;
  *     Eagle eagle;
  *
  *     error = IT9507_acquireTxChannel ((Modulator*) &eagle, 8000, 666000);
@@ -512,10 +512,10 @@ Dword IT9507_setTxModeEnable (
  * </pre>
  */
 
-Dword IT9507_acquireTxChannel (
+u32 IT9507_acquireTxChannel (
     IN  Modulator*      modulator,
-    IN  Word            bandwidth,
-    IN  Dword           frequency
+    IN  u16            bandwidth,
+    IN  u32           frequency
 );
 
 
@@ -526,7 +526,7 @@ Dword IT9507_acquireTxChannel (
  * @param modulator the handle of modulator.
  * @return Error_NO_ERROR: successful, other non-zero error code otherwise.
  */
-Dword IT9507_resetPSBBuffer (
+u32 IT9507_resetPSBBuffer (
 	IN  Modulator*    modulator
 );
 
@@ -545,7 +545,7 @@ Dword IT9507_resetPSBBuffer (
  *                  SERIAL_TS_INPUT
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
+ *     u32 error = Error_NO_ERROR;
  *     Eagle eagle;
  *
  *     error = IT9507_setTsInterface ((Modulator*) &eagle, SERIAL_TS_INPUT)
@@ -555,7 +555,7 @@ Dword IT9507_resetPSBBuffer (
  *         printf ("Success");
  * </pre>
  */
-Dword IT9507_setTsInterface (
+u32 IT9507_setTsInterface (
     IN  Modulator*    modulator,
     IN  TsInterface   streamType
 );
@@ -568,9 +568,9 @@ Dword IT9507_setTsInterface (
  * @example <pre>
  * </pre>
  */
-Dword IT9507_getIrCode (
+u32 IT9507_getIrCode (
     IN  Modulator*    modulator,
-    OUT Dword*          code
+    OUT u32*          code
 );
 
 
@@ -582,7 +582,7 @@ Dword IT9507_getIrCode (
  * @example <pre>
  * </pre>
  */
-Dword IT9507_TXreboot (
+u32 IT9507_TXreboot (
     IN  Modulator*    modulator
 );
 
@@ -596,9 +596,9 @@ Dword IT9507_TXreboot (
  * @example <pre>
  * </pre>
  */
-Dword IT9507_controlPowerSaving (
+u32 IT9507_controlPowerSaving (
     IN  Modulator*    modulator,
-    IN  Byte            control
+    IN  u8            control
 );
 
 
@@ -613,10 +613,10 @@ Dword IT9507_controlPowerSaving (
  * @example <pre>
  * </pre>
  */
-Dword IT9507_controlPidFilter (
+u32 IT9507_controlPidFilter (
     IN  Modulator*    modulator,
-    IN  Byte            control,
-	IN  Byte            enable
+    IN  u8            control,
+	IN  u8            enable
 );
 
 
@@ -626,7 +626,7 @@ Dword IT9507_controlPidFilter (
  * @param modulator the handle of modulator.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
+ *     u32 error = Error_NO_ERROR;
  *     Eagle eagle;
  *
  *     error = IT9507_resetPidFilter ((Modulator*) &eagle, 0);
@@ -636,7 +636,7 @@ Dword IT9507_controlPidFilter (
  *         printf ("Success");
  * </pre>
  */
-Dword IT9507_resetPidFilter (
+u32 IT9507_resetPidFilter (
     IN  Modulator*    modulator
 );
 
@@ -649,7 +649,7 @@ Dword IT9507_resetPidFilter (
  * @param pid the PID that will be add to PID filter.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
- *     Dword error = Error_NO_ERROR;
+ *     u32 error = Error_NO_ERROR;
  *     Pid pid;
  *     Eagle eagle;
  *
@@ -663,9 +663,9 @@ Dword IT9507_resetPidFilter (
  *         printf ("Success");
  * </pre>
  */
-Dword IT9507_addPidToFilter (
+u32 IT9507_addPidToFilter (
     IN  Modulator*    modulator,
-    IN  Byte            index,
+    IN  u8            index,
     IN  Pid             pid
 );
 
@@ -677,9 +677,9 @@ Dword IT9507_addPidToFilter (
  * @param pbuffer the data that will be write to HW PSI table.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_sendHwPSITable (
+u32 IT9507_sendHwPSITable (
 	IN  Modulator*    modulator,
-	IN  Byte*            pbuffer
+	IN  u8*            pbuffer
 );
 
 /**
@@ -691,10 +691,10 @@ Dword IT9507_sendHwPSITable (
  * @param pbuffer the data that will be write to HW PSI table.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_accessFwPSITable (
+u32 IT9507_accessFwPSITable (
 	IN  Modulator*    modulator,
-	IN  Byte		  psiTableIndex,
-	IN  Byte*         pbuffer
+	IN  u8		  psiTableIndex,
+	IN  u8*         pbuffer
 );
 
 /**
@@ -706,10 +706,10 @@ Dword IT9507_accessFwPSITable (
  * @param timer the timer unit is ms.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_setFwPSITableTimer (
+u32 IT9507_setFwPSITableTimer (
 	IN  Modulator*    modulator,
-	IN  Byte		  psiTableIndex,
-	IN  Word          timer_ms
+	IN  u8		  psiTableIndex,
+	IN  u16          timer_ms
 ); 
 
 /**
@@ -719,9 +719,9 @@ Dword IT9507_setFwPSITableTimer (
  * @param SlaveAddress Slave device IIC Addr.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_setSlaveIICAddress (
+u32 IT9507_setSlaveIICAddress (
     IN  Modulator*    modulator,
-	IN  Byte          SlaveAddress
+	IN  u8          SlaveAddress
 );
 
 /**
@@ -732,10 +732,10 @@ Dword IT9507_setSlaveIICAddress (
  * @param frequency channel frequency
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_runTxCalibration (
+u32 IT9507_runTxCalibration (
 	IN  Modulator*    modulator,
-	IN  Word            bandwidth,
-    IN  Dword           frequency
+	IN  u16            bandwidth,
+    IN  u32           frequency
 );
 
 
@@ -746,7 +746,7 @@ Dword IT9507_runTxCalibration (
  * @param gain adjust output gain value.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_adjustOutputGain (
+u32 IT9507_adjustOutputGain (
 	IN  Modulator*    modulator,
 	IN  int			  *gain	   
 ); 
@@ -758,7 +758,7 @@ Dword IT9507_adjustOutputGain (
  * @param gain : output gain value.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_getOutputGain (
+u32 IT9507_getOutputGain (
 	IN  Modulator*    modulator,
 	OUT  int			  *gain	   
 );
@@ -773,10 +773,10 @@ Dword IT9507_getOutputGain (
  * @param pMinGain:  The Minumum Gain/Attenuation can be set, in dB 
  * @return:          ERROR_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_getGainRange (
+u32 IT9507_getGainRange (
 	IN  Modulator*    modulator,
-	IN  Dword           frequency,
-	IN  Word            bandwidth,    
+	IN  u32           frequency,
+	IN  u16            bandwidth,    
 	OUT int*			maxGain,
 	OUT int*			minGain
 );
@@ -788,9 +788,9 @@ Dword IT9507_getGainRange (
  * @param enable 1:suspend mode/0: resume.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_suspendMode (
+u32 IT9507_suspendMode (
     IN  Modulator*    modulator,
-    IN  Byte          enable
+    IN  u8          enable
 );
 
 
@@ -801,7 +801,7 @@ Dword IT9507_suspendMode (
  * @param TPS: Transmission Parameter Signalling 
  * @return: ERROR_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_setTPS (
+u32 IT9507_setTPS (
     IN  Modulator*    modulator,
     IN  TPS           tps
 );
@@ -813,7 +813,7 @@ Dword IT9507_setTPS (
  * @param pTPS: Transmission Parameter Signalling 
  * @return: ERROR_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_getTPS (
+u32 IT9507_getTPS (
     IN  Modulator*    modulator,
     IN  pTPS           pTps
 );
@@ -826,10 +826,10 @@ Dword IT9507_getTPS (
  * @param tableGroups: number of tableGroups
  * @return: ERROR_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_setIQtable (
+u32 IT9507_setIQtable (
 	IN  Modulator*  modulator,
     IN  IQtable		*IQ_table_ptr,
-	IN  Word		tableGroups
+	IN  u16		tableGroups
 );
 
 
@@ -841,7 +841,7 @@ Dword IT9507_setIQtable (
  * @param dc_q: dc_q Calibration Value
  * @return: ERROR_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_setDCCalibrationValue (
+u32 IT9507_setDCCalibrationValue (
 	IN  Modulator*	modulator,
     IN	int			dc_i,
 	IN	int			dc_q
@@ -854,8 +854,8 @@ Dword IT9507_setDCCalibrationValue (
  * @param overflow: return 1:overflow
  * @return: ERROR_NO_ERROR: successful, non-zero error code otherwise.
  */
-Dword IT9507_isTsBufferOverflow (
+u32 IT9507_isTsBufferOverflow (
 	IN  Modulator*	modulator,
-    IN	Bool		*overflow	
+    IN	bool		*overflow	
 );
 #endif

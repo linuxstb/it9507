@@ -8,35 +8,35 @@
 #include "modulatorUser.h"
 
 
-Dword Usb2_getDriver (
+u32 Usb2_getDriver (
     IN  Modulator*    modulator,
     OUT Handle*         handle
 );
 
 
-Dword Usb2_exitDriver (
+u32 Usb2_exitDriver (
     IN  Modulator*    modulator
 );
 
 
-Dword Usb2_writeControlBus (
+u32 Usb2_writeControlBus (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    IN  Byte*           buffer
+    IN  u32           bufferLength,
+    IN  u8*           buffer
 );
 
 
-Dword Usb2_readControlBus (
+u32 Usb2_readControlBus (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    OUT Byte*           buffer
+    IN  u32           bufferLength,
+    OUT u8*           buffer
 );
 
 
-Dword Usb2_readDataBus (
+u32 Usb2_readDataBus (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    OUT Byte*           buffer
+    IN  u32           bufferLength,
+    OUT u8*           buffer
 );
 
 #endif

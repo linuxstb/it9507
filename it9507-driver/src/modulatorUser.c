@@ -19,14 +19,14 @@ DeviceDescription HwDesc[] =
 };
 
 
-Dword EagleUser_getSystemConfig (
+u32 EagleUser_getSystemConfig (
     IN  Modulator*    modulator,
-    IN  Byte          pcbIndex,
+    IN  u8          pcbIndex,
 	IN  SystemConfig* Config  
 ) {
 	DeviceDescription HwSetting;
 	SystemConfig PCBconfig;
-	Dword error = 0;
+	u32 error = 0;
 	
 	PCBconfig.restSlave		= UNUSED;
 	PCBconfig.rfEnable		= UNUSED;
@@ -362,102 +362,102 @@ Dword EagleUser_getSystemConfig (
 
 
 
-Dword EagleUser_setSystemConfig (
+u32 EagleUser_setSystemConfig (
     IN  Modulator*    modulator,
 	IN  SystemConfig  systemConfig
 ) {
-	Dword error = 0;
-	Byte pinCnt = 0;
+	u32 error = 0;
+	u8 pinCnt = 0;
 	
 	if(systemConfig.restSlave != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.restSlave+1, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.restSlave+1, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.restSlave+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.restSlave+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.restSlave+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.restSlave+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 		EagleUser_delay(modulator, 10);
 	}
 
    	if(systemConfig.lnaPowerDown != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.lnaPowerDown+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.lnaPowerDown+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.lnaPowerDown+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.lnaPowerDown+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
 
 	if(systemConfig.loClk != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.loClk+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loClk+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.loClk+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loClk+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
 
 	if(systemConfig.loData != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.loData+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loData+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.loData+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loData+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
 
 	if(systemConfig.loLe != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.loLe+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loLe+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.loLe+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.loLe+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
 
 	if(systemConfig.muxSelect != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.muxSelect+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.muxSelect+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.muxSelect+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.muxSelect+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
 
 	if(systemConfig.powerDownSlave != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.powerDownSlave+1, 0);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.powerDownSlave+1, 0);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.powerDownSlave+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.powerDownSlave+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.powerDownSlave+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.powerDownSlave+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
 
 	if(systemConfig.rfEnable != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.rfEnable+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.rfEnable+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.rfEnable+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.rfEnable+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
 
 	if(systemConfig.uartTxd != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.uartTxd+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.uartTxd+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.uartTxd+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.uartTxd+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
 
 	if(systemConfig.uvFilter != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.uvFilter+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.uvFilter+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.uvFilter+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.uvFilter+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
 
 	if(systemConfig.lnaGain != UNUSED){ //output
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.lnaGain+2, 1);//gpiox_en
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.lnaGain+2, 1);//gpiox_en
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)systemConfig.lnaGain+3, 1);//gpiox_on
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)systemConfig.lnaGain+3, 1);//gpiox_on
 		if (error) goto exit;
 		pinCnt++;
 	}
@@ -471,12 +471,12 @@ exit:
     return (ModulatorError_NO_ERROR);
 }
 
-Dword EagleUser_getTsInputType (
+u32 EagleUser_getTsInputType (
 	IN  Modulator*    modulator,
 	OUT  TsInterface*  tsInStreamType
 ) {
-	Dword error = ModulatorError_NO_ERROR;
-	Byte temp = 0;
+	u32 error = ModulatorError_NO_ERROR;
+	u8 temp = 0;
 	*tsInStreamType = (TsInterface)temp;
 
 	error = IT9507_readRegister (modulator, Processor_LINK, 0x4979, &temp);//has eeprom ??
@@ -489,12 +489,12 @@ Dword EagleUser_getTsInputType (
 	return (error);
 }
 
-Dword EagleUser_getDeviceType (
+u32 EagleUser_getDeviceType (
 	IN  Modulator*    modulator,
-	OUT  Byte*		  deviceType	   
+	OUT  u8*		  deviceType	   
 ){	
-	Dword error = ModulatorError_NO_ERROR;
-	Byte temp;
+	u32 error = ModulatorError_NO_ERROR;
+	u8 temp;
 
 	
 	error = IT9507_readRegister (modulator, Processor_LINK, 0x4979, &temp);//has eeprom ??
@@ -517,11 +517,11 @@ Dword EagleUser_getDeviceType (
 
 
 
-Dword EagleUser_memoryCopy (
+u32 EagleUser_memoryCopy (
     IN  Modulator*    modulator,
     IN  void*           dest,
     IN  void*           src,
-    IN  Dword           count
+    IN  u32           count
 ) {
     /*
      *  ToDo:  Add code here
@@ -533,9 +533,9 @@ Dword EagleUser_memoryCopy (
     return (ModulatorError_NO_ERROR);
 }
 
-Dword EagleUser_delay (
+u32 EagleUser_delay (
     IN  Modulator*    modulator,
-    IN  Dword           dwMs
+    IN  u32           dwMs
 ) {
     /*
      *  ToDo:  Add code here
@@ -549,7 +549,7 @@ Dword EagleUser_delay (
 }
 
 
-Dword EagleUser_enterCriticalSection (
+u32 EagleUser_enterCriticalSection (
     IN  Modulator*    modulator
 ) {
     /*
@@ -562,7 +562,7 @@ Dword EagleUser_enterCriticalSection (
 }
 
 
-Dword EagleUser_leaveCriticalSection (
+u32 EagleUser_leaveCriticalSection (
     IN  Modulator*    modulator
 ) {
     /*
@@ -575,7 +575,7 @@ Dword EagleUser_leaveCriticalSection (
 }
 
 
-Dword EagleUser_mpegConfig (
+u32 EagleUser_mpegConfig (
     IN  Modulator*    modulator
 ) {
     /*
@@ -586,10 +586,10 @@ Dword EagleUser_mpegConfig (
 }
 
 
-Dword EagleUser_busTx (
+u32 EagleUser_busTx (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    IN  Byte*           buffer
+    IN  u32           bufferLength,
+    IN  u8*           buffer
 ) {
     /*
      *  ToDo:  Add code here
@@ -609,7 +609,7 @@ Dword EagleUser_busTx (
      *  // If no error happened return 0, else return error code.
      *  return (0);
      */
-	Dword error = 0;
+	u32 error = 0;
 	if(modulator->busId == Bus_USB)
 		error = Usb2_writeControlBus(modulator,bufferLength,buffer);
 	else
@@ -618,10 +618,10 @@ Dword EagleUser_busTx (
 }
 
 
-Dword EagleUser_busRx (
+u32 EagleUser_busRx (
     IN  Modulator*    modulator,
-    IN  Dword           bufferLength,
-    OUT Byte*           buffer
+    IN  u32           bufferLength,
+    OUT u8*           buffer
 ) {
     /*
      *  ToDo:  Add code here
@@ -643,7 +643,7 @@ Dword EagleUser_busRx (
      *  // If no error happened return 0, else return error code.
      *  return (0);
      */
-	Dword error = 0;
+	u32 error = 0;
 	if(modulator->busId == Bus_USB)
 		error = Usb2_readControlBus(modulator,bufferLength,buffer);
 	else
@@ -652,7 +652,7 @@ Dword EagleUser_busRx (
 }
 
 
-Dword EagleUser_setBus (
+u32 EagleUser_setBus (
     IN  Modulator*    modulator
 ) {
 	/*
@@ -661,13 +661,13 @@ Dword EagleUser_setBus (
      *  // If no error happened return 0, else return error code.
      *  return (0);
      */
-    Dword error = ModulatorError_NO_ERROR;
+    u32 error = ModulatorError_NO_ERROR;
 
     return(error);
 }
 
 
- Dword EagleUser_Initialization  (
+ u32 EagleUser_Initialization  (
     IN  Modulator*    modulator
 ) {
 	/*
@@ -676,20 +676,20 @@ Dword EagleUser_setBus (
      *  // If no error happened return 0, else return error code.
      *  return (0);
      */
-	Dword error = 0;
+	u32 error = 0;
 	 error = EagleUser_setSystemConfig(modulator, modulator->systemConfig);
 	 if (error) goto exit;
 
 	if(modulator->tsInterfaceType != StreamType_DVBT_DATAGRAM){
 		
 		if(modulator->systemConfig.restSlave != UNUSED){
-			error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)modulator->systemConfig.restSlave+1, 1); //RX(IT9133) rest 
+			error = IT9507_writeRegister (modulator, Processor_LINK, (u32)modulator->systemConfig.restSlave+1, 1); //RX(IT9133) rest 
 			if (error) goto exit;
 		}
 
 		EagleUser_delay(modulator, 10);
 		if(modulator->systemConfig.powerDownSlave != UNUSED){
-			error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)modulator->systemConfig.powerDownSlave+1, 0); //RX(IT9133) power up
+			error = IT9507_writeRegister (modulator, Processor_LINK, (u32)modulator->systemConfig.powerDownSlave+1, 0); //RX(IT9133) power up
 			if (error) goto exit;
 		}
 
@@ -697,11 +697,11 @@ Dword EagleUser_setBus (
 	}
 
 	if(modulator->systemConfig.rfEnable != UNUSED){
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)modulator->systemConfig.rfEnable+1, 0); //RF out power down
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)modulator->systemConfig.rfEnable+1, 0); //RF out power down
 		if (error) goto exit;
 	}
 	if(modulator->systemConfig.lnaGain != UNUSED){
-		error = IT9507_writeRegister (modulator, Processor_LINK, (Dword)modulator->systemConfig.lnaGain+1, 0); //lna Gain
+		error = IT9507_writeRegister (modulator, Processor_LINK, (u32)modulator->systemConfig.lnaGain+1, 0); //lna Gain
 		if (error) goto exit;
 	}
 	if(modulator->systemConfig.loClk != UNUSED)
@@ -712,7 +712,7 @@ exit:
  }
 
 
-Dword EagleUser_Finalize  (
+u32 EagleUser_Finalize  (
     IN  Modulator*    modulator
 ) {
 	/*
@@ -721,7 +721,7 @@ Dword EagleUser_Finalize  (
      *  // If no error happened return 0, else return error code.
      *  return (0);
      */
-	Dword error = 0;
+	u32 error = 0;
 	if(modulator->busId == Bus_USB)
 		error = Usb2_exitDriver(modulator);
 	else
@@ -731,10 +731,10 @@ Dword EagleUser_Finalize  (
  }
  
 
-Dword EagleUser_acquireChannel (
+u32 EagleUser_acquireChannel (
 	IN  Modulator*    modulator,
-	IN  Word          bandwidth,
-	IN  Dword         frequency
+	IN  u16          bandwidth,
+	IN  u32         frequency
 ){
 
 	/*
@@ -743,7 +743,7 @@ Dword EagleUser_acquireChannel (
      *  // If no error happened return 0, else return error code.
      *  return (0);
      */
-	Dword error = 0;
+	u32 error = 0;
 
 	if(modulator->systemConfig.loClk != UNUSED)
 		ADF4351_setFrequency(modulator, frequency);//External Lo control
@@ -764,9 +764,9 @@ exit:
 	return (error);
 }
 
-Dword EagleUser_setTxModeEnable (
+u32 EagleUser_setTxModeEnable (
 	IN  Modulator*            modulator,
-	IN  Byte                    enable	
+	IN  u8                    enable	
 ) {
 	/*
      *  ToDo:  Add code here
@@ -774,7 +774,7 @@ Dword EagleUser_setTxModeEnable (
      *  // If no error happened return 0, else return error code.
      *  return (0);
      */
-	Dword error = ModulatorError_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 	if(enable){
 		if(modulator->systemConfig.rfEnable != UNUSED){
 			error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.rfEnable+1, 1); //RF power up 
@@ -792,9 +792,9 @@ exit :
 }
 
 
-Dword EagleUser_getChannelIndex (
+u32 EagleUser_getChannelIndex (
 	IN  Modulator*            modulator,
-	IN  Byte*                    index	
+	IN  u8*                    index	
 ) {
 
 	/*
@@ -803,9 +803,9 @@ Dword EagleUser_getChannelIndex (
      *  // If no error happened return 0, else return error code.
      *  return (0);
      */
-	Dword error = ModulatorError_NO_ERROR;
-	Byte Freqindex = 0;
-	Byte temp = 0;
+	u32 error = ModulatorError_NO_ERROR;
+	u8 Freqindex = 0;
+	u8 temp = 0;
 	// get HW setting
 	if(modulator->systemConfig.muxSelect != UNUSED){
 		error = IT9507_writeRegister (modulator, Processor_LINK, modulator->systemConfig.muxSelect+1, 1); //MUX

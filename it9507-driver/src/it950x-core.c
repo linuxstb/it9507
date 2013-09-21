@@ -36,7 +36,7 @@ static DEFINE_MUTEX(it950x_rb_mutex);
 /* Structure for urb context */
 typedef struct it950x_urb_context{
 	struct it950x_dev *dev;
-	Byte index;
+	u8 index;
 } URBContext;
 
 /* Structure to hold all of our device specific stuff */
@@ -50,57 +50,57 @@ struct it950x_dev {
 	struct kref		kref;
 	struct file *tx_file;
 	DEVICE_CONTEXT DC;	
-	Byte tx_on;
-	Byte tx_chip_minor;	
-	Byte g_AP_use;
+	u8 tx_on;
+	u8 tx_chip_minor;	
+	u8 g_AP_use;
 	atomic_t g_AP_use_tx;
 	atomic_t tx_pw_on;	
-	Bool DeviceReboot, DevicePower;	
-	Bool TunerInited0, TunerInited1;	
-	Byte is_use_low_brate;
+	bool DeviceReboot, DevicePower;	
+	bool TunerInited0, TunerInited1;	
+	u8 is_use_low_brate;
 	atomic_t urb_counter_low_brate;
 
 	/* USB URB Related for TX*/
 	int	   tx_urb_streaming;
 	struct urb *tx_urbs[URB_COUNT_TX];
 	URBContext tx_urb_context[URB_COUNT_TX];
-	Byte tx_urbstatus[URB_COUNT_TX];
-	Byte tx_urb_index;
+	u8 tx_urbstatus[URB_COUNT_TX];
+	u8 tx_urb_index;
 	atomic_t tx_urb_counter;
 	spinlock_t TxRBKeyLock;		
-	Byte* pTxRingBuffer;           // Tx Ring Buffer Address.
-	Dword TxCurrBuffPointAddr;     // Output urb addr.
-	Dword TxWriteBuffPointAddr;	   // Entry of Ring Buffer.
-	Dword dwTxWriteTolBufferSize;  // Total ringbuffer size.
-	Dword dwTxRemaingBufferSize;   // Remaining size in buffer.
+	u8* pTxRingBuffer;           // Tx Ring Buffer Address.
+	u32 TxCurrBuffPointAddr;     // Output urb addr.
+	u32 TxWriteBuffPointAddr;	   // Entry of Ring Buffer.
+	u32 dwTxWriteTolBufferSize;  // Total ringbuffer size.
+	u32 dwTxRemaingBufferSize;   // Remaining size in buffer.
 
 	/* USB URB Related for TX low bitrate*/
 	int	   tx_urb_streaming_low_brate;
 	struct urb *tx_urbs_low_brate[URB_COUNT_TX_LOW_BRATE];
 	URBContext tx_urb_context_low_brate[URB_COUNT_TX_LOW_BRATE];
-	Byte tx_urbstatus_low_brate[URB_COUNT_TX_LOW_BRATE];
-	Byte tx_urb_index_low_brate;
-	Byte tx_urb_use_count_low_brate;	
-	Byte* pTxRingBuffer_low_brate;
-	Byte* pWriteFrameBuffer_low_brate;
-	Dword* pTxCurrBuffPointAddr_low_brate;	
-	Dword* pTxWriteBuffPointAddr_low_brate;	
-	Dword dwTxWriteTolBufferSize_low_brate;
-	Dword dwTxRemaingBufferSize_low_brate;	
+	u8 tx_urbstatus_low_brate[URB_COUNT_TX_LOW_BRATE];
+	u8 tx_urb_index_low_brate;
+	u8 tx_urb_use_count_low_brate;	
+	u8* pTxRingBuffer_low_brate;
+	u8* pWriteFrameBuffer_low_brate;
+	u32* pTxCurrBuffPointAddr_low_brate;	
+	u32* pTxWriteBuffPointAddr_low_brate;	
+	u32 dwTxWriteTolBufferSize_low_brate;
+	u32 dwTxRemaingBufferSize_low_brate;	
 	
 	/* USB URB Related for TX_CMD */
 	int	   tx_urb_streaming_cmd;
 	struct urb *tx_urbs_cmd[URB_COUNT_TX_CMD];
 	URBContext tx_urb_context_cmd[URB_COUNT_TX_CMD];
-	Byte tx_urbstatus_cmd[URB_COUNT_TX_CMD];
-	Byte tx_urb_index_cmd;
-	//Byte urb_use_count_cmd;
-	Byte* pTxRingBuffer_cmd;
-	Byte* pWriteFrameBuffer_cmd;
-	Dword* pTxCurrBuffPointAddr_cmd;	
-	Dword* pTxWriteBuffPointAddr_cmd;	
-	Dword dwTxWriteTolBufferSize_cmd;
-	Dword dwTxRemaingBufferSize_cmd;	
+	u8 tx_urbstatus_cmd[URB_COUNT_TX_CMD];
+	u8 tx_urb_index_cmd;
+	//u8 urb_use_count_cmd;
+	u8* pTxRingBuffer_cmd;
+	u8* pWriteFrameBuffer_cmd;
+	u32* pTxCurrBuffPointAddr_cmd;	
+	u32* pTxWriteBuffPointAddr_cmd;	
+	u32 dwTxWriteTolBufferSize_cmd;
+	u32 dwTxRemaingBufferSize_cmd;	
 
 };
 
@@ -115,10 +115,10 @@ struct usb_device_id it950x_usb_id_table[] = {
 MODULE_DEVICE_TABLE(usb, it950x_usb_id_table);
 
 /* AirHD */
-Dword Tx_RMRingBuffer(struct it950x_urb_context *context, Dword dwDataFrameSize)
+u32 Tx_RMRingBuffer(struct it950x_urb_context *context, u32 dwDataFrameSize)
 {
 	struct it950x_dev *dev = context->dev;
-	Dword dwBuffLen = 0;
+	u32 dwBuffLen = 0;
 	unsigned long flags = 0;	
 
 #if RB_DEBUG
@@ -136,10 +136,10 @@ Dword Tx_RMRingBuffer(struct it950x_urb_context *context, Dword dwDataFrameSize)
 }
 
 /* AirHD for low bitrate */
-Dword Tx_RMRingBuffer_low_brate(struct it950x_urb_context *context, Dword dwDataFrameSize)
+u32 Tx_RMRingBuffer_low_brate(struct it950x_urb_context *context, u32 dwDataFrameSize)
 {
 	struct it950x_dev *dev = context->dev;
-	Dword dwBuffLen = 0;
+	u32 dwBuffLen = 0;
 	//deb_data("enter %s", __func__);
 	//deb_data("Tx_RMRingBuffer: (*dev->pTxCurrBuffPointAddr) %d", (*dev->pTxCurrBuffPointAddr));
 	
@@ -164,10 +164,10 @@ Dword Tx_RMRingBuffer_low_brate(struct it950x_urb_context *context, Dword dwData
 }
 
 /* AirHD for cmd */
-Dword Tx_RMRingBuffer_cmd(struct it950x_urb_context *context, Dword dwDataFrameSize)
+u32 Tx_RMRingBuffer_cmd(struct it950x_urb_context *context, u32 dwDataFrameSize)
 {
 	struct it950x_dev *dev = context->dev;
-	Dword dwBuffLen = 0;
+	u32 dwBuffLen = 0;
 	//deb_data("enter %s", __func__);
 	//deb_data("Tx_RMRingBuffer: (*dev->pTxCurrBuffPointAddr) %d", (*dev->pTxCurrBuffPointAddr));
 	
@@ -307,9 +307,9 @@ static int tx_stop_urb_transfer_cmd(struct it950x_dev *dev)
 	return 0;
 }
 
-Dword fabs_self(Dword a, Dword b)
+u32 fabs_self(u32 a, u32 b)
 {
-	Dword c = 0;
+	u32 c = 0;
 	
 	c = a - b;
 	if(c >= 0) return c;
@@ -322,15 +322,15 @@ Dword fabs_self(Dword a, Dword b)
  * Successful submissions return 0(Error_NO_ERROR) and submised buffer length.
  * Otherwise this routine returns a negative error number.
  */
-Dword Tx_RingBuffer(
+int Tx_RingBuffer(
 	struct it950x_dev *dev,
-    Byte* pBuffer,
-    Dword* pBufferLength)
+    u8* pBuffer,
+    u32* pBufferLength)
 {
-    Dword dwBuffLen = 0;
-    Dword dwCpBuffLen = *pBufferLength;
-    Dword dwCurrBuffAddr = dev->TxCurrBuffPointAddr;
-    Dword dwWriteBuffAddr = dev->TxWriteBuffPointAddr;
+    u32 dwBuffLen = 0;
+    u32 dwCpBuffLen = *pBufferLength;
+    u32 dwCurrBuffAddr = dev->TxCurrBuffPointAddr;
+    u32 dwWriteBuffAddr = dev->TxWriteBuffPointAddr;
     int ret = -ENOMEM;
 	unsigned long flags = 0;    
 
@@ -356,7 +356,7 @@ Dword Tx_RingBuffer(
 	}
 
     if (*pBufferLength == 0) {
-        return -Error_BUFFER_INSUFFICIENT;
+      return -Error_BUFFER_INSUFFICIENT;
     }
 	
 	/* memory must enough because checking at first in this function */
@@ -406,15 +406,15 @@ Dword Tx_RingBuffer(
 }
 
 /* AirHD low bitrate */
-Dword Tx_RingBuffer_low_brate(
+int Tx_RingBuffer_low_brate(
 	struct it950x_dev *dev,
-    Byte*  pBuffer,
-    Dword* pBufferLength)
+    u8*  pBuffer,
+    u32* pBufferLength)
 {
-    Dword dwBuffLen = 0;
-    Dword dwCpBuffLen = *pBufferLength;
-    Dword dwCurrBuffAddr = (*dev->pTxCurrBuffPointAddr_low_brate);
-    Dword dwWriteBuffAddr = (*dev->pTxWriteBuffPointAddr_low_brate);
+    u32 dwBuffLen = 0;
+    u32 dwCpBuffLen = *pBufferLength;
+    u32 dwCurrBuffAddr = (*dev->pTxCurrBuffPointAddr_low_brate);
+    u32 dwWriteBuffAddr = (*dev->pTxWriteBuffPointAddr_low_brate);
     int ret = -ENOMEM;
     int i;
 
@@ -514,14 +514,14 @@ Dword Tx_RingBuffer_low_brate(
 }
 
 /* AirHD_CMD */
-Dword Tx_RingBuffer_cmd(
+int Tx_RingBuffer_cmd(
 	struct it950x_dev *dev,
-    Byte* pBuffer,
-    Dword* pBufferLength)
+    u8* pBuffer,
+    u32* pBufferLength)
 {
-    Dword dwCpBuffLen = *pBufferLength;
-    //Dword dwCurrBuffAddr = (*dev->pTxCurrBuffPointAddr_cmd);
-    //Dword dwWriteBuffAddr = (*dev->pTxWriteBuffPointAddr_cmd);
+    u32 dwCpBuffLen = *pBufferLength;
+    //u32 dwCurrBuffAddr = (*dev->pTxCurrBuffPointAddr_cmd);
+    //u32 dwWriteBuffAddr = (*dev->pTxWriteBuffPointAddr_cmd);
     int ret = -ENOMEM;
     //int i;
          
@@ -915,7 +915,7 @@ try:
 		/*Write Ring buffer alloc*/
 		dev->dwTxWriteTolBufferSize = URB_BUFSIZE_TX * URB_COUNT_TX;
 		order = get_order(dev->dwTxWriteTolBufferSize);
-		dev->pTxRingBuffer = (Byte*)__get_free_pages(GFP_KERNEL, order);
+		dev->pTxRingBuffer = (u8*)__get_free_pages(GFP_KERNEL, order);
 		if (dev->pTxRingBuffer) {
 	//		dev->pWriteFrameBuffer = dev->pTxRingBuffer + 8;
 			dev->TxCurrBuffPointAddr = 0;
@@ -928,11 +928,11 @@ try:
 		/*Write cmd Ring buffer alloc*/
 		dev->dwTxWriteTolBufferSize_cmd = URB_BUFSIZE_TX_CMD * URB_COUNT_TX_CMD;
 		order_cmd = get_order(dev->dwTxWriteTolBufferSize_cmd + 8);
-		dev->pTxRingBuffer_cmd = (Byte*)__get_free_pages(GFP_KERNEL, order_cmd);
+		dev->pTxRingBuffer_cmd = (u8*)__get_free_pages(GFP_KERNEL, order_cmd);
 		if (dev->pTxRingBuffer_cmd) {
 			dev->pWriteFrameBuffer_cmd = dev->pTxRingBuffer_cmd + 8;
-			dev->pTxCurrBuffPointAddr_cmd = (Dword*)dev->pTxRingBuffer_cmd;
-			dev->pTxWriteBuffPointAddr_cmd = (Dword*)(dev->pTxRingBuffer_cmd + 4);
+			dev->pTxCurrBuffPointAddr_cmd = (u32*)dev->pTxRingBuffer_cmd;
+			dev->pTxWriteBuffPointAddr_cmd = (u32*)(dev->pTxRingBuffer_cmd + 4);
 			dev->dwTxRemaingBufferSize_cmd = dev->dwTxWriteTolBufferSize_cmd;
 			dev->tx_urb_index_cmd = 0;
 			//dev->urb_use_count_cmd = URB_COUNT_TX_CMD;
@@ -941,11 +941,11 @@ try:
 		/*Write low bitrate Ring buffer alloc*/
 		dev->dwTxWriteTolBufferSize_low_brate = URB_BUFSIZE_TX_LOW_BRATE * URB_COUNT_TX_LOW_BRATE;
 		order = get_order(dev->dwTxWriteTolBufferSize_low_brate + 8);
-		dev->pTxRingBuffer_low_brate = (Byte*)__get_free_pages(GFP_KERNEL, order);
+		dev->pTxRingBuffer_low_brate = (u8*)__get_free_pages(GFP_KERNEL, order);
 		if (dev->pTxRingBuffer_low_brate) {
 			dev->pWriteFrameBuffer_low_brate = dev->pTxRingBuffer_low_brate + 8;
-			dev->pTxCurrBuffPointAddr_low_brate = (Dword*)dev->pTxRingBuffer_low_brate;
-			dev->pTxWriteBuffPointAddr_low_brate = (Dword*)(dev->pTxRingBuffer_low_brate + 4);
+			dev->pTxCurrBuffPointAddr_low_brate = (u32*)dev->pTxRingBuffer_low_brate;
+			dev->pTxWriteBuffPointAddr_low_brate = (u32*)(dev->pTxRingBuffer_low_brate + 4);
 			dev->dwTxRemaingBufferSize_low_brate = dev->dwTxWriteTolBufferSize_low_brate;
 			dev->tx_urb_index_low_brate = 0;
 			dev->tx_urb_use_count_low_brate = URB_COUNT_TX_LOW_BRATE;
@@ -1027,7 +1027,7 @@ static int it950x_usb_tx_release(struct inode *inode, struct file *file)
 int SetLowBitRateTransfer(struct it950x_dev *dev, void *parg)
 {
 	//unsigned char b_buf[188];
-	Dword dwError = Error_NO_ERROR;
+	u32 dwError = Error_NO_ERROR;
 	int act_len;
 	
 	PSetLowBitRateTransferRequest pRequest = (PSetLowBitRateTransferRequest) parg;
@@ -1089,7 +1089,7 @@ long it950x_usb_tx_unlocked_ioctl(
 			SetLowBitRateTransfer(dev, (void*)parg);
 			return 0;
 	}
-	return DL_DemodIOCTLFun((void *)&dev->DC.modulator, (Dword)cmd, parg);
+	return DL_DemodIOCTLFun((void *)&dev->DC.modulator, (u32)cmd, parg);
 }
 
 
@@ -1101,8 +1101,8 @@ static ssize_t it950x_tx_write(
 {
 	struct it950x_dev *dev;
 
-	Dword Len = count;
-	Dword dwError = Error_NO_ERROR;
+	u32 Len = count;
+	u32 dwError = Error_NO_ERROR;
 
 	/*AirHD RingBuffer*/
 	dev = (struct it950x_dev *)file->private_data;
@@ -1111,33 +1111,10 @@ static ssize_t it950x_tx_write(
 #if URB_TEST
 	loop_cnt++;	
 #endif
-	dwError = Tx_RingBuffer(dev, (Byte*)user_buffer, &Len);
+	dwError = Tx_RingBuffer(dev, (u8*)user_buffer, &Len);
 	//printk("[%lu]\n", Len);
 	if(dwError != 0) return dwError;
 	else return Len;
-
-	/*AirHD Bulk Msg*/
-#if 0
-	copy_from_user(b_buf, user_buffer, count);
-
-	dwError = usb_bulk_msg(usb_get_dev(dev0->DC->modulator.userData),
-			usb_sndbulkpipe(usb_get_dev(dev0->DC->modulator.userData), 0x06),
-			b_buf,
-			count,
-			&act_len,
-			100000);
-   
-	if(dev->is_use_low_brate) {
-		//deb_data("it950x_tx_write: g_is_use_low_brate is open!\n");
-		dwError = Tx_RingBuffer_low_brate(dev, user_buffer, &Len);
-	}else{
-		//deb_data("it950x_tx_write: g_is_use_low_brate is close!\n");
-		dwError = Tx_RingBuffer(dev, user_buffer, &Len);
-	}   
-	if (dwError) deb_data("--------Usb2_writeControlBus fail : 0x%08lx\n", dwError);
-	
-	return count;
-#endif
 }
 
 
@@ -1281,7 +1258,7 @@ static int it950x_resume(struct usb_interface *intf)
 
 #ifdef EEEPC
 #else
-    if (dev->DeviceReboot == True) {
+    if (dev->DeviceReboot) {
 		retval = Device_init(interface_to_usbdev(intf),&dev->DC, false);
 		if(retval)
 			deb_data("Device_init Fail: 0x%08x\n", retval);

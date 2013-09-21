@@ -151,7 +151,7 @@ int setIO(const int THETA){
 }
 
 
-Dword interpolation(
+u32 interpolation(
 	Modulator*    modulator,
     int fIn, 
     int *ptrdAmp, 
@@ -159,8 +159,8 @@ Dword interpolation(
 	)
 {
   // Using binary search to find the frequency interval in the table
-	Word TABLE_NROW = modulator->calibrationInfo.tableGroups;
-	Dword   error = ModulatorError_NO_ERROR;
+	u16 TABLE_NROW = modulator->calibrationInfo.tableGroups;
+	u32   error = ModulatorError_NO_ERROR;
     int idx = TABLE_NROW/2;
     int preIdx = -1;
     int lower = 0;
@@ -246,19 +246,19 @@ exit:
 
 
 
-Dword EagleTuner_setIQCalibration(
+u32 EagleTuner_setIQCalibration(
 	IN  Modulator*    modulator,
-    IN  Dword         frequency	
+    IN  u32         frequency	
 ) {
-	Dword   error = ModulatorError_NO_ERROR;
-	Dword reg = 0;
-	Byte c1_tmp_highbyte;
-	Byte c1_tmp_lowbyte;
-	Byte c2_tmp_highbyte;
-	Byte c2_tmp_lowbyte;
-	Byte c3_tmp_highbyte;
-	Byte c3_tmp_lowbyte;
-	Byte val[6];
+	u32   error = ModulatorError_NO_ERROR;
+	u32 reg = 0;
+	u8 c1_tmp_highbyte;
+	u8 c1_tmp_lowbyte;
+	u8 c2_tmp_highbyte;
+	u8 c2_tmp_lowbyte;
+	u8 c3_tmp_highbyte;
+	u8 c3_tmp_lowbyte;
+	u8 val[6];
 	int dAmp = 0;
     int dPhi = 0;
     int* ptrdAmp = &dAmp;
@@ -323,12 +323,12 @@ Dword EagleTuner_setIQCalibration(
 
 
   reg = 0xF752; //p_eagle_reg_iqik_c1_7_0
-  val[0] = (Byte) c1_tmp_lowbyte;
-  val[1] = (Byte) c1_tmp_highbyte;
-  val[2] = (Byte) c2_tmp_lowbyte;
-  val[3] = (Byte) c2_tmp_highbyte;
-  val[4] = (Byte) c3_tmp_lowbyte;
-  val[5] = (Byte) c3_tmp_highbyte;
+  val[0] = (u8) c1_tmp_lowbyte;
+  val[1] = (u8) c1_tmp_highbyte;
+  val[2] = (u8) c2_tmp_lowbyte;
+  val[3] = (u8) c2_tmp_highbyte;
+  val[4] = (u8) c3_tmp_lowbyte;
+  val[5] = (u8) c3_tmp_highbyte;
 exit:
   error = IT9507_writeRegisters(modulator, Processor_OFDM, reg, 6, val);
 
@@ -336,19 +336,19 @@ exit:
 }
 
 
-Dword EagleTuner_calIQCalibrationValue(
+u32 EagleTuner_calIQCalibrationValue(
 	IN  Modulator*    modulator,
-    IN  Dword         frequency,
-	IN  Byte*		  val
+    IN  u32         frequency,
+	IN  u8*		  val
 ) {
-	Dword   error = ModulatorError_NO_ERROR;
+	u32   error = ModulatorError_NO_ERROR;
 	
-	Byte c1_tmp_highbyte;
-	Byte c1_tmp_lowbyte;
-	Byte c2_tmp_highbyte;
-	Byte c2_tmp_lowbyte;
-	Byte c3_tmp_highbyte;
-	Byte c3_tmp_lowbyte;
+	u8 c1_tmp_highbyte;
+	u8 c1_tmp_lowbyte;
+	u8 c2_tmp_highbyte;
+	u8 c2_tmp_lowbyte;
+	u8 c3_tmp_highbyte;
+	u8 c3_tmp_lowbyte;
 	int dAmp = 0;
     int dPhi = 0;
     int* ptrdAmp = &dAmp;
@@ -412,12 +412,12 @@ Dword EagleTuner_calIQCalibrationValue(
 
 
   
-  val[0] = (Byte) c1_tmp_lowbyte;
-  val[1] = (Byte) c1_tmp_highbyte;
-  val[2] = (Byte) c2_tmp_lowbyte;
-  val[3] = (Byte) c2_tmp_highbyte;
-  val[4] = (Byte) c3_tmp_lowbyte;
-  val[5] = (Byte) c3_tmp_highbyte;
+  val[0] = (u8) c1_tmp_lowbyte;
+  val[1] = (u8) c1_tmp_highbyte;
+  val[2] = (u8) c2_tmp_lowbyte;
+  val[3] = (u8) c2_tmp_highbyte;
+  val[4] = (u8) c3_tmp_lowbyte;
+  val[5] = (u8) c3_tmp_highbyte;
   //error = Eagle_writeRegisters(modulator, Processor_OFDM, reg, 6, val);
 exit:
   return (error);
