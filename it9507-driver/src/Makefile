@@ -17,7 +17,6 @@ usb-it950x-objs := \
 obj-m += usb-it950x.o 
 
 default:
-	@(cp api/*.* ./; cp src/*.* ./)
 	make -s -C $(KDIR) SUBDIRS=$(PWD) modules
 EXTRA_CFLAGS += -Wno-unused-value -Wno-unused-variable -Wno-unused-parameter \
 		-Wno-switch 
@@ -51,7 +50,7 @@ remove:
 	@modprobe -r usb_it950x 
 
 clean:
-	@-rm -f *~ *.o *.ko .*.o.cmd .*.ko.cmd *.mod.c *.*~ *.c *.h \
+	@-rm -f *~ *.o *.ko .*.o.cmd .*.ko.cmd *.mod.c *.*~ \
 	demux.h dmxdev.h dvb-pll.h dvb-usb-ids.h dvb-usb.h dvb_demux.h dvb_frontend.h \
 	dvb_net.h dvb_ringbuffer.h dvbdev.h modules.order Module.markers Module.symvers
 
