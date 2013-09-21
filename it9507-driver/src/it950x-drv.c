@@ -1,7 +1,5 @@
 #include "it950x-core.h"
 #include "modulatorFirmware.h"
-#include "firmware.h"
-#include "firmware_V2.h"
 #include "IQ_fixed_table.h"
 
 
@@ -163,6 +161,8 @@ static DWORD DRV_getFirmwareVersionFromFile(
 	
 	chip_Type = var[1]<<8 | var[0];	
 	if(chip_Type == 0x9135 && chip_version == 2){
+#if 0
+	  /* NOT USED */
 		OFDM_VER1 = DVB_V2_OFDM_VERSION1;
 		OFDM_VER2 = DVB_V2_OFDM_VERSION2;
 		OFDM_VER3 = DVB_V2_OFDM_VERSION3;
@@ -172,6 +172,7 @@ static DWORD DRV_getFirmwareVersionFromFile(
 		LINK_VER2 = DVB_V2_LL_VERSION2;
 		LINK_VER3 = DVB_V2_LL_VERSION3;    
 		LINK_VER4 = DVB_V2_LL_VERSION4;
+#endif
 	}else{
 		OFDM_VER1 = DVB_OFDM_VERSION1;
     	OFDM_VER2 = DVB_OFDM_VERSION2;
