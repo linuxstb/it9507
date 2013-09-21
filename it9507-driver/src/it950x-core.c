@@ -863,7 +863,7 @@ static struct file_operations it950x_usb_tx_fops ={
  * and to have the device registered with devfs and the driver core
  */
 static struct usb_class_driver it950x_class_tx = {
-	.name =			"usb-it950x%d",
+	.name =			"dvbmod%d",
 	.fops =			&it950x_usb_tx_fops,
 	.minor_base = 	USB_it950x_MINOR_BASE
 };
