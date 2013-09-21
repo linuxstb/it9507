@@ -19,17 +19,6 @@
 /* Use 'k' as magic number */
 #define AFA_IOC_MAGIC  'k'
 
-
-typedef struct {
-    u8			chip;
-    Processor		processor;
-    u32			registerAddress;
-    u8			bufferLength;
-    u8			buffer[256];
-    u32			error;
-    u8			reserved[16];
-} WriteRegistersRequest, *PWriteRegistersRequest;
-
 typedef struct {
     u8			chip;
     Processor		processor;
@@ -58,49 +47,7 @@ typedef struct {
     u8			value;
     u32			error;
     u8			reserved[16];
-} WriteRegisterBitsRequest, *PWriteRegisterBitsRequest;
-
-typedef struct {
-    u8			chip;
-    Processor		processor;
-    u32			registerAddress;
-    u8			position;
-    u8			length;
-    u8			value;
-    u32			error;
-    u8			reserved[16];
 } TxWriteRegisterBitsRequest, *PTxWriteRegisterBitsRequest;
-
-typedef struct {
-    u8			chip;
-    Processor		processor;
-    u16			variableIndex;
-    u8			bufferLength;
-    u8			buffer[256];
-    u32			error;
-    u8			reserved[16];
-} SetVariablesRequest, *PSetVariablesRequest;
-
-typedef struct {
-    u8			chip;
-    Processor		processor;
-    u16			variableIndex;
-    u8			position;
-    u8			length;
-    u8			value;
-    u32			error;
-    u8			reserved[16];
-} SetVariableBitsRequest, *PSetVariableBitsRequest;
-
-typedef struct {
-    u8			chip;
-    Processor		processor;
-    u32			registerAddress;
-    u8			bufferLength;
-    u8			buffer[256];
-    u32			error;
-    u8			reserved[16];
-} ReadRegistersRequest, *PReadRegistersRequest;
 
 typedef struct {
     u8			chip;
@@ -111,15 +58,6 @@ typedef struct {
     u32			error;
     u8			reserved[16];
 } TxReadRegistersRequest, *PTxReadRegistersRequest;
-
-typedef struct {
-    u8			chip;
-    u16			registerAddress;
-    u8			bufferLength;
-    u8			buffer[256];
-    u32			error;
-    u8			reserved[16];
-} ReadEepromValuesRequest, *PReadEepromValuesRequest;
 
 typedef struct {
     u8			chip;
@@ -153,37 +91,6 @@ typedef struct {
 } TxReadRegisterBitsRequest, *PTxReadRegisterBitsRequest;
 
 typedef struct {
-    u8			chip;
-    Processor		processor;
-    u16			variableIndex;
-    u8			bufferLength;
-    u8*			buffer;
-    u32			error;
-    u8			reserved[16];
-} GetVariablesRequest, *PGetVariablesRequest;
-
-typedef struct {
-    u8			chip;
-    Processor		processor;
-    u16			variableIndex;
-    u8			position;
-    u8			length;
-    u8*			value;
-    u32			error;
-    u8			reserved[16];
-} GetVariableBitsRequest, *PGetVariableBitsRequest;
-
-typedef struct {
-    u8				chipNumber;
-    u16				sawBandwidth;
-    StreamType			streamType;
-    Architecture		architecture;
-    u32				error;
-    u8				reserved[16];
-} InitializeRequest, *PInitializeRequest;
-
-
-typedef struct {
     u32				error;
     u8				reserved[16];
 } FinalizeRequest, *PFinalizeRequest;
@@ -194,45 +101,11 @@ typedef struct {
 } TxFinalizeRequest, *PTxFinalizeRequest;
 
 typedef struct {
-    StreamType*			streamType;
-    u32				error;
-    u8				reserved[16];
-} GetStreamTypeRequest, *PGetStreamTypeRequest;
-
-typedef struct {
-    Architecture*		architecture;
-    u32				error;
-    u8				reserved[16];
-} GetArchitectureRequest, *PGetArchitectureRequest;
-
-typedef struct {
-    StreamType			streamType;
-    Architecture		architecture;
-    u32				error;
-    u8				reserved[16];
-} ReinitializeRequest, *PReinitializeRequest;
-
-typedef struct {
-    Processor			processor;
-	u32*				version;
-    u32				error;
-    u8				reserved[16];
-} GetFirmwareVersionRequest, *PGetFirmwareVersionRequest;
-
-typedef struct {
     Processor			processor;
 	u32*				version;
     u32				error;
     u8				reserved[16];
 } TxGetFirmwareVersionRequest, *PTxGetFirmwareVersionRequest;
-
-typedef struct {
-    u8				chip;
-    u16				bandwidth;
-    u32				frequency;
-    u32				error;
-    u8				reserved[16];
-} AcquireChannelRequest, *PAcquireChannelRequest;
 
 typedef struct {
     u8				chip;
@@ -274,101 +147,6 @@ typedef struct {
     int				GainValue;
     u32				error;
 } SetGainRequest, *PSetGainRequest;
-
-typedef struct {
-    u8				chip;
-    bool*				locked;
-    u32				error;
-    u8				reserved[16];
-} IsLockedRequest, *PIsLockedRequest;
-
-typedef struct {
-    u8*				platformLength;
-    Platform*			platforms;
-    u32				error;
-    u8				reserved[16];
-} AcquirePlatformRequest, *PAcquirePlatformRequest;
-
-typedef struct {
-    Platform*			platform;
-    u32				error;
-    u8				reserved[16];
-} SetPlatformRequest, *PSetPlatformRequest;
-
-typedef struct {
-    Ip					ip;
-    u32				error;
-    u8				reserved[16];
-} AddIpRequest, *PAddIpRequest;
-
-typedef struct {
-    Ip					ip;
-    u32				error;
-    u8				reserved[16];
-} RemoveIpRequest, *PRemoveIpRequest;
-
-typedef struct {
-	u8				chip;
-	u8				index;
-    Pid					pid;
-    u32				error;
-    u8				reserved[16];
-} AddPidAtRequest, *PAddPidAtRequest;
-
-typedef struct {
-	u8				chip;
-	u8				index;
-    Pid					pid;
-    u32				error;
-    u8				reserved[16];
-} TxAddPidAtRequest, *PTxAddPidAtRequest;
-
-typedef struct {
-	u8			chip;
-    u32			error;
-    u8			reserved[16];
-} ResetPidRequest, *PResetPidRequest;
-
-typedef struct {
-	u8			chip;
-    u32			error;
-    u8			reserved[16];
-} TxResetPidRequest, *PTxResetPidRequest;
-
-typedef struct {
-    u16*				bufferLength;
-    u8*				buffer;
-    u32				error;
-    u8				reserved[16];
-} GetSectionRequest, *PGetSectionRequest;
-
-typedef struct {
-    u8				chip;
-    ChannelStatistic*	channelStatistic;
-    u32				error;
-    u8				reserved[16];
-} GetChannelStatisticRequest, *PGetChannelStatisticRequest;
-
-typedef struct {
-    u8				chip;
-    Statistic*			statistic;
-    u32				error;
-    u8				reserved[16];
-} GetStatisticRequest, *PGetStatisticRequest;
-
-typedef struct {
-    u32*				bufferLength;
-    u8*				buffer;
-    u32				error;
-    u8				reserved[16];
-} GetDatagramRequest, *PGetDatagramRequest;
-
-typedef struct {
-    u8			chip;
-	u8			control;
-    u32			error;
-    u8			reserved[16];
-} ControlPidFilterRequest, *PControlPidFilterRequest;
 
 typedef struct {
     u8			chip;
@@ -419,73 +197,20 @@ typedef struct {
     u8                SupportHWInfo[32];  /** Ex.,"Jupiter DVBT/DVBH"			*/
     u32               error;
     u8                reserved[128];
-} DemodDriverInfo, *PDemodDriverInfo;
-
-typedef struct {
-    u8                DriverVerion[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
-    u8                APIVerion[32];      /** XX.XX.XXXXXXXX.XX Ex., 1.2.3.4	*/
-    u8                FWVerionLink[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
-    u8                FWVerionOFDM[16];   /** XX.XX.XX.XX Ex., 1.2.3.4			*/
-    u8                DateTime[24];       /** Ex.,"2004-12-20 18:30:00" or "DEC 20 2004 10:22:10" with compiler __DATE__ and __TIME__  definitions */
-    u8                Company[8];         /** Ex.,"ITEtech"					*/
-    u8                SupportHWInfo[32];  /** Ex.,"Jupiter DVBT/DVBH"			*/
-    u32               error;
-    u8                reserved[128];
 } TxModDriverInfo, *PTxModDriverInfo;
 
-/**
- * Demodulator Stream control API commands
- */
 typedef struct {
-	u8			chip;
-    u32			error;
-    u8			reserved[16];
-} StartCaptureRequest, *PStartCaptureRequest;
-
-typedef struct {
-	u8			chip;
-    u32			error;
-    u8			reserved[16];
+       u8                      chip;
+    u32                        error;
+    u8                 reserved[16];
 } StartTransferRequest, *PStartTransferRequest;
 
 typedef struct {
-	u8			chip;
-    u32			error;
-    u8			reserved[16];
+       u8                      chip;
+    u32                        error;
+    u8                 reserved[16];
 } StopTransferRequest, *PStopTransferRequest;
 
-typedef struct {
-	u8			chip;
-    u32			error;
-    u8			reserved[16];
-} StopCaptureRequest, *PStopCaptureRequest;
-
-typedef struct {
-	u8			chip;
-	u8            I2CAddr;
-    u32			error;
-    u8			reserved[16];
-} GetEEPROMI2CAddrRequest, *PGetEEPROMI2CAddrRequest;
-
-typedef struct {
-	u8			chip;
-	u32           handle;
-    u32			error;
-    u8			reserved[16];
-} GetBufferEventRequest, *PGetBufferEventRequest;
-
-typedef struct {
-	u8			chip;
-	u32           length;
-    u32			error;
-    u8			reserved[16];
-} GetTSBufferLenRequest, *PGetTSBufferLenRequest;
-
-typedef struct {
-	u8			chip;
-    u32			error;
-    u8			reserved[16];
-} CleanTSDataBufferRequest, *PCleanTSDataBufferRequest;
 
 typedef struct {
 	u32*			len;
@@ -571,123 +296,12 @@ typedef struct {
 #define IOCTRL_ITE_GROUP_TDMB				0x400
 #define IOCTRL_ITE_GROUP_OTHER              0x500
 
-
-/***************************************************************************/
-/*                             STANDARD                                    */
-/***************************************************************************/
-
-/**
- * Write a sequence of bytes to the contiguous registers in demodulator.
- * Paramters:   WriteRegistersRequest struct
- */
-#define IOCTL_ITE_DEMOD_WRITEREGISTERS \
-	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x00, WriteRegistersRequest)
-
-/**
- * Write one byte to the contiguous registers in demodulator.
- * Paramters:   WriteRegisterBitsRequest struct
- */
-#define IOCTL_ITE_DEMOD_WRITEREGISTERBITS \
-	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x03, WriteRegisterBitsRequest)
-
-/**
- * Write a sequence of bytes to the contiguous variables in demodulator.
- * Paramters:   SetVariablesRequest struct
- */
-#define IOCTL_ITE_DEMOD_SETVARIABLES \
-	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x04, SetVariablesRequest)
-
-/**
- * Write a sequence of bytes to the contiguous variables in demodulator.
- * Paramters:   SetVariableBitsRequest struct
- */
-#define IOCTL_ITE_DEMOD_SETVARIABLEBITS \
-	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x05, SetVariableBitsRequest)
-
-/**
- * Read a sequence of bytes from the contiguous registers in demodulator.
- * Paramters:   ReadRegistersRequest struct
- */
-#define IOCTL_ITE_DEMOD_READREGISTERS \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x06, ReadRegistersRequest)
-
-/**
- * Read a sequence of bytes from the contiguous registers in demodulator.
- * Paramters:   ReadRegisterBitsRequest struct
- */
-#define IOCTL_ITE_DEMOD_READREGISTERBITS \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x09, ReadRegisterBitsRequest)
-
-/**
- * Read a sequence of bytes from the contiguous variables in demodulator. 
- * Paramters:   GetVariablesRequest struct
- */
-#define IOCTL_ITE_DEMOD_GETVARIABLES \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x0A, GetVariablesRequest)
-	
-/**
- * Read a sequence of bytes from the contiguous variables in demodulator. 
- * Paramters:   GetVariableBitsRequest struct
- */
-#define IOCTL_ITE_DEMOD_GETVARIABLEBITS \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x0B, GetVariableBitsRequest)
-
 /**
  * Power off the demodulators.
- * Paramters: 	FinalizeRequest struct
+ * Paramters:  FinalizeRequest struct
  */
 #define IOCTL_ITE_DEMOD_FINALIZE \
-	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x0D, FinalizeRequest)
-
-
-
-/**
- * Set the output stream type of chip. Because the device could output in 
- * many stream type, therefore host have to choose one type before receive 
- * data.
- * Paramters:   GetFirmwareVersionRequest struct
- */
-#define IOCTL_ITE_DEMOD_GETFIRMWAREVERSION \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x13, GetFirmwareVersionRequest)
-
-/**
- * Specify the bandwidth of channel and tune the channel to the specific
- * frequency. Afterwards, host could use output parameter dvbH to determine
- * if there is a DVB-H signal.
- * In DVB-T mode, after calling this function output parameter dvbH should
- * be False and host could use output parameter "locked" to indicate if the 
- * TS is correct.
- * In DVB-H mode, after calling this function output parameter dvbH should
- * be True and host could use Jupiter_acquirePlatorm to get platform. 
- * Paramters:   AcquireChannelRequest struct
- */
-#define IOCTL_ITE_DEMOD_ACQUIRECHANNEL \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x14, AcquireChannelRequest)
-
-/**
- * Get all the platforms found in current frequency.
- * Paramters:	IsLockedRequest struct
- */
-#define IOCTL_ITE_DEMOD_ISLOCKED \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x15, IsLockedRequest)
-
-/**
- * Get the statistic values of demodulator, it includes Pre-Viterbi BER,
- * Post-Viterbi BER, Abort Count, Signal Presented Flag, Signal Locked Flag,
- * Signal Quality, Signal Strength, Delta-T for DVB-H time slicing.
- * Paramters:	GetStatisticRequest struct
- */
-#define IOCTL_ITE_DEMOD_GETSTATISTIC \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x18, GetStatisticRequest)
-
-/**
- * Get the statistic values of demodulator, it includes Pre-Viterbi BER,
- * Post-Viterbi BER, Abort Count, Signal Presented Flag, Signal Locked Flag,
- * Signal Quality, Signal Strength, Delta-T for DVB-H time slicing.
- * Paramters:	GetChannelStatisticRequest struct
- */
-#define IOCTL_ITE_DEMOD_GETCHANNELSTATISTIC \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x19, GetChannelStatisticRequest)
+       _IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x0D, FinalizeRequest)
 
 
 /**
