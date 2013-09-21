@@ -1296,9 +1296,6 @@ u32 IT9507_initialize (
 	modulator->calibrationInfo.tableGroups = IQ_TABLE_NROW;
 	modulator->i2cAddr = i2cAddr;
 
-	error = EagleUser_setBus(modulator);
-    if (error) goto exit;
-
 	error = IT9507_getFirmwareVersion (modulator, Processor_LINK, &version);
 	if (error) goto exit;
 	if (version != 0) {

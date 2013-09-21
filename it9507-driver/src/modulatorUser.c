@@ -258,21 +258,6 @@ u32 EagleUser_busRx (
 }
 
 
-u32 EagleUser_setBus (
-    IN  Modulator*    modulator
-) {
-	/*
-     *  ToDo:  Add code here
-     *
-     *  // If no error happened return 0, else return error code.
-     *  return (0);
-     */
-    u32 error = ModulatorError_NO_ERROR;
-
-    return(error);
-}
-
-
  u32 EagleUser_Initialization  (
     IN  Modulator*    modulator
 ) {

@@ -150,10 +150,6 @@ u32 EagleUser_busRx (
 );
 
 
-u32 EagleUser_setBus (
-	IN  Modulator*	modulator
-);
-
 u32 EagleUser_Initialization  (
     IN  Modulator*    modulator
 ); 
