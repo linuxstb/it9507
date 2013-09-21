@@ -6,7 +6,6 @@
 #include "IT9507.h"
 #include "modulatorType.h"
 #include "usb2impl.h"
-#include "af9035u2iimpl.h"
 
 #define EagleUser_MAX_PKT_SIZE               255
 
