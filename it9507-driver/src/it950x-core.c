@@ -7,7 +7,7 @@
  * Abstract:
  *   The core of IT950x serial driver.
  */
- 
+
 #include "it950x-core.h"
 #include "modulatorIocontrol.h"
 
@@ -67,6 +67,7 @@ struct it950x_dev {
 	u8 tx_urbstatus[URB_COUNT_TX];
 	u8 tx_urb_index;
 	atomic_t tx_urb_counter;
+        wait_queue_head_t TxQueue;
 	spinlock_t TxRBKeyLock;		
 	u8* pTxRingBuffer;           // Tx Ring Buffer Address.
 	u32 TxCurrBuffPointAddr;     // Output urb addr.
@@ -129,9 +130,11 @@ u32 Tx_RMRingBuffer(struct it950x_urb_context *context, u32 dwDataFrameSize)
 		dev->TxCurrBuffPointAddr = (dev->TxCurrBuffPointAddr + dwDataFrameSize) % (dev->dwTxWriteTolBufferSize);
 		dev->dwTxRemaingBufferSize += dwDataFrameSize;
 	spin_unlock_irqrestore(&dev->TxRBKeyLock, flags);
-		
+
 	dev->tx_urbstatus[context->index] = 0;
 	atomic_add(1, &dev->tx_urb_counter);
+
+        wake_up_interruptible(&dev->TxQueue);
 	return 0;
 }
 
@@ -325,10 +328,10 @@ u32 fabs_self(u32 a, u32 b)
 int Tx_RingBuffer(
 	struct it950x_dev *dev,
     u8* pBuffer,
+    int non_blocking,
     u32* pBufferLength)
 {
     u32 dwBuffLen = 0;
-    u32 dwCpBuffLen = *pBufferLength;
     u32 dwCurrBuffAddr = dev->TxCurrBuffPointAddr;
     u32 dwWriteBuffAddr = dev->TxWriteBuffPointAddr;
     int ret = -ENOMEM;
@@ -336,24 +339,32 @@ int Tx_RingBuffer(
 
 #if RB_DEBUG
 	deb_data("RemaingBufferSize: {%lu}\n", dev->dwTxRemaingBufferSize);		
-	deb_data("Tx_RingBuffer-CPLen %lu, dwCurrBuffAddr %lu, dwWriteBuffAddr %lu\n", dwCpBuffLen, dwCurrBuffAddr, dwWriteBuffAddr);
+	deb_data("Tx_RingBuffer-CPLen %lu, dwCurrBuffAddr %lu, dwWriteBuffAddr %lu\n", *pBufferLength, dwCurrBuffAddr, dwWriteBuffAddr);
 #endif
-	/* RingBuffer full */
-	if ((dev->dwTxRemaingBufferSize) == 0) {
-		*pBufferLength = 0;
-#if RB_DEBUG		
-		deb_data("dwTxRemaingBufferSize = 0\n");
-#endif
-		return Error_NO_ERROR;
-	}
+    /* RingBuffer full */
+    if ((non_blocking) && (dev->dwTxRemaingBufferSize == 0))
+      return -EWOULDBLOCK;
 
-    if ((dev->dwTxRemaingBufferSize) < dwCpBuffLen) {
-		*pBufferLength = 0;
-#if RB_DEBUG
-		deb_data("dwTxRemaingBufferSize < dwCpBuffLen\n");
+  while ((dev->dwTxRemaingBufferSize) == 0) {
+#if RB_DEBUG		
+	deb_data("dwTxRemaingBufferSize = 0\n");
 #endif
-		return Error_NO_ERROR;
-	}
+        /* Block until wake_up_interruptible is called (from the USB completion handler) */
+        ret = wait_event_interruptible(dev->TxQueue, dev->dwTxRemaingBufferSize > 0);
+
+        /* Return if we were interrupted with a signal */
+        if (ret < 0)
+          return ret;
+    }
+
+    if ((dev->dwTxRemaingBufferSize) < *pBufferLength) {
+                //DAVE*pBufferLength = 0;
+#if RB_DEBUG
+		deb_data("dwTxRemaingBufferSize < *pBufferLength\n");
+#endif
+		//DAVEreturn Error_NO_ERROR;
+      *pBufferLength = dev->dwTxRemaingBufferSize;
+    }
 
     if (*pBufferLength == 0) {
       return -Error_BUFFER_INSUFFICIENT;
@@ -363,24 +374,24 @@ int Tx_RingBuffer(
 	if(dwWriteBuffAddr >= dwCurrBuffAddr){      
 		/* To_kernel_urb not run a cycle or both run a cycle */
 		dwBuffLen = dev->dwTxWriteTolBufferSize - dwWriteBuffAddr; //remaining memory (to buffer end), not contain buffer beginning to return urb
-		if(dwBuffLen >= dwCpBuffLen){    // For not cycle case.
+		if(dwBuffLen >= *pBufferLength){    // For not cycle case.
 			/* end remaining memory is enough */
-			memcpy(dev->pTxRingBuffer + dwWriteBuffAddr, pBuffer, dwCpBuffLen);
+			memcpy(dev->pTxRingBuffer + dwWriteBuffAddr, pBuffer, *pBufferLength);
 		}
 		else{   /* For cycle case */
 			/* use all end memory, run a cycle and need use beginning memory */
 			memcpy(dev->pTxRingBuffer + dwWriteBuffAddr, pBuffer, dwBuffLen); //using end memory
-			memcpy(dev->pTxRingBuffer, pBuffer + dwBuffLen, dwCpBuffLen - dwBuffLen); //using begining memory
+			memcpy(dev->pTxRingBuffer, pBuffer + dwBuffLen, *pBufferLength - dwBuffLen); //using begining memory
 		}
 	}
 	else{       
 		/* To_kernel_urb run a cycle and Return_urb not */
-		memcpy(dev->pTxRingBuffer + dwWriteBuffAddr, pBuffer, dwCpBuffLen);
+		memcpy(dev->pTxRingBuffer + dwWriteBuffAddr, pBuffer, *pBufferLength);
 	}
 
 	spin_lock_irqsave(&dev->TxRBKeyLock, flags);
-		dev->TxWriteBuffPointAddr = (dev->TxWriteBuffPointAddr + dwCpBuffLen) % (dev->dwTxWriteTolBufferSize);
-		dev->dwTxRemaingBufferSize -= dwCpBuffLen;
+		dev->TxWriteBuffPointAddr = (dev->TxWriteBuffPointAddr + *pBufferLength) % (dev->dwTxWriteTolBufferSize);
+		dev->dwTxRemaingBufferSize -= *pBufferLength;
 	spin_unlock_irqrestore(&dev->TxRBKeyLock, flags);
 
 	if(dev->tx_urb_streaming == 1){
@@ -910,6 +921,7 @@ try:
 #endif
 
 	if( atomic_read(&dev->g_AP_use_tx) == 1) {      // Allocate buffer just for first user.
+		init_waitqueue_head(&dev->TxQueue);
 		atomic_set(&dev->tx_urb_counter, URB_COUNT_TX);
 		atomic_set(&dev->urb_counter_low_brate, URB_COUNT_TX_LOW_BRATE);	
 		/*Write Ring buffer alloc*/
@@ -1102,7 +1114,7 @@ static ssize_t it950x_tx_write(
 	struct it950x_dev *dev;
 
 	u32 Len = count;
-	u32 dwError = Error_NO_ERROR;
+        int res;
 
 	/*AirHD RingBuffer*/
 	dev = (struct it950x_dev *)file->private_data;
@@ -1111,10 +1123,13 @@ static ssize_t it950x_tx_write(
 #if URB_TEST
 	loop_cnt++;	
 #endif
-	dwError = Tx_RingBuffer(dev, (u8*)user_buffer, &Len);
+	res = Tx_RingBuffer(dev, (u8*)user_buffer, file->f_flags & O_NONBLOCK, &Len);
 	//printk("[%lu]\n", Len);
-	if(dwError != 0) return dwError;
-	else return Len;
+        if (res < 0) {
+          return res;
+        } else {
+          return Len;
+        }
 }
 
 
