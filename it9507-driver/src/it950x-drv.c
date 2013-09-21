@@ -256,47 +256,6 @@ static u32  DRV_Initialize(
   	      		error = Error_NO_ERROR;
         	}
 	}//pdc->IT950x.booted
-//ReInit:  //Patch for NIM fail or disappear, Maggie   
-#if 0   
-    error = IT9507_initialize ((Demodulator*) &pdc->demodulator , StreamType_DVBT_PARALLEL, Bus_USB, EagleUser_DEVICETYPE); 
-    if (error) 
-    { 
-        deb_data("IT9507_initialize _Device initialize fail : 0x%08x\n", error);
-		/*
-        if( ((error&Error_FIRMWARE_STATUS) && (error&0x10)) && (pdc->Demodulator.chipNumber>1) )
-        {
-            pdc->Demodulator.cmdDescription->sendCommand ((Demodulator*) &pdc->Demodulator, Command_FW_DOWNLOAD_END, 0, Processor_LINK, 0, NULL, 0, NULL);
-
-            deb_data("	Retry to download FW with Single TS\n");
-            pdc->Demodulator.chipNumber = 1;
-            pdc->bDualTs = false;
-            error = Demodulator_writeRegister ((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, 0x417F, 0);
-            goto ReInit;
-       }
-       */
-    }
-    pdc->demodulator.userData = &pdc->modulator;
-    error = Demodulator_initialize ((Demodulator*) &pdc->demodulator , StreamType_DVBT_PARALLEL); 
-    if (error) 
-    { 
-        deb_data("Demodulator_initialize_Device initialize fail : 0x%08x\n", error);
-		/*
-        if( ((error&Error_FIRMWARE_STATUS) && (error&0x10)) && (pdc->Demodulator.chipNumber>1) )
-        {
-            pdc->Demodulator.cmdDescription->sendCommand ((Demodulator*) &pdc->Demodulator, Command_FW_DOWNLOAD_END, 0, Processor_LINK, 0, NULL, 0, NULL);
-
-            deb_data("	Retry to download FW with Single TS\n");
-            pdc->Demodulator.chipNumber = 1;
-            pdc->bDualTs = false;
-            error = Demodulator_writeRegister ((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, 0x417F, 0);
-            goto ReInit;
-       }
-       */
-    }
-    else {
-        deb_data("    Device initialize Ok!!\n");
-    }
-#endif
 
 	error = EagleUser_getTsInputType((Modulator*) &pdc->modulator, (TsInterface*) &streamType_t);
     if (error ==  ModulatorError_NO_ERROR)
@@ -305,7 +264,7 @@ static u32  DRV_Initialize(
 		{
 			case StreamType_DVBT_DATAGRAM:
 				deb_data("    StreamType_DVBT_DATAGRAM\n");
-				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_DATAGRAM, 2, 0);
+				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_DATAGRAM, 0);
 				 
 				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
@@ -327,7 +286,7 @@ static u32  DRV_Initialize(
 				break;
 			case StreamType_DVBT_PARALLEL:
 				deb_data("    StreamType_DVBT_PARALLEL\n");
-				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_PARALLEL, 2, 0);			
+				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_PARALLEL, 0);
 				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
 				
@@ -348,7 +307,7 @@ static u32  DRV_Initialize(
 				break;
 			case StreamType_DVBT_SERIAL:
 				deb_data("    StreamType_DVBT_SERIAL\n"); 
-				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_SERIAL, Bus_USB, EagleUser_DEVICETYPE);
+				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_SERIAL, EagleUser_DEVICETYPE);
 				
 				if (error) deb_data("IT9507_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
@@ -370,7 +329,7 @@ static u32  DRV_Initialize(
 			default:
 				deb_data(" Set Default StreamType_DVBT_PARALLEL\n");
 
-				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_PARALLEL, Bus_USB, EagleUser_DEVICETYPE);
+				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_PARALLEL, EagleUser_DEVICETYPE);
 				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 				else deb_data("    Device initialize TX Ok\n");
 
@@ -607,7 +566,6 @@ exit:
 
 static u32 DRV_SetBusTuner(
 	 void * handle, 
-	 u16 busId, 
 	 u16 tunerId
 )
 {
@@ -617,14 +575,7 @@ static u32 DRV_SetBusTuner(
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 
 	deb_data("- Enter %s Function -",__FUNCTION__);
-	deb_data("busId = 0x%x, tunerId =0x%x\n", busId, tunerId);
-
-/*	if ((pdc->UsbMode==0x0110) && (busId==Bus_USB)) {
-        busId=Bus_USB11;    
-    }*/
-    pdc->modulator.busId = busId;
-//    	dwError = IT9507_setBus ((Modulator*) &pdc->modulator, busId);
-//	if (dwError) {deb_data("Demodulator_setBusTuner error\n");return dwError;}
+	deb_data("tunerId =0x%x\n", tunerId);
 
 	dwError = IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_LINK, &version);
     	if (version != 0) {
@@ -966,7 +917,6 @@ static u32 DL_Initialize(
 
 static u32 DL_SetBusTuner(
 	 void * handle, 
-	 u16 busId, 
 	 u16 tunerId
 )
 {
@@ -974,7 +924,7 @@ static u32 DL_SetBusTuner(
 	
 	mutex_lock(&mymutex);
 
-    dwError = DRV_SetBusTuner(handle, busId, tunerId);
+    dwError = DRV_SetBusTuner(handle, tunerId);
 
     mutex_unlock(&mymutex);
 
@@ -1510,7 +1460,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
         	//error = DL_SetBusTuner (PDC, Bus_USB, 0x38);
         	//PDC->UsbCtrlTimeOut = 5;
         
-        	error = DL_SetBusTuner (PDC, Bus_USB, 0x38);
+        	error = DL_SetBusTuner (PDC, 0x38);
         	if (error)
         	{ 
             		deb_data("First DL_SetBusTuner fail : 0x%08x\n",error );
@@ -1527,7 +1477,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
         	}
 	}//bBoot
 	
-	error = DL_SetBusTuner(PDC, Bus_USB, PDC->fc[0].tunerinfo.TunerId);
+	error = DL_SetBusTuner(PDC, PDC->fc[0].tunerinfo.TunerId);
 	
     	if (error)
     	{

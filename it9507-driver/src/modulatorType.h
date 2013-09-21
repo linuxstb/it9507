@@ -433,7 +433,6 @@ typedef struct _TPS{
 typedef struct {
     /** Basic structure */
     Handle userData;
-    u8 busId;
 	u8 i2cAddr;
     u8* firmwareCodes;
     Segment* firmwareSegments;

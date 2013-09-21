@@ -1283,7 +1283,6 @@ exit :
 u32 IT9507_initialize (
     IN  Modulator*    modulator,
     IN  TsInterface   streamType,
-	IN  u8            busId,
 	IN  u8            i2cAddr
 ) {
 
@@ -1295,16 +1294,10 @@ u32 IT9507_initialize (
 	modulator->frequency = 642000;	
 	modulator->calibrationInfo.ptrIQtableEx =  IQ_fixed_table0;
 	modulator->calibrationInfo.tableGroups = IQ_TABLE_NROW;
-	modulator->busId = busId; 
 	modulator->i2cAddr = i2cAddr;
 
 	error = EagleUser_setBus(modulator);
     if (error) goto exit;
-
-	if (modulator->busId == 0xFF) {
-		goto exit;
-	}
-
 
 	error = IT9507_getFirmwareVersion (modulator, Processor_LINK, &version);
 	if (error) goto exit;
@@ -1789,24 +1782,7 @@ u32 IT9507_TXreboot (
 		
 		error = IT9507Cmd_reboot (modulator);
 		EagleUser_delay (modulator, 1);
-		if (error) goto exit;		
-		
-		if (modulator->busId == Bus_USB) 
-			goto exit;
-
-		EagleUser_delay (modulator, 10);
-
-		version = 1;
-		for (i = 0; i < 30; i++) {
-			error = IT9507_getFirmwareVersion (modulator, Processor_LINK, &version);
-			if (error == ModulatorError_NO_ERROR) break;
-			EagleUser_delay (modulator, 10);
-		}
-		if (error) 
-			goto exit;
-		
-		if (version != 0)
-			error = ModulatorError_REBOOT_FAIL;
+		goto exit;
 	}
 
 	modulator->booted = false;
@@ -1824,43 +1800,27 @@ u32 IT9507_controlPowerSaving (
 
 	if (control) {
 		/** Power up case */
-		if (modulator->busId == Bus_USB) {
-			error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 0);
-			if (error) goto exit;
-			error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_dyn0_clk, 0);
-			if (error) goto exit;
-		} 
+		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 0);
+		if (error) goto exit;
+		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_dyn0_clk, 0);
+		if (error) goto exit;
 
 		/** Fixed current leakage */
-		switch (modulator->busId) {
-			case Bus_USB :
-				error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
-				if (error) goto exit;
-				/** Disable HostB parallel */  
-				error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 0);
-				if (error) goto exit;
-			
-				break;
-		}
+		error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
+		if (error) goto exit;
+		/** Disable HostB parallel */  
+		error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 0);
+		if (error) goto exit;
 	} else {
 		/** Power down case */
-		if (modulator->busId == Bus_USB) {
-			
-			error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 1);
-		
-		} 
+		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 1);
 
 		/** Fixed current leakage */
-		switch (modulator->busId) {
-			case Bus_USB :			
-				/** Enable HostB parallel */
-				error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
-				if (error) goto exit;
-				error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 1);
-				if (error) goto exit;						
-				
-				break;
-		}
+		/** Enable HostB parallel */
+		error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
+		if (error) goto exit;
+		error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 1);
+		if (error) goto exit;						
 	}
 
 exit :

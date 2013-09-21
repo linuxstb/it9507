@@ -388,7 +388,6 @@ u32 IT9507_loadIrTable (
  *
  * @param modulator the handle of modulator.
  * @param streamType The format of TS interface type.
- * @param busId The id of bus type.1:Bus_I2C 2:Bus_USB
  * @param i2cAddr The address of i2c bus.
  * @return Error_NO_ERROR: successful, non-zero error code otherwise.
  * @example <pre>
@@ -408,7 +407,6 @@ u32 IT9507_loadIrTable (
 u32 IT9507_initialize (
     IN  Modulator*    modulator,
     IN  TsInterface   streamType,
-	IN  u8            busId,
 	IN  u8            i2cAddr
 );
 

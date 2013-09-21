@@ -281,10 +281,7 @@ u32 EagleUser_busTx (
      *  return (0);
      */
 	u32 error = 0;
-	if(modulator->busId == Bus_USB)
-		error = Usb2_writeControlBus(modulator,bufferLength,buffer);
-	else
-		error = ModulatorError_INVALID_BUS_TYPE;
+	error = Usb2_writeControlBus(modulator,bufferLength,buffer);
     return (error);
 }
 
@@ -315,10 +312,7 @@ u32 EagleUser_busRx (
      *  return (0);
      */
 	u32 error = 0;
-	if(modulator->busId == Bus_USB)
-		error = Usb2_readControlBus(modulator,bufferLength,buffer);
-	else
-		error = ModulatorError_INVALID_BUS_TYPE;
+	error = Usb2_readControlBus(modulator,bufferLength,buffer);
 	return (error);
 }
 
