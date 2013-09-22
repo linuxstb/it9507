@@ -180,7 +180,6 @@ typedef struct _DEVICE_CONTEXT {
     //u8    ucSerialNo; 
     Architecture architecture;
     //u8 Tuner_Id;
-    StreamType StreamType;
     bool bDCAPIP;
     bool bSwapFilter;
     u8 FilterCnt;

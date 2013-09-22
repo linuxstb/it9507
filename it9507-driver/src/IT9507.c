@@ -13,6 +13,8 @@ static unsigned int c_fN_min[9] = {
 	53000, 74000, 111000, 148000, 222000, 296000, 445000, 573000, 950000
 };
 
+static u32 IT9507_setTsInterface (IN  Modulator*    modulator);
+
 unsigned int IT9507_getLoFreq(unsigned int rf_freq_kHz)
 {
 	unsigned int nc, nv, mv, lo_freq;
@@ -1282,7 +1284,6 @@ exit :
 
 u32 IT9507_initialize (
     IN  Modulator*    modulator,
-    IN  TsInterface   streamType,
 	IN  u8            i2cAddr
 ) {
 
@@ -1354,7 +1355,7 @@ u32 IT9507_initialize (
 	if (error) goto exit;
 
 	/** Set the desired stream type */
-	error = IT9507_setTsInterface (modulator, streamType);
+	error = IT9507_setTsInterface (modulator);
 	if (error) goto exit;
 
 	/** Set H/W MPEG2 locked detection **/
@@ -1581,7 +1582,7 @@ exit :
 	return (error);
 }
 
-
+#if 0
 u32 IT9507_resetPSBBuffer (
 	IN  Modulator*    modulator
 ){
@@ -1611,11 +1612,10 @@ exit :
 
 	return (error);
 }
+#endif
 
-
-u32 IT9507_setTsInterface (
-    IN  Modulator*    modulator,
-    IN  TsInterface   streamType
+static u32 IT9507_setTsInterface (
+    IN  Modulator*    modulator
 ) {
     u32 error = ModulatorError_NO_ERROR;
 	u16 frameSize;
@@ -1688,15 +1688,6 @@ u32 IT9507_setTsInterface (
 	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_en, eagle_reg_mp2if2_en_pos, eagle_reg_mp2if2_en_len, 1);
 	if (error) goto exit;
 
-	if(streamType == PARALLEL_TS_INPUT){
-	/** Enable tsip */
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_tsip_en, eagle_reg_tsip_en_pos, eagle_reg_tsip_en_len, 1);
-		if (error) goto exit;
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_tsis_en, eagle_reg_tsis_en_pos, eagle_reg_tsis_en_len, 0);
-		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_ts_in_src, 1);
-		if (error) goto exit;
-	}else{
 		/** Enable tsis */
 		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_tsip_en, eagle_reg_tsip_en_pos, eagle_reg_tsip_en_len, 0);
 		if (error) goto exit;
@@ -1704,7 +1695,6 @@ u32 IT9507_setTsInterface (
 		if (error) goto exit;
 		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_ts_in_src, 0);
 		if (error) goto exit;
-	}
 
 	/** Negate EP4 reset */
 	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mp2_sw_rst, eagle_reg_mp2_sw_rst_pos, eagle_reg_mp2_sw_rst_len, 0);
@@ -1741,8 +1731,6 @@ u32 IT9507_setTsInterface (
 	if (error) goto exit;
 
 	error = EagleUser_mpegConfig (modulator);
-
-	modulator->tsInterfaceType = streamType;
 
 exit :
 	return (error);

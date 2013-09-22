@@ -296,24 +296,6 @@ typedef enum {
  * The type defination of StreamType.
  */
 typedef enum {
-    StreamType_NONE = 0,            /** Invalid (Null) StreamType                */
-    StreamType_DVBT_DATAGRAM = 3,   /** DVB-T mode, store data in device buffer  */
-    StreamType_DVBT_PARALLEL,       /** DVB-T mode, output via paralle interface */
-    StreamType_DVBT_SERIAL,         /** DVB-T mode, output via serial interface  */
-} StreamType;
-/**
- * The type defination of StreamType.
- */
-typedef enum {
-	INTERFACE_UNUSE = 0, 
-    PARALLEL_TS_INPUT=4,		/** input via paralle interface */
-    SERIAL_TS_INPUT,			/** input via serial interface  */
-} TsInterface;
-
-/**
- * The type defination of StreamType.
- */
-typedef enum {
     Architecture_NONE = 0,      /** Inavalid (Null) Architecture.                                    */
     Architecture_DCA,           /** Diversity combine architecture. Only valid when chip number > 1. */
     Architecture_PIP            /** Picture in picture. Only valid when chip number > 1.             */
@@ -439,7 +421,6 @@ typedef struct {
     u16*  firmwarePartitions;
     u16* scriptSets;
     ValueSet* scripts;
-    TsInterface tsInterfaceType;
     u16 bandwidth;
     u32 frequency;    
     bool booted;

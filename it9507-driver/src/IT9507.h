@@ -406,7 +406,6 @@ u32 IT9507_loadIrTable (
  */
 u32 IT9507_initialize (
     IN  Modulator*    modulator,
-    IN  TsInterface   streamType,
 	IN  u8            i2cAddr
 );
 
@@ -526,36 +525,6 @@ u32 IT9507_acquireTxChannel (
  */
 u32 IT9507_resetPSBBuffer (
 	IN  Modulator*    modulator
-);
-
-/**
- * Set the output stream type of chip. Because the device could output in
- * many stream type, therefore host have to choose one type before receive
- * data.
- *
- * Note: After host know all the available channels, and want to change to
- *       specific channel, host have to choose output mode before receive
- *       data. Please refer the example of IT9507_setTsInterface.
- *
- * @param modulator the handle of modulator.
- * @param streamType the possible values are
- *        DVB-T:    PARALLEL_TS_INPUT
- *                  SERIAL_TS_INPUT
- * @return Error_NO_ERROR: successful, non-zero error code otherwise.
- * @example <pre>
- *     u32 error = Error_NO_ERROR;
- *     Eagle eagle;
- *
- *     error = IT9507_setTsInterface ((Modulator*) &eagle, SERIAL_TS_INPUT)
- *     if (error)
- *         printf ("Error Code = %X", error);
- *     else
- *         printf ("Success");
- * </pre>
- */
-u32 IT9507_setTsInterface (
-    IN  Modulator*    modulator,
-    IN  TsInterface   streamType
 );
 
 /**

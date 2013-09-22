@@ -216,7 +216,6 @@ static u32  DRV_Initialize(
 	//u8 usb_dma_reg;
 	u8 chip_version = 0; 
 	u32 fileVersion, cmdVersion = 0; 
-	StreamType streamType_t;
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
@@ -257,105 +256,13 @@ static u32  DRV_Initialize(
         	}
 	}//pdc->IT950x.booted
 
-	error = EagleUser_getTsInputType((Modulator*) &pdc->modulator, (TsInterface*) &streamType_t);
-    if (error ==  ModulatorError_NO_ERROR)
-    {		
-		switch(streamType_t)
-		{
-			case StreamType_DVBT_DATAGRAM:
-				deb_data("    StreamType_DVBT_DATAGRAM\n");
-				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_DATAGRAM, 0);
+	//			case StreamType_DVBT_DATAGRAM:
+	deb_data("    StreamType_DVBT_DATAGRAM\n");
+	error = IT9507_initialize ((Modulator*) &pdc->modulator, 0);
 				 
-				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
-				else deb_data("    Device initialize TX Ok\n");
+	if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
+	else deb_data("    Device initialize TX Ok\n");
 
-#if 0				
-				pdc->demodulator.userData = &pdc->modulator;
-				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
-				
-				if (error_rx) deb_data("    Device initialize RX Fail\n");
-				else {
-					error = OMEGA_supportLNA((Demodulator*) &pdc->demodulator ,0);
-					if (error) deb_data("OMEGA_supportLNAfail : 0x%08x\n", error);
-					else deb_data("    OMEGA_supportLNA Ok\n");
-					error = Demodulator_initialize ((Demodulator*) &pdc->demodulator , StreamType_DVBT_DATAGRAM); 
-					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08x\n", error);
-					else deb_data("    Device initialize RX Ok\n");
-				}
-#endif
-				break;
-			case StreamType_DVBT_PARALLEL:
-				deb_data("    StreamType_DVBT_PARALLEL\n");
-				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_PARALLEL, 0);
-				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
-				else deb_data("    Device initialize TX Ok\n");
-				
-#if 0				
-				pdc->demodulator.userData = &pdc->modulator;
-				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
-
-				if (error_rx) deb_data("    Device initialize RX Fail\n");
-				else {
-					error = OMEGA_supportLNA((Demodulator*) &pdc->demodulator ,0);
-					if (error) deb_data("OMEGA_supportLNAfail : 0x%08x\n", error);
-					else deb_data("    OMEGA_supportLNA Ok\n");
-					error = Demodulator_initialize ((Demodulator*) &pdc->demodulator , StreamType_DVBT_PARALLEL); 
-					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08x\n", error);
-					else deb_data("    Device initialize RX Ok\n");
-				}
-#endif
-				break;
-			case StreamType_DVBT_SERIAL:
-				deb_data("    StreamType_DVBT_SERIAL\n"); 
-				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_SERIAL, EagleUser_DEVICETYPE);
-				
-				if (error) deb_data("IT9507_initialize _Device initialize fail : 0x%08x\n", error);
-				else deb_data("    Device initialize TX Ok\n");
-				
-#if 0				
-				pdc->demodulator.userData = &pdc->modulator;
-				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
-				if (error_rx) deb_data("    Device initialize RX Fail\n");
-				else {
-					error = OMEGA_supportLNA((Demodulator*) &pdc->demodulator ,0);
-					if (error) deb_data("OMEGA_supportLNAfail : 0x%08x\n", error);
-					else deb_data("    OMEGA_supportLNA Ok\n");
-					error = Demodulator_initialize ((Demodulator*) &pdc->demodulator , StreamType_DVBT_SERIAL); 
-					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08x\n", error);
-					else deb_data("    Device initialize RX Ok\n");
-				}
-#endif
-				break;
-			default:
-				deb_data(" Set Default StreamType_DVBT_PARALLEL\n");
-
-				error = IT9507_initialize ((Modulator*) &pdc->modulator , StreamType_DVBT_PARALLEL, EagleUser_DEVICETYPE);
-				if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
-				else deb_data("    Device initialize TX Ok\n");
-
-#if 0				
-				pdc->demodulator.userData = &pdc->modulator;
-				error_rx = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, chip_version_7_0, &chip_version);
-
-				if (error_rx) deb_data("    Device initialize RX Fail\n");
-				else {
-					error = OMEGA_supportLNA((Demodulator*) &pdc->demodulator ,0);
-					if (error) deb_data("OMEGA_supportLNAfail : 0x%08x\n", error);
-					else deb_data("    OMEGA_supportLNA Ok\n");
-					
-					error = Demodulator_initialize ((Demodulator*) &pdc->demodulator , StreamType_DVBT_PARALLEL);
-					if (error) deb_data("Demodulator_initialize_Device initialize fail : 0x%08x\n", error);
-					else deb_data("    Device initialize RX Ok\n");
-					//error_rx = Demodulator_writeRegister((Demodulator*) &pdc->demodulator, Processor_LINK, 0xd830, 1);			
-				}			
-#endif
-				break;
-			
-		} 
-	} else {
-		printk("EagleUser_getTsInputType fail");	
-		return error;
-	}
     IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_OFDM, &cmdVersion);
     deb_data("    FwVer OFDM = 0x%x, ", cmdVersion);
     IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_LINK, &cmdVersion);
@@ -1431,7 +1338,6 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 		PDC->fc[1].tunerinfo.TunerId = 0;
 		PDC->bDualTs=false;	
         	PDC->FilterCnt = 0;
-		PDC->StreamType = StreamType_DVBT_DATAGRAM;
 		PDC->UsbCtrlTimeOut = 1;
 	}
 	else {

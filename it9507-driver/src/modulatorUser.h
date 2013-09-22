@@ -72,11 +72,6 @@ u32 EagleUser_setSystemConfig (
     IN  Modulator*    modulator
 );
 
-u32 EagleUser_getTsInputType (
-	IN  Modulator*    modulator,
-	OUT  TsInterface*  tsInStreamType
-);
-
 u32 EagleUser_getDeviceType (
 	IN  Modulator*    modulator,
 	OUT  u8*		  deviceType	   

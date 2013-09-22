@@ -91,24 +91,6 @@ exit:
     return (ModulatorError_NO_ERROR);
 }
 
-u32 EagleUser_getTsInputType (
-	IN  Modulator*    modulator,
-	OUT  TsInterface*  tsInStreamType
-) {
-	u32 error = ModulatorError_NO_ERROR;
-	u8 temp = 0;
-	*tsInStreamType = (TsInterface)temp;
-
-	error = IT9507_readRegister (modulator, Processor_LINK, 0x4979, &temp);//has eeprom ??
-	if((temp == 1) && (error == ModulatorError_NO_ERROR)){
-		error = IT9507_readRegister (modulator, Processor_LINK, 0x49CA, &temp);
-		if(error == ModulatorError_NO_ERROR){
-			*tsInStreamType = (TsInterface)temp;
-		}
-	}
-	return (error);
-}
-
 u32 EagleUser_getDeviceType (
 	IN  Modulator*    modulator,
 	OUT  u8*		  deviceType	   
@@ -270,19 +252,6 @@ u32 EagleUser_busRx (
 	u32 error = 0;
 	 error = EagleUser_setSystemConfig(modulator);
 	 if (error) goto exit;
-
-	if(modulator->tsInterfaceType != StreamType_DVBT_DATAGRAM){
-		
-		error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH1_O, 1); //RX(IT9133) rest 
-		if (error) goto exit;
-
-		EagleUser_delay(modulator, 10);
-
-		error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH5_O, 0); //RX(IT9133) power up
-		if (error) goto exit;
-
-
-	}
 
 	// RF Enable
 	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_O, 0); //RF out power down
