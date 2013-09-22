@@ -82,52 +82,6 @@ static u32 DRV_Initialize(
 
 static u32 DL_Initialize(
 	void* handle);
-  
-static u32 DRV_IrTblDownload(IN void* handle)
-{
-        u32 dwError = Error_NO_ERROR;
-        PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-        struct file *filp;
-        unsigned char b_buf[512] ;
-        int i, fileSize;
-        mm_segment_t oldfs;
-
-        deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-        oldfs=get_fs();
-        set_fs(KERNEL_DS);
-
-        filp=filp_open("/lib/firmware/af35irtbl.bin", O_RDWR,0644);
-        if ( IS_ERR(filp) ) {
-                deb_data("      LoadIrTable : Can't open file\n");goto exit;}
-
-        if ( (filp->f_op) == NULL ) {
-                deb_data("      LoadIrTable : File Operation Method Error!!\n");goto exit;}
-
-        filp->f_pos=0x00;
-        fileSize = filp->f_op->read(filp,b_buf,sizeof(b_buf),&filp->f_pos);
-
-        for(i=0; i<fileSize; i++)
-        {
-              //deb_data("\n Data %d",i); //
-              //deb_data("0x%x",b_buf[i]);//
-              // dwError = Af901xWriteReg(ucDemod2WireAddr, 0, MERC_IR_TABLE_BASE_ADDR + i, b_buf[i]);
-              //if (dwError) goto exit;
-        }
-
-        dwError = IT9507_loadIrTable((Modulator*) &pdc->modulator, (u16)fileSize, b_buf);
-        if (dwError) {deb_data("Demodulator_loadIrTable fail"); goto exit;}
-
-        filp_close(filp, NULL);
-        set_fs(oldfs);
-
-exit:
-		deb_data("LoadIrTable fail!\n");
-        return (dwError);
-
-
-}
-
 
 static u32 DRV_getFirmwareVersionFromFile( 
 		void* handle,
@@ -348,9 +302,8 @@ static u32 DRV_GetEEPROMConfig(
 
 	if(btmp == 0)
 	{
+	  printk("it905x: btmp=%d\n",btmp);
 		deb_data("=============No need read eeprom");
-		pdc->bIrTblDownload = false;
-		pdc->bProprietaryIr = false;
 		pdc->bSupportSelSuspend = false;
 		pdc->bDualTs = false;
     	pdc->architecture = Architecture_DCA;
@@ -363,27 +316,8 @@ static u32 DRV_GetEEPROMConfig(
 		deb_data("=============Need read eeprom");
 		dwError = IT9507_readRegisters((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_IRMODE, 1, &btmp);
     	if (dwError) goto exit;
-    	pdc->bIrTblDownload = btmp ? true:false;
     	deb_data("EEPROM_IRMODE = 0x%02X, ", btmp);	
-    	deb_data("bIrTblDownload %s\n", pdc->bIrTblDownload?"ON":"OFF");
-    	pdc->bProprietaryIr = (btmp==0x05)?true:false;
-    	deb_data("bRAWIr %s\n", pdc->bProprietaryIr?"ON":"OFF");
-		if(pdc->bProprietaryIr)
-		{
-			deb_data("IT950x proprietary (raw) mode\n");
-		}
-		else
-		{
-			deb_data("IT950x HID (keyboard) mode\n");
-		}		    	        	    
-		//EE chose NEC RC5 RC6 threshhold table
-		if(pdc->bIrTblDownload)
-		{
-			dwError = IT9507_readRegisters((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_IRTYPE, 1, &btmp);
-    		if (dwError) goto exit;
-			pdc->bIrType = btmp;
-			deb_data("bIrType 0x%02X", pdc->bIrType);
-		}
+
 //selective suspend
     	pdc->bSupportSelSuspend = false;
 	    //btmp = 0; //not support in v8.12.12.3
@@ -866,21 +800,6 @@ static u32 DL_TunerWakeup(
    
     	return(dwError);
 }
-static u32  DL_IrTblDownload(
-      void *     handle
-)
-{
-	u32 dwError = Error_NO_ERROR;
-
-    mutex_lock(&mymutex);
-
-	dwError = DRV_IrTblDownload(handle);
-
-    mutex_unlock(&mymutex);
-
-    return(dwError);
-}
-
 
 u32 DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
 {
@@ -1333,7 +1252,6 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 		PDC->architecture=Architecture_DCA;
 		PDC->modulator.frequency = 666000;
 		PDC->modulator.bandwidth = 8000;
-		PDC->bIrTblDownload = false;
 		PDC->fc[0].tunerinfo.TunerId = 0;
 		PDC->fc[1].tunerinfo.TunerId = 0;
 		PDC->bDualTs=false;	
@@ -1417,35 +1335,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 		errcount++;
 		goto Exit;
 	}
-	
-	if (PDC->bIrTblDownload) 
-    	{
-        	error = DL_IrTblDownload(PDC);
-       	 	if (error) {deb_data("DL_IrTblDownload fail");errcount++;}
-    	}
 
-   	 /*if (PDC->modulator.chipNumber == 2)
-    	{
-        	error = DL_USBSetup(PDC);
-        	if (error) deb_data("DRV_SDIOSetup fail!");
-    	}
-
-    if (PDC->modulator.chipNumber == 2)
-    	{
-        	error = DL_InitNIMSuspendRegs(PDC);
-        	if (error) deb_data("DL_InitNIMSuspendRegs fail!");
-    	}	
-	*/
-//    for (filterIdx=0; filterIdx< PDC->modulator.chipNumber; filterIdx++) 
-//    	{  
-/*			filterIdx = 0;
-        	if (bBoot || !PDC->fc[filterIdx].GraphBuilt)
-        	{
-            		error = DRV_ApCtrl(PDC, filterIdx, false);
-            		if (error) {deb_data("%d: DRV_ApCtrl Fail!\n", filterIdx);errcount++;}
-        	} */
-//    	}        
-	
 	deb_data("	%s success \n",__FUNCTION__);
 
 

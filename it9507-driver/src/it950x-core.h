@@ -155,7 +155,6 @@ typedef struct _DEVICE_CONTEXT {
     //bool bDebugMsg;
     //bool bDevExist;
     bool bDualTs;
-    bool bIrTblDownload;    
     u8 BulkOutData[256];
     u32 WriteLength;
     bool bSurpriseRemoval;
@@ -193,8 +192,6 @@ typedef struct _DEVICE_CONTEXT {
     
     bool ForceWrite;
     u8 chip_version;
-    bool bProprietaryIr;
-    u8 bIrType;
 
     u32		nReadTmpBusLength;
     u32		nWriteTmpBusLength;
