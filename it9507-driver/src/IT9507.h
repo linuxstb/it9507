@@ -9,7 +9,6 @@
 #include "modulatorVersion.h"
 #include "modulatorFirmware.h"
 #include "IQ_fixed_table.h"
-#include "eagleTuner.h"
 
 
 /**
