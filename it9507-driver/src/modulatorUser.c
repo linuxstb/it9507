@@ -19,39 +19,7 @@
 #include "modulatorType.h"
 #include "modulatorError.h"
 #include "modulatorUser.h"
-
-#define    GPIOH1_I	0xd8ae
-#define    GPIOH1_O	0xd8af
-#define    GPIOH1_EN	0xd8b0 
-#define    GPIOH1_ON	0xd8b1
-#define    GPIOH3_I	0xd8b2
-#define    GPIOH3_O	0xd8b3
-#define    GPIOH3_EN	0xd8b4
-#define    GPIOH3_ON	0xd8b5
-#define    GPIOH2_I	0xd8b6
-#define    GPIOH2_O	0xd8b7
-#define    GPIOH2_EN	0xd8b8
-#define    GPIOH2_ON	0xd8b9
-#define    GPIOH5_I	0xd8ba
-#define    GPIOH5_O	0xd8bb
-#define    GPIOH5_EN	0xd8bc
-#define    GPIOH5_ON	0xd8bd
-#define    GPIOH4_I	0xd8be
-#define    GPIOH4_O	0xd8bf
-#define    GPIOH4_EN	0xd8c0 
-#define    GPIOH4_ON	0xd8c1 
-#define    GPIOH7_I	0xd8c2
-#define    GPIOH7_O	0xd8c3
-#define    GPIOH7_EN	0xd8c4
-#define    GPIOH7_ON	0xd8c5
-#define    GPIOH6_I	0xd8c6
-#define    GPIOH6_O	0xd8c7
-#define    GPIOH6_EN	0xd8c8
-#define    GPIOH6_ON	0xd8c9
-#define    GPIOH8_I	0xd8ce
-#define    GPIOH8_O	0xd8cf 
-#define    GPIOH8_EN	0xd8d0 
-#define    GPIOH8_ON	0xd8d1 
+#include "it9507-priv.h"
 
 u32 EagleUser_setSystemConfig (
     IN  Modulator*    modulator
@@ -59,32 +27,32 @@ u32 EagleUser_setSystemConfig (
 	u32 error = 0;
 
         /* restSlave */	
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH1_O, 1);//gpiox_en
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH1), 1);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH1_EN, 1);//gpiox_en
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_EN(GPIOH1), 1);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH1_ON, 1);//gpiox_on
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_ON(GPIOH1), 1);
 	if (error) goto exit;
 	EagleUser_delay(modulator, 10);
 
         /* powerDownSlave */
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH5_O, 0);//gpiox_en
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH5), 0);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH5_EN, 1);//gpiox_en
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_EN(GPIOH5), 1);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH5_ON, 1);//gpiox_on
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_ON(GPIOH5), 1);
 	if (error) goto exit;
 
         /* rfEnable */
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_EN, 1);//gpiox_en
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_EN(GPIOH2), 1);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_ON, 1);//gpiox_on
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_ON(GPIOH2), 1);
 	if (error) goto exit;
 
         /* uvFilter */
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH8_EN, 1);//gpiox_en
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_EN(GPIOH8), 1);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH8_ON, 1);//gpiox_on
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_ON(GPIOH8), 1);
 	if (error) goto exit;
 
 exit:
@@ -254,7 +222,7 @@ u32 EagleUser_busRx (
 	 if (error) goto exit;
 
 	// RF Enable
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_O, 0); //RF out power down
+	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH2), 0); //RF out power down
 	if (error) goto exit;
 exit:
     return (error);
@@ -277,11 +245,11 @@ u32 EagleUser_acquireChannel (
 	u32 error = 0;
 
 	if(frequency <= 300000){ // <=300000KHz v-filter gpio set to Lo
-	  error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH8_O, 0);  /* uvFilter */
+	  error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH8), 0);  /* uvFilter */
 		if (error) goto exit;
 
 	}else{
-	  error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH8_O, 1); /* uvFilter */
+	  error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH8), 1); /* uvFilter */
 		if (error) goto exit;
 	}	
 exit:
@@ -300,10 +268,10 @@ u32 EagleUser_setTxModeEnable (
      */
 	u32 error = ModulatorError_NO_ERROR;
 	if(enable){
-			error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_O, 1); //RF power up 
+			error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH2), 1); //RF power up 
 			if (error) goto exit;
 	}else{
-			error = IT9507_writeRegister (modulator, Processor_LINK, GPIOH2_O, 0); //RF power down 
+			error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH2), 0); //RF power down 
 			if (error) goto exit;
 	}
 exit :
