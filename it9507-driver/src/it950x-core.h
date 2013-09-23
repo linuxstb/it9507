@@ -35,7 +35,7 @@
 #define   DRIVER_RELEASE_VERSION    "v13.06.27.1"
 
 #define URB_TEST	0
-#define URB_COUNT_TX   16
+#define URB_COUNT_TX   8
 #define URB_COUNT_TX_LOW_BRATE 64
 #define URB_COUNT_TX_CMD   1
 #define URB_COUNT_RX   16
