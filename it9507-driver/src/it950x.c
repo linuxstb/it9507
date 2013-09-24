@@ -139,23 +139,7 @@ static u32 EagleUser_busRx (
 	return (Error_NO_ERROR);
 }
 
-static u32 EagleUser_delay (
-    IN  Modulator*    modulator,
-    IN  u32           dwMs
-) {
-    /*
-     *  ToDo:  Add code here
-     *
-     *  //Pseudo code
-     *  delay(dwMs);
-     *  return (0);
-     */
-	msleep(dwMs); 
-    return (ModulatorError_NO_ERROR);
-}
-
-
-static u32 IT9507_writeRegisters (
+static u32 it950x_wr_regs (
     IN  Modulator*    modulator,
     IN  Processor     processor,
     IN  u32         registerAddress,
@@ -229,7 +213,7 @@ static u32 IT9507_writeRegisters (
 		for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
 			error = EagleUser_busTx (modulator, i, &buffer[sendLength]);
 			if (error == 0) break;
-			EagleUser_delay (modulator, 1);
+			msleep(1);
 		}
         if (error) goto exit;
 
@@ -243,7 +227,7 @@ static u32 IT9507_writeRegisters (
 	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
 		error = EagleUser_busRx (modulator, bufferLength, buffer);
 		if (error == 0) break;
-		EagleUser_delay (modulator, 1);
+		msleep(1);
 	}
     if (error) goto exit;
 
@@ -257,16 +241,16 @@ exit :
 return (error);
 }
 
-static u32 IT9507_writeRegister (
+static u32 it950x_wr_reg (
     IN  Modulator*    modulator,
     IN  Processor       processor,
     IN  u32           registerAddress,
     IN  u8            value
 ) {
-   	return (IT9507_writeRegisters(modulator, processor, registerAddress, 1, &value));
+   	return (it950x_wr_regs(modulator, processor, registerAddress, 1, &value));
 }
 
-static u32 IT9507_readRegisters (
+static u32 it950x_rd_regs (
     IN  Modulator*    modulator,
     IN  Processor       processor,
     IN  u32           registerAddress,
@@ -340,7 +324,7 @@ static u32 IT9507_readRegisters (
       	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
 			error = EagleUser_busTx (modulator, i, &buffer[sendLength]);
 			if (error == 0) break;
-			EagleUser_delay (modulator, 1);
+			msleep(1);
 		}
         if (error) goto exit;
 
@@ -354,7 +338,7 @@ static u32 IT9507_readRegisters (
 	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
 		error = EagleUser_busRx (modulator, bufferLength, buffer);
 		if (error == 0) break;
-		EagleUser_delay (modulator, 1);
+		msleep(1);
 	}
     if (error) goto exit;
 
@@ -370,17 +354,17 @@ exit:
 	return (error);
 }
 
-static u32 IT9507_readRegister (
+static u32 it950x_rd_reg (
     IN  Modulator*    modulator,
     IN  Processor       processor,
     IN  u32           registerAddress,
     OUT u8*           value
 ) {
-    return (IT9507_readRegisters (modulator, processor, registerAddress, 1, value));
+    return (it950x_rd_regs (modulator, processor, registerAddress, 1, value));
 }
 
 
-static u32 IT9507_writeRegisterBits (
+static u32 it950x_wr_regbits (
     IN  Modulator*    modulator,
     IN  Processor       processor,
     IN  u32           registerAddress,
@@ -394,16 +378,16 @@ static u32 IT9507_writeRegisterBits (
 	u8 temp;
 
 	if (length == 8) {
-		error = IT9507_writeRegisters (modulator, processor, registerAddress, 1, &value);
+		error = it950x_wr_regs (modulator, processor, registerAddress, 1, &value);
 		
 	} else {
-		error = IT9507_readRegisters (modulator, processor, registerAddress, 1, &temp);
+		error = it950x_rd_regs (modulator, processor, registerAddress, 1, &temp);
 		if (error) goto exit;
 		
 
 		temp = (u8)REG_CREATE (value, temp, position, length);
 
-		error = IT9507_writeRegisters (modulator, processor, registerAddress, 1, &temp);
+		error = it950x_wr_regs (modulator, processor, registerAddress, 1, &temp);
 		if (error) goto exit;
 		
 	}
@@ -466,7 +450,7 @@ static u32 IT9507Cmd_sendCommand (
 			for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
 				error = EagleUser_busTx (modulator, i, &buffer[sendLength]);
 				if (error == 0) break;
-				EagleUser_delay (modulator, 1);
+				msleep(1);
 			}
             if (error) goto exit;
 
@@ -497,7 +481,7 @@ static u32 IT9507Cmd_sendCommand (
 			for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
 				error = EagleUser_busTx (modulator, i, &buffer[sendLength]);
 				if (error == 0) break;
-				EagleUser_delay (modulator, 1);
+				msleep(1);
 			}
             if (error) goto exit;
 
@@ -511,7 +495,7 @@ static u32 IT9507Cmd_sendCommand (
 	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
 		error = EagleUser_busRx (modulator, bufferLength, buffer);
 		if (error == 0) break;
-		EagleUser_delay (modulator, 1);
+		msleep(1);
 	}
     if (error) goto exit;
 
@@ -573,32 +557,32 @@ static u32 EagleUser_setSystemConfig (
 	u32 error = 0;
 
         /* restSlave */	
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH1), 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH1), 1);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_EN(GPIOH1), 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_EN(GPIOH1), 1);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_ON(GPIOH1), 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_ON(GPIOH1), 1);
 	if (error) goto exit;
-	EagleUser_delay(modulator, 10);
+	msleep(10);
 
         /* powerDownSlave */
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH5), 0);
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH5), 0);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_EN(GPIOH5), 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_EN(GPIOH5), 1);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_ON(GPIOH5), 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_ON(GPIOH5), 1);
 	if (error) goto exit;
 
         /* rfEnable */
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_EN(GPIOH2), 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_EN(GPIOH2), 1);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_ON(GPIOH2), 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_ON(GPIOH2), 1);
 	if (error) goto exit;
 
         /* uvFilter */
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_EN(GPIOH8), 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_EN(GPIOH8), 1);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_ON(GPIOH8), 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_ON(GPIOH8), 1);
 	if (error) goto exit;
 
 exit:
@@ -614,9 +598,9 @@ static u32 EagleUser_getDeviceType (
 	u8 temp;
 
 	
-	error = IT9507_readRegister (modulator, Processor_LINK, 0x4979, &temp);//has eeprom ??
+	error = it950x_rd_reg (modulator, Processor_LINK, 0x4979, &temp);//has eeprom ??
 	if((temp == 1) && (error == ModulatorError_NO_ERROR)){
-		error = IT9507_readRegister (modulator, Processor_LINK, 0x49D5, &temp);	
+		error = it950x_rd_reg (modulator, Processor_LINK, 0x49D5, &temp);	
 		if(error == ModulatorError_NO_ERROR){
 			*deviceType = temp;	
 		}else if(temp == 0){ // No eeprom 
@@ -658,7 +642,7 @@ static u32 EagleUser_mpegConfig (
 	 if (error) goto exit;
 
 	// RF Enable
-	error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH2), 0); //RF out power down
+	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH2), 0); //RF out power down
 	if (error) goto exit;
 exit:
     return (error);
@@ -681,11 +665,11 @@ static u32 EagleUser_acquireChannel (
 	u32 error = 0;
 
 	if(frequency <= 300000){ // <=300000KHz v-filter gpio set to Lo
-	  error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH8), 0);  /* uvFilter */
+	  error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH8), 0);  /* uvFilter */
 		if (error) goto exit;
 
 	}else{
-	  error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH8), 1); /* uvFilter */
+	  error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH8), 1); /* uvFilter */
 		if (error) goto exit;
 	}	
 exit:
@@ -704,10 +688,10 @@ static u32 EagleUser_setTxModeEnable (
      */
 	u32 error = ModulatorError_NO_ERROR;
 	if(enable){
-			error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH2), 1); //RF power up 
+			error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH2), 1); //RF power up 
 			if (error) goto exit;
 	}else{
-			error = IT9507_writeRegister (modulator, Processor_LINK, GPIO_O(GPIOH2), 0); //RF power down 
+			error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH2), 0); //RF power down 
 			if (error) goto exit;
 	}
 exit :
@@ -1042,7 +1026,7 @@ static u32 EagleTuner_setIQCalibration(
   val[4] = (u8) c3_tmp_lowbyte;
   val[5] = (u8) c3_tmp_highbyte;
 exit:
-  error = IT9507_writeRegisters(modulator, Processor_OFDM, reg, 6, val);
+  error = it950x_wr_regs(modulator, Processor_OFDM, reg, 6, val);
 
   return (error);
 }
@@ -1235,7 +1219,7 @@ static u32 IT9507Cmd_reboot (
 	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
 		error = EagleUser_busTx (modulator, bufferLength, buffer);
 		if (error == 0) break;
-		EagleUser_delay (modulator, 1);
+		msleep(1);
 	}
     if (error) goto exit;
 
@@ -1394,7 +1378,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x00;	//0xF741
-			error = IT9507_writeRegister (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;
 			break;
 
@@ -1404,7 +1388,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x00;	//0xF741
-			error = IT9507_writeRegister (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;
 			break; 
 
@@ -1414,7 +1398,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x00;	//0xF741
-			error = IT9507_writeRegister (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1424,7 +1408,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x00;	//0xF741
-			error = IT9507_writeRegister (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1434,7 +1418,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x00;	//0xF741
-			error = IT9507_writeRegister (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1444,7 +1428,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x01;	//0xF741
-			error = IT9507_writeRegister (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1454,7 +1438,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x01;	//0xF741
-			error = IT9507_writeRegister (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1464,7 +1448,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x01;	//0xF741
-			error = IT9507_writeRegister (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;
 			break;
 
@@ -1474,7 +1458,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x02;	//0xF741
-			error = IT9507_writeRegister (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1484,7 +1468,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x02;	//0xF741
-			error = IT9507_writeRegister (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;
 			break;
 
@@ -1495,22 +1479,22 @@ static u32 IT9507_selectBandwidth (
 	}
 
 	if(error == ModulatorError_NO_ERROR){
-		error = IT9507_writeRegister (modulator, Processor_OFDM, 0xFBB6, temp1);
+		error = it950x_wr_reg (modulator, Processor_OFDM, 0xFBB6, temp1);
 		if (error) goto exit;
 
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, 0xFBB7, 0, 2, temp2);
+		error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFBB7, 0, 2, temp2);
 		if (error) goto exit;
 
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, 0xFBB8, 2, 1, temp3);
+		error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFBB8, 2, 1, temp3);
 		if (error) goto exit;
 
-		error = IT9507_writeRegister (modulator,  Processor_OFDM, 0xF741, temp5);
+		error = it950x_wr_reg (modulator,  Processor_OFDM, 0xF741, temp5);
 		if (error) goto exit;
 
-		error = IT9507_writeRegister (modulator, Processor_LINK, 0xD814, temp4);
+		error = it950x_wr_reg (modulator, Processor_LINK, 0xD814, temp4);
 		if (error) goto exit;
 
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, 0xFBB8, 2, 1, 0);
+		error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFBB8, 2, 1, 0);
 		if (error) goto exit;
 		
 
@@ -1541,11 +1525,11 @@ static u32 IT9507_runTxCalibration (
 		goto exit;
 	}
 	if (error) goto exit;
-	error = IT9507_readRegisters (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, 2, c1_default_value);
+	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, 2, c1_default_value);
 	if (error) goto exit;
-	error = IT9507_readRegisters (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, 2, c2_default_value);
+	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, 2, c2_default_value);
 	if (error) goto exit;
-	error = IT9507_readRegisters (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, 2, c3_default_value);
+	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, 2, c3_default_value);
 	if (error) goto exit;
 	
 	modulator->calibrationInfo.c1DefaultValue = c1_default_value[1]<<8 | c1_default_value[0];
@@ -1579,24 +1563,24 @@ static u32 IT9507_setFrequency (
 	freq_code_L = (unsigned char) (tmp & 0xFF);
 	freq_code_H = (unsigned char) ((tmp >> 8) & 0xFF);
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xFB2A, freq_code_L);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFB2A, freq_code_L);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator,  Processor_OFDM, 0xFB2B, freq_code_H);
+	error = it950x_wr_reg (modulator,  Processor_OFDM, 0xFB2B, freq_code_H);
 	if (error) goto exit;
 
 	if(frequency>950000)
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, 0xFB2C, 2, 1,1);
+		error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFB2C, 2, 1,1);
 	else
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, 0xFB2C, 2, 1,0);
+		error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFB2C, 2, 1,0);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xFB2D, 2);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFB2D, 2);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xFB2D, 1);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFB2D, 1);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xFB2D, 0);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFB2D, 0);
 	if (error) goto exit;
 	modulator->frequency = frequency;
 
@@ -1644,7 +1628,7 @@ static u32 IT9507_loadFirmware (
 	
 	/** Set I2C master clock speed. */
 	temp = EagleUser_IIC_SPEED;
-	error = IT9507_writeRegisters (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, 1, &temp);
+	error = it950x_wr_regs (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, 1, &temp);
 	if (error) goto exit;
 
 	firmwareCodesPointer = firmwareCodes;
@@ -1670,7 +1654,7 @@ static u32 IT9507_loadFirmware (
 	error = IT9507Cmd_sendCommand (modulator, Command_BOOT, Processor_LINK, 0, NULL, 0, NULL);
 	if (error) goto exit;
 
-	EagleUser_delay (modulator, 10);
+	msleep(10);
 
 	/** Check if firmware is running */
 	version = 0;
@@ -1698,14 +1682,14 @@ static u32 IT9507_loadScript (
 	u32 tunerAddr, tunerAddrTemp;
 	
 	/** Querry SupportRelayCommandWrite **/
-	error = IT9507_readRegisters (modulator, Processor_OFDM, 0x004D, 1, &supportRelay);
+	error = it950x_rd_regs (modulator, Processor_OFDM, 0x004D, 1, &supportRelay);
 	if (error) goto exit;
 
 	
 	/** Enable RelayCommandWrite **/
 	if (supportRelay) {
 		temp = 1;
-		error = IT9507_writeRegisters (modulator, Processor_OFDM, 0x004E, 1, &temp);
+		error = it950x_wr_regs (modulator, Processor_OFDM, 0x004E, 1, &temp);
 		if (error) goto exit;
 	}
 
@@ -1729,7 +1713,7 @@ static u32 IT9507_loadScript (
 					j ++;
 				}
 
-				error = IT9507_writeRegisters (modulator, Processor_OFDM, tunerAddr, bufferLens, buffer);
+				error = it950x_wr_regs (modulator, Processor_OFDM, tunerAddr, bufferLens, buffer);
 				if (error) goto exit;
 				bufferLens = 1;
 			}
@@ -1739,7 +1723,7 @@ static u32 IT9507_loadScript (
 	/** Disable RelayCommandWrite **/
 	if (supportRelay) {
 		temp = 0;
-		error = IT9507_writeRegisters (modulator, Processor_OFDM, 0x004E, 1, &temp);
+		error = it950x_wr_regs (modulator, Processor_OFDM, 0x004E, 1, &temp);
 		if (error) goto exit;
 	}
 
@@ -1903,7 +1887,7 @@ exit :
 }
 
 
-static u32 IT9507_readRegisterBits (
+static u32 it950x_rd_regbits (
     IN  Modulator*    modulator,
     IN  Processor       processor,
     IN  u32           registerAddress,
@@ -1914,7 +1898,7 @@ static u32 IT9507_readRegisterBits (
         u32 error = ModulatorError_NO_ERROR;
 	
 	u8 temp = 0;
-	error = IT9507_readRegisters (modulator, processor, registerAddress, 1, &temp);
+	error = it950x_rd_regs (modulator, processor, registerAddress, 1, &temp);
 	if (error) goto exit;
 
 	if (length == 8) {
@@ -1959,10 +1943,10 @@ static u32 IT9507_initialize (
 	modulator->scripts = EagleFirmware_scripts;
 	
 	/** Write secondary I2C address to device */
-	//error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, EagleUser_IIC_SPEED);
+	//error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, EagleUser_IIC_SPEED);
 	//if (error) goto exit;	
 	
-	error = IT9507_writeRegister (modulator, Processor_LINK, second_i2c_address, 0x00);
+	error = it950x_wr_reg (modulator, Processor_LINK, second_i2c_address, 0x00);
 	if (error) goto exit;
 
 	
@@ -1974,12 +1958,12 @@ static u32 IT9507_initialize (
 			modulator->booted = true;
 		}
 	}
-	error = IT9507_writeRegister (modulator, Processor_LINK, 0xD924, 0);//set UART -> GPIOH4
+	error = it950x_wr_reg (modulator, Processor_LINK, 0xD924, 0);//set UART -> GPIOH4
 	if (error) goto exit;
 
 
 	/** Set I2C master clock 100k in order to support tuner I2C. */
-	error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, 0x7);//1a
+	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, 0x7);//1a
 	if (error) goto exit;
 
 	/** Load script */
@@ -1989,13 +1973,13 @@ static u32 IT9507_initialize (
 	}
 
 
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, 0xFB26, 7, 1, 1);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFB26, 7, 1, 1);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xFBBD, 0xE0);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFBBD, 0xE0);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xF99A, 0);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF99A, 0);
 	if (error) goto exit;
 
 	error = EagleUser_Initialization(modulator);
@@ -2006,34 +1990,34 @@ static u32 IT9507_initialize (
 	if (error) goto exit;
 
 	/** Set H/W MPEG2 locked detection **/
-	error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_top_lock3_out, 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_lock3_out, 1);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_top_padmiscdrsr, 1);
+	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_padmiscdrsr, 1);
 	if (error) goto exit;
 	/** Set registers for driving power 0xD830 **/
-	error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_top_padmiscdr2, 0);
+	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_padmiscdr2, 0);
 	if (error) goto exit;
 	
 
 	/** Set registers for driving power 0xD831 **/
-	error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_top_padmiscdr4, 0);
+	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_padmiscdr4, 0);
 	if (error) goto exit;
 
 	/** Set registers for driving power 0xD832 **/
-	error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_top_padmiscdr8, 0);
+	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_padmiscdr8, 0);
 	if (error) goto exit;   
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xFB2E, 0x11);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFB2E, 0x11);
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xFBB3, 0x98);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFBB3, 0x98);
 	if (error) goto exit;
 
-	error = IT9507_readRegisters (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, 2, c1_default_value);
+	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, 2, c1_default_value);
 	if (error) goto exit;
-	error = IT9507_readRegisters (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, 2, c2_default_value);
+	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, 2, c2_default_value);
 	if (error) goto exit;
-	error = IT9507_readRegisters (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, 2, c3_default_value);
+	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, 2, c3_default_value);
 	if (error) goto exit;
 
 	modulator->calibrationInfo.c1DefaultValue = c1_default_value[1]<<8 | c1_default_value[0];
@@ -2055,37 +2039,37 @@ static u32 IT9507_setTxModeEnable (
 	if(enable){
 
 		//afe Power up
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 0);
+		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 0);
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_afe_mem1, 0xFC);
+		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_afe_mem1, 0xFC);
 		if (error) goto exit;
 			
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_fec_sw_rst, 0);
+		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_fec_sw_rst, 0);
 		if (error) goto exit;
 
-		error = IT9507_writeRegister (modulator, Processor_LINK, 0xDDAB, 0);
+		error = it950x_wr_reg (modulator, Processor_LINK, 0xDDAB, 0);
 		if (error) goto exit;
 	
-		error = IT9507_writeRegister (modulator, Processor_OFDM, eagle_reg_tx_fifo_overflow, 1); //clear
+		error = it950x_wr_reg (modulator, Processor_OFDM, eagle_reg_tx_fifo_overflow, 1); //clear
 		if (error) goto exit;
 		
 	}else{
 
-		error = IT9507_writeRegister (modulator, Processor_LINK, 0xDDAB, 1);
+		error = it950x_wr_reg (modulator, Processor_LINK, 0xDDAB, 1);
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_fec_sw_rst, 1);
+		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_fec_sw_rst, 1);
 		if (error) goto exit;
 
 		//afe Power down
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 1);
+		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 1);
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_afe_mem1, 0xFE);
+		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_afe_mem1, 0xFE);
 		if (error) goto exit;
 			
 	}
 	error = EagleUser_setTxModeEnable(modulator, enable);
 exit :
-	EagleUser_delay(modulator,100);
+	msleep(100);
 	return (error);
 }
 
@@ -2105,12 +2089,12 @@ static u32 IT9507_setTXChannelModulation (
 	temp=(u8)channelModulation->constellation;
 
 	modulator->channelModulation.constellation=channelModulation->constellation;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xf721, temp);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xf721, temp);
 	if (error) goto exit;
 
 	modulator->channelModulation.highCodeRate=channelModulation->highCodeRate;
 	temp=(u8)channelModulation->highCodeRate;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xf723, temp);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xf723, temp);
 	if (error) goto exit;
 	/** Set low code rate */
 
@@ -2118,12 +2102,12 @@ static u32 IT9507_setTXChannelModulation (
 	modulator->channelModulation.interval=channelModulation->interval;
 	temp=(u8)channelModulation->interval;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_tps_gi, temp);
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_tps_gi, temp);
 	if (error) goto exit;
 	/** Set FFT mode */
 	modulator->channelModulation.transmissionMode=channelModulation->transmissionMode;
 	temp=(u8)channelModulation->transmissionMode;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xf726, temp);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xf726, temp);
 	if (error) goto exit;
 
 
@@ -2150,10 +2134,10 @@ static u32 IT9507_setTXChannelModulation (
 
 	if(error)
 		goto exit;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xf7C1, temp);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xf7C1, temp);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xf7C6, 1);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xf7C6, 1);
 	if (error) goto exit;
 
 exit :
@@ -2200,18 +2184,18 @@ static u32 IT9507_resetPSBBuffer (
 	else
 		temp = 0xF9CD;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xF9A4, 1);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF9A4, 1);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, temp, 0);
+	error = it950x_wr_reg (modulator, Processor_OFDM, temp, 0);
 	if (error) goto exit;
 
 
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xF9A4, 0);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF9A4, 0);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, temp, 1);
+	error = it950x_wr_reg (modulator, Processor_OFDM, temp, 1);
 
 exit :
 
@@ -2228,112 +2212,112 @@ static u32 IT9507_setTsInterface (
 	u8 packetSize;
 	u8 buffer[2];
 
-	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_dvbt_inten, eagle_reg_dvbt_inten_pos, eagle_reg_dvbt_inten_len, 1);
+	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_dvbt_inten, eagle_reg_dvbt_inten_pos, eagle_reg_dvbt_inten_len, 1);
 	if (error) goto exit;
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mpeg_full_speed, eagle_reg_mpeg_full_speed_pos, eagle_reg_mpeg_full_speed_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mpeg_full_speed, eagle_reg_mpeg_full_speed_pos, eagle_reg_mpeg_full_speed_len, 0);
 	if (error) goto exit;
 
 	/** Enable DVB-T mode */
-	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_dvbt_en, eagle_reg_dvbt_en_pos, eagle_reg_dvbt_en_len, 1);
+	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_dvbt_en, eagle_reg_dvbt_en_pos, eagle_reg_dvbt_en_len, 1);
 	if (error) goto exit;
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_mp2if_mpeg_ser_mode, mp2if_mpeg_ser_mode_pos, mp2if_mpeg_ser_mode_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_mp2if_mpeg_ser_mode, mp2if_mpeg_ser_mode_pos, mp2if_mpeg_ser_mode_len, 0);
 	if (error) goto exit;
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_mp2if_mpeg_par_mode, mp2if_mpeg_par_mode_pos, mp2if_mpeg_par_mode_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_mp2if_mpeg_par_mode, mp2if_mpeg_par_mode_pos, mp2if_mpeg_par_mode_len, 0);
 	if (error) goto exit;
 	/** Fix current leakage */
-	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
 	if (error) goto exit;
-	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 0);
 	if (error) goto exit;
 	
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xF714, 0);
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF714, 0);
 	if (error) goto exit;
 
 	frameSize = EagleUser_USB20_FRAME_SIZE_DW;
 	packetSize = (u8) (EagleUser_USB20_MAX_PACKET_SIZE / 4);
 
 	
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mp2_sw_rst, eagle_reg_mp2_sw_rst_pos, eagle_reg_mp2_sw_rst_len, 1);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2_sw_rst, eagle_reg_mp2_sw_rst_pos, eagle_reg_mp2_sw_rst_len, 1);
 	if (error) goto exit;
 
 	/** Reset EP5 */
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_sw_rst, eagle_reg_mp2if2_sw_rst_pos, eagle_reg_mp2if2_sw_rst_len, 1);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_sw_rst, eagle_reg_mp2if2_sw_rst_pos, eagle_reg_mp2if2_sw_rst_len, 1);
 	if (error) goto exit;
 
 	
 	/** Disable EP5 */
-	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_ep5_tx_en, eagle_reg_ep5_tx_en_pos, eagle_reg_ep5_tx_en_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep5_tx_en, eagle_reg_ep5_tx_en_pos, eagle_reg_ep5_tx_en_len, 0);
 	if (error) goto exit;
 
 	/** Disable EP5 NAK */
-	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_ep5_tx_nak, eagle_reg_ep5_tx_nak_pos, eagle_reg_ep5_tx_nak_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep5_tx_nak, eagle_reg_ep5_tx_nak_pos, eagle_reg_ep5_tx_nak_len, 0);
 	if (error) goto exit;
 
 
 	/** Enable EP5 */
-	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_ep5_tx_en, eagle_reg_ep5_tx_en_pos, eagle_reg_ep5_tx_en_len, 1);
+	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep5_tx_en, eagle_reg_ep5_tx_en_pos, eagle_reg_ep5_tx_en_len, 1);
 	if (error) goto exit;
 
 	/** Set EP5 transfer length */
 	buffer[p_eagle_reg_ep5_tx_len_7_0 - p_eagle_reg_ep5_tx_len_7_0] = (u8) frameSize;
 	buffer[p_eagle_reg_ep5_tx_len_15_8 - p_eagle_reg_ep5_tx_len_7_0] = (u8) (frameSize >> 8);
-	error = IT9507_writeRegisters (modulator, Processor_LINK, p_eagle_reg_ep5_tx_len_7_0, 2, buffer);
+	error = it950x_wr_regs (modulator, Processor_LINK, p_eagle_reg_ep5_tx_len_7_0, 2, buffer);
 
 	/** Set EP5 packet size */
-	error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_ep5_max_pkt, packetSize);
+	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_ep5_max_pkt, packetSize);
 	if (error) goto exit;
 
 	/** Disable 15 SER/PAR mode */
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_mp2if_mpeg_ser_mode, mp2if_mpeg_ser_mode_pos, mp2if_mpeg_ser_mode_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_mp2if_mpeg_ser_mode, mp2if_mpeg_ser_mode_pos, mp2if_mpeg_ser_mode_len, 0);
 	if (error) goto exit;
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_mp2if_mpeg_par_mode, mp2if_mpeg_par_mode_pos, mp2if_mpeg_par_mode_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_mp2if_mpeg_par_mode, mp2if_mpeg_par_mode_pos, mp2if_mpeg_par_mode_len, 0);
 	if (error) goto exit;
 
 	
 	/** Enable mp2if2 */
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_en, eagle_reg_mp2if2_en_pos, eagle_reg_mp2if2_en_len, 1);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_en, eagle_reg_mp2if2_en_pos, eagle_reg_mp2if2_en_len, 1);
 	if (error) goto exit;
 
 		/** Enable tsis */
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_tsip_en, eagle_reg_tsip_en_pos, eagle_reg_tsip_en_len, 0);
+		error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_tsip_en, eagle_reg_tsip_en_pos, eagle_reg_tsip_en_len, 0);
 		if (error) goto exit;
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_tsis_en, eagle_reg_tsis_en_pos, eagle_reg_tsis_en_len, 1);
+		error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_tsis_en, eagle_reg_tsis_en_pos, eagle_reg_tsis_en_len, 1);
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_ts_in_src, 0);
+		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_ts_in_src, 0);
 		if (error) goto exit;
 
 	/** Negate EP4 reset */
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mp2_sw_rst, eagle_reg_mp2_sw_rst_pos, eagle_reg_mp2_sw_rst_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2_sw_rst, eagle_reg_mp2_sw_rst_pos, eagle_reg_mp2_sw_rst_len, 0);
 	if (error) goto exit;
 
 	/** Negate EP5 reset */
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_sw_rst, eagle_reg_mp2if2_sw_rst_pos, eagle_reg_mp2if2_sw_rst_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_sw_rst, eagle_reg_mp2if2_sw_rst_pos, eagle_reg_mp2if2_sw_rst_len, 0);
 	if (error) goto exit;
 
 
 	/** Split 15 PSB to 1K + 1K and enable flow control */
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_half_psb, eagle_reg_mp2if2_half_psb_pos, eagle_reg_mp2if2_half_psb_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_half_psb, eagle_reg_mp2if2_half_psb_pos, eagle_reg_mp2if2_half_psb_len, 0);
 	if (error) goto exit;
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_mp2if_stop_en, eagle_reg_mp2if_stop_en_pos, eagle_reg_mp2if_stop_en_len, 1);
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2if_stop_en, eagle_reg_mp2if_stop_en_pos, eagle_reg_mp2if_stop_en_len, 1);
 	if (error) goto exit;			
 
-	error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_top_host_reverse, 0);
+	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_host_reverse, 0);
 	if (error) goto exit;
 
-	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_ep6_rx_en, eagle_reg_ep6_rx_en_pos, eagle_reg_ep6_rx_en_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep6_rx_en, eagle_reg_ep6_rx_en_pos, eagle_reg_ep6_rx_en_len, 0);
 	if (error) goto exit;
 
-	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_ep6_rx_nak, eagle_reg_ep6_rx_nak_pos, eagle_reg_ep6_rx_nak_len, 0);
+	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep6_rx_nak, eagle_reg_ep6_rx_nak_pos, eagle_reg_ep6_rx_nak_len, 0);
 	if (error) goto exit;
 
 
-	error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_ep6_rx_en, eagle_reg_ep6_rx_en_pos, eagle_reg_ep6_rx_en_len, 1);
+	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep6_rx_en, eagle_reg_ep6_rx_en_pos, eagle_reg_ep6_rx_en_len, 1);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_ep6_max_pkt, 0x80);
+	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_ep6_max_pkt, 0x80);
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_LINK, p_eagle_reg_ep6_cnt_num_7_0, 0x16);
+	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_ep6_cnt_num_7_0, 0x16);
 	if (error) goto exit;
 
 	error = EagleUser_mpegConfig (modulator);
@@ -2355,7 +2339,7 @@ static u32 IT9507_TXreboot (
 	if (version != 0) {
 		
 		error = IT9507Cmd_reboot (modulator);
-		EagleUser_delay (modulator, 1);
+		msleep(1);
 		goto exit;
 	}
 
@@ -2374,26 +2358,26 @@ static u32 IT9507_controlPowerSaving (
 
 	if (control) {
 		/** Power up case */
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 0);
+		error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 0);
 		if (error) goto exit;
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_dyn0_clk, 0);
+		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_dyn0_clk, 0);
 		if (error) goto exit;
 
 		/** Fixed current leakage */
-		error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
+		error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
 		if (error) goto exit;
 		/** Disable HostB parallel */  
-		error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 0);
+		error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 0);
 		if (error) goto exit;
 	} else {
 		/** Power down case */
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 1);
+		error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 1);
 
 		/** Fixed current leakage */
 		/** Enable HostB parallel */
-		error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
+		error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
 		if (error) goto exit;
-		error = IT9507_writeRegisterBits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 1);
+		error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 1);
 		if (error) goto exit;						
 	}
 
@@ -2413,36 +2397,36 @@ static u32 IT9507_sendHwPSITable (
 	u8 tempbuf[10] ;
 	u8 i,temp;
 	
-	error = IT9507_readRegisters (modulator, Processor_OFDM, psi_table1_timer_H, 10, temp_timer);		//save pei table timer	
+	error = it950x_rd_regs (modulator, Processor_OFDM, psi_table1_timer_H, 10, temp_timer);		//save pei table timer	
 	if (error) goto exit;
 
 	for(i=0;i<10;i++)
 		tempbuf[i] = 0;
 
-	error = IT9507_writeRegisters (modulator, Processor_OFDM, psi_table1_timer_H, 10, tempbuf);		//stop send FW psi table	
+	error = it950x_wr_regs (modulator, Processor_OFDM, psi_table1_timer_H, 10, tempbuf);		//stop send FW psi table	
 	if (error) goto exit;
 
 	for(i=0 ; i<50 ;i++){
-		error = IT9507_readRegister (modulator, Processor_OFDM, p_reg_psi_access, &temp);		//wait per table send	
+		error = it950x_rd_reg (modulator, Processor_OFDM, p_reg_psi_access, &temp);		//wait per table send	
 		if (error) goto exit;
 		if(temp == 0) break;
-		EagleUser_delay(modulator,1);
+		msleep(1);
 	}
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_reg_psi_index, 0);
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_reg_psi_index, 0);
 	if (error) goto exit;
 
 	for(i=0;i<188;i++){
 		temp = pbuffer[i];	
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_reg_psi_dat,  temp); //write data to HW psi table buffer
+		error = it950x_wr_reg (modulator, Processor_OFDM, p_reg_psi_dat,  temp); //write data to HW psi table buffer
 		if (error) goto exit;
 	}
 
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_reg_psi_access, reg_psi_access_pos, reg_psi_access_len, 1); //send psi tabledata
+	error = it950x_wr_regbits (modulator, Processor_OFDM, p_reg_psi_access, reg_psi_access_pos, reg_psi_access_len, 1); //send psi tabledata
 	if (error) goto exit;
 
 	
-	error = IT9507_writeRegisters (modulator, Processor_OFDM, psi_table1_timer_H, 10, temp_timer);		//set org timer	
+	error = it950x_wr_regs (modulator, Processor_OFDM, psi_table1_timer_H, 10, temp_timer);		//set org timer	
 	if (error) goto exit;
 
 	
@@ -2465,11 +2449,11 @@ static u32 IT9507_accessFwPSITable (
 	temp[0] = 0;
 	temp[1] = 0;
 	if((psiTableIndex>0)&&(psiTableIndex<6)){
-		error = IT9507_writeRegisters (modulator, Processor_OFDM, psi_table1_timer_H+(psiTableIndex-1)*2, 2, temp);		//set timer	= 0 & stop
+		error = it950x_wr_regs (modulator, Processor_OFDM, psi_table1_timer_H+(psiTableIndex-1)*2, 2, temp);		//set timer	= 0 & stop
 		if (error) goto exit;
 
 		for(i=0;i<188;i++){
-			error = IT9507_writeRegister (modulator, Processor_OFDM, (PSI_table1+(psiTableIndex-1)*188)+i, pbuffer[i]);
+			error = it950x_wr_reg (modulator, Processor_OFDM, (PSI_table1+(psiTableIndex-1)*188)+i, pbuffer[i]);
 			if (error) goto exit;
 
 		}
@@ -2499,7 +2483,7 @@ static u32 IT9507_setFwPSITableTimer (
 
 
 	if((psiTableIndex>0)&&(psiTableIndex<6)){	
-		error = IT9507_writeRegisters (modulator, Processor_OFDM, psi_table1_timer_H+(psiTableIndex-1)*2, 2,temp);		
+		error = it950x_wr_regs (modulator, Processor_OFDM, psi_table1_timer_H+(psiTableIndex-1)*2, 2,temp);		
 	}else{
 		error = ModulatorError_INVALID_INDEX;
 	}	
@@ -2640,17 +2624,17 @@ static u32 IT9507_adjustOutputGain (
 	*gain = i/10;
 	modulator->calibrationInfo.outputGain = *gain;
 	
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, (u8)(c1value&0x00ff));
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, (u8)(c1value&0x00ff));
 	if (error) goto exit;		
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_10_8, (u8)(c1value>>8));
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_10_8, (u8)(c1value>>8));
 	if (error) goto exit;		
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, (u8)(c2value&0x00ff));
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, (u8)(c2value&0x00ff));
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_10_8, (u8)(c2value>>8));
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_10_8, (u8)(c2value>>8));
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, (u8)(c3value&0x00ff));
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, (u8)(c3value&0x00ff));
 	if (error) goto exit;
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_10_8, (u8)(c3value>>8));
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_10_8, (u8)(c3value>>8));
 	if (error) goto exit;
 
 exit:
@@ -2709,10 +2693,10 @@ static u32 IT9507_setTPS (
 	//---- set TPS Cell ID
 	
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xF727, (u8)(tps.cellid>>8));
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF727, (u8)(tps.cellid>>8));
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, 0xF728, (u8)(tps.cellid));
+	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF728, (u8)(tps.cellid));
 		
 exit:	
 	return (error);
@@ -2728,11 +2712,11 @@ static u32 IT9507_getTPS (
 	u8 temp;
 	u16 cellID = 0;
 
-	error = IT9507_readRegister (modulator, Processor_OFDM, 0xF727, &temp);//get cell id
+	error = it950x_rd_reg (modulator, Processor_OFDM, 0xF727, &temp);//get cell id
 	if (error) goto exit;
 	cellID = temp<<8;
 
-	error = IT9507_readRegister (modulator, Processor_OFDM, 0xF728, &temp);//get cell id
+	error = it950x_rd_reg (modulator, Processor_OFDM, 0xF728, &temp);//get cell id
 	cellID = cellID | temp;	
 	pTps->cellid = cellID;
 
@@ -2777,16 +2761,16 @@ static u32 IT9507_setDCCalibrationValue (
 	else
 		dc_q_temp = ((u16)dc_q) & 0x01FF;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_i_7_0, (u8)(dc_i_temp));
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_i_7_0, (u8)(dc_i_temp));
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_i_8, (u8)(dc_i_temp>>8));
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_i_8, (u8)(dc_i_temp>>8));
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_q_7_0, (u8)(dc_q_temp));
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_q_7_0, (u8)(dc_q_temp));
 	if (error) goto exit;
 
-	error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_q_8, (u8)(dc_q_temp>>8));
+	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_q_8, (u8)(dc_q_temp>>8));
 	if (error) goto exit;
 exit:
 	return (error);
@@ -2870,8 +2854,8 @@ static u32 DRV_getFirmwareVersionFromFile(
     u32 LINK_VER4;    
     
 
-	error = IT9507_readRegister((Modulator*) &pdc->modulator, processor, chip_version_7_0, &chip_version);
-	error = IT9507_readRegisters((Modulator*) &pdc->modulator, processor, chip_version_7_0+1, 2, var);
+	error = it950x_rd_reg((Modulator*) &pdc->modulator, processor, chip_version_7_0, &chip_version);
+	error = it950x_rd_regs((Modulator*) &pdc->modulator, processor, chip_version_7_0+1, 2, var);
 	
 	if(error) deb_data("DRV_getFirmwareVersionFromFile fail");
 	
@@ -3028,8 +3012,8 @@ static u32 DRV_GetEEPROMConfig(
 	deb_data("- Enter %s Function -",__FUNCTION__);
 
 	//patch for read eeprom valid bit
-	dwError = IT9507_readRegister((Modulator*) &pdc->modulator, Processor_LINK, chip_version_7_0, &chip_version);
-	dwError = IT9507_readRegisters((Modulator*) &pdc->modulator, Processor_LINK, chip_version_7_0+1, 2, var);
+	dwError = it950x_rd_reg((Modulator*) &pdc->modulator, Processor_LINK, chip_version_7_0, &chip_version);
+	dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, chip_version_7_0+1, 2, var);
 
 	if(dwError) deb_data("DRV_GetEEPROMConfig fail---cant read chip version");
 
@@ -3037,13 +3021,13 @@ static u32 DRV_GetEEPROMConfig(
 	if(chip_Type==0x9135 && chip_version == 2) //Om2
 	{
 		pdc->chip_version = 2;
-		dwError = IT9507_readRegisters((Modulator*) &pdc->modulator, Processor_LINK, 0x461d, 1, &btmp);
+		dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, 0x461d, 1, &btmp);
 		deb_data("Chip Version is %d---and Read 461d---valid bit = 0x%02X", chip_version, btmp);
 	}
 	else 
 	{
 		pdc->chip_version = 1; //Om1
-		dwError = IT9507_readRegisters((Modulator*) &pdc->modulator, Processor_LINK, 0x4979, 1, &btmp);
+		dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, 0x4979, 1, &btmp);
 		deb_data("Chip Version is %d---and Read 4979---valid bit = 0x%02X", chip_version, btmp);
 	}
 	if (dwError) 
@@ -3066,14 +3050,14 @@ static u32 DRV_GetEEPROMConfig(
 	else
 	{
 		deb_data("=============Need read eeprom");
-		dwError = IT9507_readRegisters((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_IRMODE, 1, &btmp);
+		dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_IRMODE, 1, &btmp);
     	if (dwError) goto exit;
     	deb_data("EEPROM_IRMODE = 0x%02X, ", btmp);	
 
 //selective suspend
     	pdc->bSupportSelSuspend = false;
 	    //btmp = 0; //not support in v8.12.12.3
-   		//dwError = IT9507_readRegisters((Demodulator*) &pdc->Demodulator, Processor_LINK, EEPROM_SELSUSPEND, 1, &btmp);
+   		//dwError = it950x_rd_regs((Demodulator*) &pdc->Demodulator, Processor_LINK, EEPROM_SELSUSPEND, 1, &btmp);
    	 	//if (dwError) goto exit;
     	//if(btmp<2)
     	//	PDC->bSupportSelSuspend = btmp ? true:false; 
@@ -3085,7 +3069,7 @@ static u32 DRV_GetEEPROMConfig(
     	//pdc->modulator.chipNumber = 1;    
     	pdc->bDCAPIP = false;
 
-    	dwError = IT9507_readRegisters((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_TSMODE, 1, &btmp);
+    	dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_TSMODE, 1, &btmp);
     	if (dwError) goto exit;
     	deb_data("EEPROM_TSMODE = 0x%02X", btmp);
 
@@ -3115,7 +3099,7 @@ static u32 DRV_GetEEPROMConfig(
     	}
 
 //tunerID option, in Omega, not need to read register, just assign 0x38;
-		dwError = IT9507_readRegisters((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_TUNERID, 1, &btmp);
+		dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_TUNERID, 1, &btmp);
 		if (btmp==0x51) {
 			pdc->fc[0].tunerinfo.TunerId = 0x51;  	
 		}
@@ -3141,8 +3125,8 @@ static u32 DRV_GetEEPROMConfig(
 			deb_data("pdc->fc[1].tunerinfo.TunerId = 0x%x", pdc->fc[1].tunerinfo.TunerId);
 		}
 
-		//dwError = IT9507_writeRegister((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, EEPROM_SUSPEND, 0);
-		dwError = IT9507_readRegisters((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
+		//dwError = it950x_wr_reg((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, EEPROM_SUSPEND, 0);
+		dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
 		deb_data("EEPROM susped mode=%d", btmp);
     	
     }
@@ -3194,14 +3178,14 @@ static u32 DRV_NIMReset(
     deb_data("- Enter %s Function -\n",__FUNCTION__);
     //Set AF0350 GPIOH1 to 0 to reset AF0351
 
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_en, reg_top_gpioh1_en_pos, reg_top_gpioh1_en_len, 1);
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_on, reg_top_gpioh1_on_pos, reg_top_gpioh1_on_len, 1);
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 0);
+    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_en, reg_top_gpioh1_en_pos, reg_top_gpioh1_en_len, 1);
+    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_on, reg_top_gpioh1_on_pos, reg_top_gpioh1_on_len, 1);
+    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 0);
 
 //    mdelay(50);
 	msleep(50);
 
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 1);
+    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 1);
 
     return(dwError);
 }
@@ -3215,13 +3199,13 @@ static u32 DRV_InitNIMSuspendRegs(
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
     deb_data("- Enter %s Function -\n",__FUNCTION__);
 
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 1);
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 1);
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 1);
+    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 1);
+    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_pwrdw, reg_top_pwrdw_pos, reg_top_pwrdw_len, 1);
+    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_pwrdw, reg_top_pwrdw_pos, reg_top_pwrdw_len, 1);
 
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_pwrdw_hwen, reg_top_pwrdw_hwen_pos, reg_top_pwrdw_hwen_len, 1);
+    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_pwrdw_hwen, reg_top_pwrdw_hwen_pos, reg_top_pwrdw_hwen_len, 1);
 
     return(dwError);
 }
@@ -3247,10 +3231,10 @@ static u32 NIM_ResetSeq(IN  void *	handle)
 	//reset 9133 -> boot -> demod init
 
 	//GPIOH5 init
-	dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 0);
-	dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 0);
+	dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 0);
+	dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 0);
 		
-	//dwError = IT9507_writeRegisterBits((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+	//dwError = it950x_wr_regbits((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 	//mdelay(100);
 
 	deb_data("aaa start DRV_NIMReset");
@@ -3270,7 +3254,7 @@ static u32 NIM_ResetSeq(IN  void *	handle)
 //	mdelay(50); //delay for Fw boot	
 	msleep(50); //delay for Fw boot	
 
-	//IT9507_readRegister((Demodulator*) &pdc->Demodulator, Processor_LINK, 0x4100, &ucValue);
+	//it950x_rd_reg((Demodulator*) &pdc->Demodulator, Processor_LINK, 0x4100, &ucValue);
 	
 	//Demod & Tuner init
 	deb_data("aaa DL_Initialize");
@@ -3292,10 +3276,10 @@ static u32 DRV_NIMSuspend(
     deb_data("- Enter DRV_NIMSuspend : bSuspend = %s\n", bSuspend ? "ON":"OFF");
 
     if(bSuspend) { //sleep
-    	dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
+    	dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
 		if(dwError) return (dwError);
     } else {        //resume 
-		dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+		dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 		if(dwError) return (dwError);
     }
 
@@ -3470,7 +3454,7 @@ static u32 DRV_TunerWakeup(
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
 	//tuner power on
-	dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);
+	dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);
 
     return(dwError);
 
@@ -3594,7 +3578,7 @@ u32 DL_ApPwCtrl (
 #if 0
 		if(bOn) {		// resume
 			deb_data("IT9130x Power ON\n");		
-			dwError = IT9507_writeRegisterBits((Modulator*) &PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+			dwError = it950x_wr_regbits((Modulator*) &PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 			dwError = Demodulator_controlPowerSaving ((Demodulator*) &PDC->demodulator, bOn);				
 			if(dwError) { 
 				deb_data("ApCtrl::IT913x chip resume error = 0x%04x\n", dwError); 
@@ -3602,7 +3586,7 @@ u32 DL_ApPwCtrl (
 			}
 		} else {       // suspend
 			deb_data("IT9130x Power OFF\n");	
-			dwError = IT9507_writeRegisterBits((Modulator*) &PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
+			dwError = it950x_wr_regbits((Modulator*) &PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
 			dwError = Demodulator_controlPowerSaving ((Demodulator*) &PDC->demodulator, bOn);	
 			if(dwError) { 
 				deb_data("ApCtrl::IT913x chip suspend error = 0x%04x\n", dwError); 
@@ -3788,7 +3772,7 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         {
             PControlPowerSavingRequest pRequest = (PControlPowerSavingRequest) pIOBuffer;
             //DAVE: pRequest->error = Demodulator_controlPowerSaving ((Demodulator*) handle, pRequest->control);
-            pRequest->error = IT9507_writeRegisterBits(modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, !pRequest->control);
+            pRequest->error = it950x_wr_regbits(modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, !pRequest->control);
             break;
         }
         case IOCTL_ITE_DEMOD_CONTROLPOWERSAVING_TX:
@@ -3855,7 +3839,7 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         case IOCTL_ITE_DEMOD_WRITEREGISTERS_TX:
         {
             PTxWriteRegistersRequest pRequest = (PTxWriteRegistersRequest) pIOBuffer;
-            pRequest->error = IT9507_writeRegisters (modulator, pRequest->processor, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
+            pRequest->error = it950x_wr_regs (modulator, pRequest->processor, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
 
             break;
         }
@@ -3869,7 +3853,7 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         case IOCTL_ITE_DEMOD_WRITEREGISTERBITS_TX:
         {
             PTxWriteRegisterBitsRequest pRequest = (PTxWriteRegisterBitsRequest) pIOBuffer;
-            pRequest->error = IT9507_writeRegisterBits (modulator, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
+            pRequest->error = it950x_wr_regbits (modulator, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
 
             break;
         }
@@ -3877,7 +3861,7 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         {
         //    deb_data("IOCTL_ITE_DEMOD_READREGISTERS\n");
             PTxReadRegistersRequest pRequest = (PTxReadRegistersRequest) pIOBuffer;
-            pRequest->error = IT9507_readRegisters (modulator, pRequest->processor, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
+            pRequest->error = it950x_rd_regs (modulator, pRequest->processor, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
 
             break;
         }
@@ -3891,7 +3875,7 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         case IOCTL_ITE_DEMOD_READREGISTERBITS_TX:
         {
             PTxReadRegisterBitsRequest pRequest = (PTxReadRegisterBitsRequest) pIOBuffer;
-            pRequest->error = IT9507_readRegisterBits (modulator, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
+            pRequest->error = it950x_rd_regbits (modulator, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
 
             break;
         }        
@@ -4085,7 +4069,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	deb_data("	%s success \n",__FUNCTION__);
 
 
-	error = IT9507_writeRegister((Modulator*) &PDC->modulator, Processor_OFDM, 0xF7C6, 0x1);
+	error = it950x_wr_reg((Modulator*) &PDC->modulator, Processor_OFDM, 0xF7C6, 0x1);
 	if(error)	printk( "AirHD Reg Write fail!\n");
 	else printk( "AirHD Reg Write ok!\n");
 	
