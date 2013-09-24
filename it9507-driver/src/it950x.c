@@ -88,6 +88,72 @@ exit :
     return (error);
 }
 
+static u32 EagleUser_busTx (
+    IN  Modulator*    modulator,
+    IN  u32           bufferLength,
+    IN  u8*           buffer
+) {
+    u32     ret;
+    int		  act_len;
+	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
+	ret = 0;
+
+	if (pTmpBuffer) 
+		memcpy(pTmpBuffer, buffer, bufferLength);
+//deb_data(" ---------Usb2_writeControlBus----------\n", ret);	
+	ret = usb_bulk_msg(usb_get_dev( modulator->userData),
+			usb_sndbulkpipe(usb_get_dev(modulator->userData), 0x02),
+			pTmpBuffer,
+			bufferLength,
+			&act_len,
+			1000000);
+   
+	if (ret) deb_data(" Usb2_writeControlBus fail : 0x%08x\n", ret);
+
+	return (Error_NO_ERROR);
+}
+
+
+static u32 EagleUser_busRx (
+    IN  Modulator*    modulator,
+    IN  u32           bufferLength,
+    OUT u8*           buffer
+) {
+	u32     ret;
+	int       nu8sRead;
+	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
+	ret = 0;
+
+//deb_data(" ---------Usb2_readControlBus----------\n", ret);			
+   ret = usb_bulk_msg(usb_get_dev(modulator->userData),
+				usb_rcvbulkpipe(usb_get_dev(modulator->userData),129),
+				pTmpBuffer,
+				bufferLength,
+				&nu8sRead,
+				1000000);
+	if (pTmpBuffer)
+		memcpy(buffer, pTmpBuffer, bufferLength);   
+	 
+	if (ret) 	deb_data(" Usb2_readControlBus fail : 0x%08x\n", ret);
+
+	return (Error_NO_ERROR);
+}
+
+static u32 EagleUser_delay (
+    IN  Modulator*    modulator,
+    IN  u32           dwMs
+) {
+    /*
+     *  ToDo:  Add code here
+     *
+     *  //Pseudo code
+     *  delay(dwMs);
+     *  return (0);
+     */
+	msleep(dwMs); 
+    return (ModulatorError_NO_ERROR);
+}
+
 
 static u32 IT9507_writeRegisters (
     IN  Modulator*    modulator,
@@ -347,7 +413,7 @@ exit:
 }
 
 
-u32 IT9507Cmd_sendCommand (
+static u32 IT9507Cmd_sendCommand (
     IN  Modulator*    modulator,
     IN  u16            command,
     IN  Processor       processor,
@@ -501,7 +567,7 @@ static u32 IT9507_readGenericRegisters (
 
 
 
-u32 EagleUser_setSystemConfig (
+static u32 EagleUser_setSystemConfig (
     IN  Modulator*    modulator
 ) {
 	u32 error = 0;
@@ -540,7 +606,7 @@ exit:
 }
 
 
-u32 EagleUser_getDeviceType (
+static u32 EagleUser_getDeviceType (
 	IN  Modulator*    modulator,
 	OUT  u8*		  deviceType	   
 ){	
@@ -567,66 +633,7 @@ u32 EagleUser_getDeviceType (
 
 
 
-
-u32 EagleUser_memoryCopy (
-    IN  Modulator*    modulator,
-    IN  void*           dest,
-    IN  void*           src,
-    IN  u32           count
-) {
-    /*
-     *  ToDo:  Add code here
-     *
-     *  //Pseudo code
-     *  memcpy(dest, src, (size_t)count);
-     *  return (0);
-     */
-    return (ModulatorError_NO_ERROR);
-}
-
-u32 EagleUser_delay (
-    IN  Modulator*    modulator,
-    IN  u32           dwMs
-) {
-    /*
-     *  ToDo:  Add code here
-     *
-     *  //Pseudo code
-     *  delay(dwMs);
-     *  return (0);
-     */
-	msleep(dwMs); 
-    return (ModulatorError_NO_ERROR);
-}
-
-
-u32 EagleUser_enterCriticalSection (
-    IN  Modulator*    modulator
-) {
-    /*
-     *  ToDo:  Add code here
-     *
-     *  //Pseudo code
-     *  return (0);
-     */
-    return (ModulatorError_NO_ERROR);
-}
-
-
-u32 EagleUser_leaveCriticalSection (
-    IN  Modulator*    modulator
-) {
-    /*
-     *  ToDo:  Add code here
-     *
-     *  //Pseudo code
-     *  return (0);
-     */
-    return (ModulatorError_NO_ERROR);
-}
-
-
-u32 EagleUser_mpegConfig (
+static u32 EagleUser_mpegConfig (
     IN  Modulator*    modulator
 ) {
     /*
@@ -634,58 +641,6 @@ u32 EagleUser_mpegConfig (
      *
      */
     return (ModulatorError_NO_ERROR);
-}
-
-
-u32 EagleUser_busTx (
-    IN  Modulator*    modulator,
-    IN  u32           bufferLength,
-    IN  u8*           buffer
-) {
-    u32     ret;
-    int		  act_len;
-	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
-	ret = 0;
-
-	if (pTmpBuffer) 
-		memcpy(pTmpBuffer, buffer, bufferLength);
-//deb_data(" ---------Usb2_writeControlBus----------\n", ret);	
-	ret = usb_bulk_msg(usb_get_dev( modulator->userData),
-			usb_sndbulkpipe(usb_get_dev(modulator->userData), 0x02),
-			pTmpBuffer,
-			bufferLength,
-			&act_len,
-			1000000);
-   
-	if (ret) deb_data(" Usb2_writeControlBus fail : 0x%08x\n", ret);
-
-	return (Error_NO_ERROR);
-}
-
-
-u32 EagleUser_busRx (
-    IN  Modulator*    modulator,
-    IN  u32           bufferLength,
-    OUT u8*           buffer
-) {
-	u32     ret;
-	int       nu8sRead;
-	u8 *pTmpBuffer = kzalloc(sizeof(buffer)*bufferLength, GFP_KERNEL);
-	ret = 0;
-
-//deb_data(" ---------Usb2_readControlBus----------\n", ret);			
-   ret = usb_bulk_msg(usb_get_dev(modulator->userData),
-				usb_rcvbulkpipe(usb_get_dev(modulator->userData),129),
-				pTmpBuffer,
-				bufferLength,
-				&nu8sRead,
-				1000000);
-	if (pTmpBuffer)
-		memcpy(buffer, pTmpBuffer, bufferLength);   
-	 
-	if (ret) 	deb_data(" Usb2_readControlBus fail : 0x%08x\n", ret);
-
-	return (Error_NO_ERROR);
 }
 
 
@@ -711,7 +666,7 @@ exit:
  }
 
 
-u32 EagleUser_acquireChannel (
+static u32 EagleUser_acquireChannel (
 	IN  Modulator*    modulator,
 	IN  u16          bandwidth,
 	IN  u32         frequency
@@ -737,7 +692,7 @@ exit:
 	return (error);
 }
 
-u32 EagleUser_setTxModeEnable (
+static u32 EagleUser_setTxModeEnable (
 	IN  Modulator*            modulator,
 	IN  u8                    enable	
 ) {
@@ -1261,7 +1216,7 @@ unsigned int IT9507_getLoFreq(unsigned int rf_freq_kHz)
 }
 
 
-u32 IT9507Cmd_reboot (
+static u32 IT9507Cmd_reboot (
     IN  Modulator*    modulator
 ) {
     u32       error = ModulatorError_NO_ERROR;
@@ -1289,7 +1244,7 @@ exit :
     return (error);
 }
 
-u32 IT9507_calOutputGain (
+static u32 IT9507_calOutputGain (
 	IN  Modulator*    modulator,
 	IN  u8		  *defaultValue,
 	IN  int			  *gain	   
@@ -1413,7 +1368,7 @@ exit:
 }
 
 
-u32 IT9507_selectBandwidth (
+static u32 IT9507_selectBandwidth (
 	IN  Modulator*    modulator,
 	IN  u16          bandwidth          /** KHz              */
 ) {
@@ -1571,7 +1526,7 @@ exit :
 	return (error);
 }
 
-u32 IT9507_runTxCalibration (
+static u32 IT9507_runTxCalibration (
 	IN  Modulator*    modulator,
 	IN  u16            bandwidth,
     IN  u32           frequency
@@ -1602,7 +1557,7 @@ exit:
 	return (error);
 }
 
-u32 IT9507_setFrequency (
+static u32 IT9507_setFrequency (
 	IN  Modulator*    modulator,
 	IN  u32           frequency
 ) {
@@ -1651,7 +1606,7 @@ exit :
 	return (error);
 }
 
-u32 IT9507_getFirmwareVersion (
+static u32 IT9507_getFirmwareVersion (
     IN  Modulator*    modulator,
     IN  Processor       processor,
     OUT u32*          version
@@ -1672,7 +1627,7 @@ exit :
 	return (error);
 }
 
-u32 IT9507_loadFirmware (
+static u32 IT9507_loadFirmware (
 	IN  Modulator*    modulator,
 	IN  u8*           firmwareCodes,
 	IN  Segment*        firmwareSegments,
@@ -1728,7 +1683,7 @@ exit :
 	return (error);
 }
 
-u32 IT9507_loadScript (
+static u32 IT9507_loadScript (
 	IN  Modulator*    modulator,
 	IN  u16*           scriptSets,
 	IN  ValueSet*       scripts
@@ -1792,7 +1747,7 @@ exit :
 	return (error);
 }
 
-u32 IT9507_writeEepromValues (
+static u32 IT9507_writeEepromValues (
     IN  Modulator*    modulator,
     IN  u16            registerAddress,
     IN  u8            writeBufferLength,
@@ -1809,8 +1764,6 @@ u32 IT9507_writeEepromValues (
     u32       maxFrameSize;
 	u8 eepromAddress = 0x01;	
 	u8 registerAddressLength = 0x01;
-
-    EagleUser_enterCriticalSection (modulator);
 
     if (writeBufferLength == 0) goto exit;
 
@@ -1865,12 +1818,11 @@ u32 IT9507_writeEepromValues (
     if (error) goto exit;
 
 exit :
-    EagleUser_leaveCriticalSection (modulator);
     return (error);
 }
 
 
-u32 IT9507_readEepromValues (
+static u32 IT9507_readEepromValues (
     IN  Modulator*    modulator,
     IN  u16            registerAddress,
     IN  u8            readBufferLength,
@@ -1888,8 +1840,6 @@ u32 IT9507_readEepromValues (
 	u8	eepromAddress = 0x01;
 
 	u8	registerAddressLength = 0x01;
-
-    EagleUser_enterCriticalSection (modulator);
 
     if (readBufferLength == 0) goto exit;
 
@@ -1949,12 +1899,11 @@ u32 IT9507_readEepromValues (
     }
 
 exit :
-    EagleUser_leaveCriticalSection (modulator);
     return (error);
 }
 
 
-u32 IT9507_readRegisterBits (
+static u32 IT9507_readRegisterBits (
     IN  Modulator*    modulator,
     IN  Processor       processor,
     IN  u32           registerAddress,
@@ -1980,37 +1929,7 @@ exit :
 }
 
 
-u32 IT9507_loadIrTable (
-    IN  Modulator*    modulator,
-    IN  u16            tableLength,
-    IN  u8*           table
-) {
-	u32 error = ModulatorError_NO_ERROR;
-	u8 baseHigh;
-	u8 baseLow;
-	u16 registerBase;
-	u16 i;
-
-	error = IT9507_readRegister (modulator, Processor_LINK, ir_table_start_15_8, &baseHigh);
-	if (error) goto exit;
-	error = IT9507_readRegister (modulator, Processor_LINK, ir_table_start_7_0, &baseLow);
-	if (error) goto exit;
-
-	registerBase = (u16) (baseHigh << 8) + (u16) baseLow;
-
-	if (registerBase) {
-		for (i = 0; i < tableLength; i++) {
-			error = IT9507_writeRegister (modulator, Processor_LINK, registerBase + i, table[i]);
-			if (error) goto exit;
-		}
-	}
-
-exit :
-	return (error);
-}
-
-
-u32 IT9507_initialize (
+static u32 IT9507_initialize (
     IN  Modulator*    modulator,
 	IN  u8            i2cAddr
 ) {
@@ -2127,48 +2046,7 @@ exit:
 }
 
 
-u32 IT9507_reset (
-    IN  Modulator*    modulator
-) {
-	u32 error = ModulatorError_NO_ERROR;
-
-	u8 value;
-	u8 j;
-	/** Enable OFDM reset */
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, I2C_eagle_reg_ofdm_rst_en, eagle_reg_ofdm_rst_en_pos, eagle_reg_ofdm_rst_en_len, 0x01);
-	if (error) goto exit;
-
-	/** Start reset mechanism */
-	value = 0x00;
-	
-	/** Clear ofdm reset */
-	for (j = 0; j < 150; j++) {
-		error = IT9507_readRegisterBits (modulator, Processor_OFDM, I2C_eagle_reg_ofdm_rst, eagle_reg_ofdm_rst_pos, eagle_reg_ofdm_rst_len, &value);
-		if (error) goto exit;
-		if (value) break;
-		EagleUser_delay (modulator, 10);
-	}
-
-	if (j == 150) {
-		error = ModulatorError_RESET_TIMEOUT;
-		goto exit;
-	}
-
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, I2C_eagle_reg_ofdm_rst, eagle_reg_ofdm_rst_pos, eagle_reg_ofdm_rst_len, 0);
-	if (error) goto exit;
-
-	/** Disable OFDM reset */
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, I2C_eagle_reg_ofdm_rst_en, eagle_reg_ofdm_rst_en_pos, eagle_reg_ofdm_rst_en_len, 0x00);
-	if (error) goto exit;
-	
-
-exit :
-
-	return (error);
-}
-
-
-u32 IT9507_setTxModeEnable (
+static u32 IT9507_setTxModeEnable (
     IN  Modulator*            modulator,
     IN  u8                    enable
 ) {
@@ -2212,7 +2090,7 @@ exit :
 }
 
 
-u32 IT9507_setTXChannelModulation (
+static u32 IT9507_setTXChannelModulation (
     IN  Modulator*            modulator,
     IN  ChannelModulation*      channelModulation
 ) {
@@ -2282,7 +2160,7 @@ exit :
 	return (error);
 }
 
-u32 IT9507_acquireTxChannel (
+static u32 IT9507_acquireTxChannel (
 	IN  Modulator*            modulator,
     IN  u16            bandwidth,
     IN  u32           frequency
@@ -2311,7 +2189,7 @@ exit :
 }
 
 #if 0
-u32 IT9507_resetPSBBuffer (
+static u32 IT9507_resetPSBBuffer (
 	IN  Modulator*    modulator
 ){
 	u32 error = ModulatorError_NO_ERROR;
@@ -2464,24 +2342,7 @@ exit :
 	return (error);
 }
 
-u32 IT9507_getIrCode (
-    IN  Modulator*    modulator,
-    OUT u32*          code
-)  {
-	u32 error = ModulatorError_NO_ERROR;
-	u8 readBuffer[4];
-
-	error = IT9507Cmd_sendCommand (modulator, Command_IR_GET, Processor_LINK, 0, NULL, 4, readBuffer);
-	if (error) goto exit;
-
-	*code = (u32) ((readBuffer[0] << 24) + (readBuffer[1] << 16) + (readBuffer[2] << 8) + readBuffer[3]);
-
-exit :
-	return (error);
-}
-
-
-u32 IT9507_TXreboot (
+static u32 IT9507_TXreboot (
     IN  Modulator*    modulator
 )  {
 	u32 error = ModulatorError_NO_ERROR;
@@ -2505,7 +2366,7 @@ exit :
 }
 
 
-u32 IT9507_controlPowerSaving (
+static u32 IT9507_controlPowerSaving (
     IN  Modulator*    modulator,
     IN  u8            control
 ) {
@@ -2543,67 +2404,7 @@ exit :
 
 
 
-u32 IT9507_controlPidFilter (
-    IN  Modulator*    modulator,
-    IN  u8            control,
-	IN  u8            enable
-) {
-	u32 error = ModulatorError_NO_ERROR;
-
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_mp2if_pid_complement, mp2if_pid_complement_pos, mp2if_pid_complement_len, control);
-	if(error) goto exit;
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_mp2if_pid_en, mp2if_pid_en_pos, mp2if_pid_en_len, enable);
-
-exit:
-	return (error);
-}
-
-
-u32 IT9507_resetPidFilter (
-    IN  Modulator*    modulator
-) {
-	u32 error = ModulatorError_NO_ERROR;
-
-	error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_mp2if_pid_rst, mp2if_pid_rst_pos, mp2if_pid_rst_len, 1);
-	if (error) goto exit;
-
-exit :
-	return (error);
-}
-
-
-u32 IT9507_addPidToFilter (
-    IN  Modulator*    modulator,
-    IN  u8            index,
-    IN  Pid             pid
-) {
-	u32 error = ModulatorError_NO_ERROR;
-
-	u8 writeBuffer[2];
-	
-	/** Enable pid filter */
-	if((index>0)&&(index<32)){
-		writeBuffer[0] = (u8) pid.value;
-		writeBuffer[1] = (u8) (pid.value >> 8);
-
-		error = IT9507_writeRegisters (modulator, Processor_OFDM, p_mp2if_pid_dat_l, 2, writeBuffer);
-		if (error) goto exit;
-
-		error = IT9507_writeRegisterBits (modulator, Processor_OFDM, p_mp2if_pid_index_en, mp2if_pid_index_en_pos, mp2if_pid_index_en_len, 1);
-		if (error) goto exit;
-
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_mp2if_pid_index, index);
-		if (error) goto exit;
-	}else{
-		error = ModulatorError_INDEX_OUT_OF_RANGE;
-	}
-
-exit :
-
-	return (error);
-}
-
-u32 IT9507_sendHwPSITable (
+static u32 IT9507_sendHwPSITable (
 	IN  Modulator*    modulator,
 	IN  u8*            pbuffer
 ) {
@@ -2651,7 +2452,7 @@ exit :
 	return (error);
 }
 
-u32 IT9507_accessFwPSITable (
+static u32 IT9507_accessFwPSITable (
 	IN  Modulator*    modulator,
 	IN  u8		  psiTableIndex,
 	IN  u8*         pbuffer
@@ -2683,7 +2484,7 @@ exit :
 	return (error);
 }
 
-u32 IT9507_setFwPSITableTimer (
+static u32 IT9507_setFwPSITableTimer (
 	IN  Modulator*    modulator,
 	IN  u8		  psiTableIndex,
 	IN  u16          timer_ms
@@ -2706,7 +2507,7 @@ u32 IT9507_setFwPSITableTimer (
 }
 
 
-u32 IT9507_setSlaveIICAddress (
+static u32 IT9507_setSlaveIICAddress (
     IN  Modulator*    modulator,
 	IN  u8          SlaveAddress
 ){
@@ -2719,7 +2520,7 @@ u32 IT9507_setSlaveIICAddress (
     return (error);
 }
 
-u32 IT9507_adjustOutputGain (
+static u32 IT9507_adjustOutputGain (
 	IN  Modulator*    modulator,
 	IN  int			  *gain	   
 ){
@@ -2857,7 +2658,7 @@ exit:
 	return (error);
 }
 
-u32 IT9507_getGainRange (
+static u32 IT9507_getGainRange (
 	IN  Modulator*    modulator,
 	IN  u32           frequency,
 	IN  u16            bandwidth,    
@@ -2890,7 +2691,7 @@ exit:
 	return (error);
 }
 
-u32 IT9507_getOutputGain (
+static u32 IT9507_getOutputGain (
 	IN  Modulator*    modulator,
 	OUT  int			  *gain	   
 ){
@@ -2900,30 +2701,7 @@ u32 IT9507_getOutputGain (
     return(ModulatorError_NO_ERROR);
 }
 
-u32 IT9507_suspendMode (
-    IN  Modulator*    modulator,
-    IN  u8          enable
-){
-	u32   error = ModulatorError_NO_ERROR;
-
-	u8 temp;
-	error = IT9507_readRegister (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, &temp);//get power setting
-
-	if(error == ModulatorError_NO_ERROR){
-		if(enable){
-		// suspend mode	
-			temp = temp | 0x2D; //set bit0/2/3/5 to 1		
-		}else{
-		// resume mode	
-			temp = temp & 0xD2; //set bit0/2/3/5 to 0	
-		}
-		error = IT9507_writeRegister (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, temp);
-	}
-	return (error);
-}
-
-
-u32 IT9507_setTPS (
+static u32 IT9507_setTPS (
     IN  Modulator*    modulator,
     IN  TPS           tps
 ){
@@ -2941,7 +2719,7 @@ exit:
 
 }
 
-u32 IT9507_getTPS (
+static u32 IT9507_getTPS (
     IN  Modulator*    modulator,
     IN  pTPS           pTps
 ){
@@ -2962,7 +2740,7 @@ exit:
 	return (error);
 }
 
-u32 IT9507_setIQtable (
+static u32 IT9507_setIQtable (
 	IN  Modulator*    modulator,
     IN  IQtable *IQ_table_ptr,
 	IN  u16 tableGroups
@@ -2981,7 +2759,7 @@ u32 IT9507_setIQtable (
 }
 
 
-u32 IT9507_setDCCalibrationValue (
+static u32 IT9507_setDCCalibrationValue (
 	IN  Modulator*	modulator,
     IN	int			dc_i,
 	IN	int			dc_q
@@ -3013,28 +2791,6 @@ u32 IT9507_setDCCalibrationValue (
 exit:
 	return (error);
 }
-
-u32 IT9507_isTsBufferOverflow (
-	IN  Modulator*	modulator,
-    IN	bool		*overflow	
-){
-	u32   error = ModulatorError_NO_ERROR;
-	u8	temp = 0;
-	error = IT9507_readRegister (modulator, Processor_OFDM, eagle_reg_tx_fifo_overflow, &temp);
-	if (error) goto exit;
-
-	if(temp) {
-		*overflow = true;
-		error = IT9507_writeRegister (modulator, Processor_OFDM, eagle_reg_tx_fifo_overflow, 1); //clear
-		if (error) goto exit;
-	} else {
-		*overflow = false;
-	}
-
-exit:
-	return (error);
-}
-
 
 #define FW_VER         0x08060000
 
@@ -3088,33 +2844,6 @@ module_param_named(debug,dvb_usb_it950x_debug, int, 0644);
 
 
 static DEFINE_MUTEX(mymutex);
-
-static u32 DRV_NIMReset(
-	void* handle);
-
-static u32 DRV_InitNIMSuspendRegs(
-	void* handle);
-	
-u32 DRV_TunerSuspend(
-	void * handle,
-	u8 ucChip,
-	bool bOn);
-
-static u32 DRV_NIMSuspend(
-	void * handle,
-	bool bSuspend);
-
-static u32 DRV_NIMReset(
-	void* handle);
-
-static u32 DRV_InitNIMSuspendRegs(
-	void* handle);
-
-static u32 DRV_Initialize(
-	void* handle);
-
-static u32 DL_Initialize(
-	void* handle);
 
 static u32 DRV_getFirmwareVersionFromFile( 
 		void* handle,
@@ -3180,16 +2909,6 @@ static u32 DRV_getFirmwareVersionFromFile(
     }
     
     return *version;
-}
-
-u32 DRV_getDeviceType(void *handle)
-{
-	u32 dwError = Error_NO_ERROR;
-   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
-
-	dwError =  EagleUser_getDeviceType((Modulator*) &PDC->modulator, &PDC->deviceType);
-
-    return(dwError);
 }
 
 static u32  DRV_Initialize(
@@ -3463,7 +3182,52 @@ static u32 DRV_SetBusTuner(
     	return(dwError); 
 }
 
-u32 NIM_ResetSeq(IN  void *	handle)
+static u32 DRV_NIMReset(
+    void *      handle
+)
+{
+
+
+    u32   dwError = Error_NO_ERROR;
+
+    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
+    deb_data("- Enter %s Function -\n",__FUNCTION__);
+    //Set AF0350 GPIOH1 to 0 to reset AF0351
+
+    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_en, reg_top_gpioh1_en_pos, reg_top_gpioh1_en_len, 1);
+    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_on, reg_top_gpioh1_on_pos, reg_top_gpioh1_on_len, 1);
+    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 0);
+
+//    mdelay(50);
+	msleep(50);
+
+    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 1);
+
+    return(dwError);
+}
+
+static u32 DRV_InitNIMSuspendRegs(
+    void *      handle
+)
+{
+    u32 dwError = Error_NO_ERROR;
+
+    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
+    deb_data("- Enter %s Function -\n",__FUNCTION__);
+
+    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 1);
+    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 1);
+    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+
+    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_pwrdw, reg_top_pwrdw_pos, reg_top_pwrdw_len, 1);
+
+    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_pwrdw_hwen, reg_top_pwrdw_hwen_pos, reg_top_pwrdw_hwen_len, 1);
+
+    return(dwError);
+}
+
+
+static u32 NIM_ResetSeq(IN  void *	handle)
 {
 	u32 dwError = Error_NO_ERROR;
 	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
@@ -3513,6 +3277,29 @@ u32 NIM_ResetSeq(IN  void *	handle)
 	dwError = DRV_Initialize(handle);
 
 	return dwError;
+}
+
+static u32 DRV_NIMSuspend(
+    void *      handle,
+    bool        bSuspend
+
+)
+{
+    u32 dwError = Error_NO_ERROR;
+
+    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
+
+    deb_data("- Enter DRV_NIMSuspend : bSuspend = %s\n", bSuspend ? "ON":"OFF");
+
+    if(bSuspend) { //sleep
+    	dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
+		if(dwError) return (dwError);
+    } else {        //resume 
+		dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+		if(dwError) return (dwError);
+    }
+
+    return(dwError);
 }
 
 
@@ -3687,73 +3474,6 @@ static u32 DRV_TunerWakeup(
 
     return(dwError);
 
-}
-
-static u32 DRV_NIMSuspend(
-    void *      handle,
-    bool        bSuspend
-
-)
-{
-    u32 dwError = Error_NO_ERROR;
-
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
-
-    deb_data("- Enter DRV_NIMSuspend : bSuspend = %s\n", bSuspend ? "ON":"OFF");
-
-    if(bSuspend) { //sleep
-    	dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
-		if(dwError) return (dwError);
-    } else {        //resume 
-		dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
-		if(dwError) return (dwError);
-    }
-
-    return(dwError);
-}
-
-static u32 DRV_InitNIMSuspendRegs(
-    void *      handle
-)
-{
-    u32 dwError = Error_NO_ERROR;
-
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
-    deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 1);
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 1);
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
-
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_pwrdw, reg_top_pwrdw_pos, reg_top_pwrdw_len, 1);
-
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_pwrdw_hwen, reg_top_pwrdw_hwen_pos, reg_top_pwrdw_hwen_len, 1);
-
-    return(dwError);
-}
-
-static u32 DRV_NIMReset(
-    void *      handle
-)
-{
-
-
-    u32   dwError = Error_NO_ERROR;
-
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-    deb_data("- Enter %s Function -\n",__FUNCTION__);
-    //Set AF0350 GPIOH1 to 0 to reset AF0351
-
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_en, reg_top_gpioh1_en_pos, reg_top_gpioh1_en_len, 1);
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_on, reg_top_gpioh1_on_pos, reg_top_gpioh1_on_len, 1);
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 0);
-
-//    mdelay(50);
-	msleep(50);
-
-    dwError = IT9507_writeRegisterBits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 1);
-
-    return(dwError);
 }
 
 //************** DL_ *************//
@@ -4062,13 +3782,6 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         {
             PTxGetFirmwareVersionRequest pRequest = (PTxGetFirmwareVersionRequest) pIOBuffer;
             pRequest->error = IT9507_getFirmwareVersion (modulator, pRequest->processor, pRequest->version);
-            break;
-        }
-        case IOCTL_ITE_DEMOD_CONTROLPIDFILTER_TX:
-        {
-            PTxControlPidFilterRequest pRequest = (PTxControlPidFilterRequest) pIOBuffer;
-            pRequest->error = IT9507_controlPidFilter (modulator, pRequest->chip, pRequest->control);
-            
             break;
         }
         case IOCTL_ITE_DEMOD_CONTROLPOWERSAVING:
