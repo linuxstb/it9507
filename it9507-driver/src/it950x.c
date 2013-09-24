@@ -144,8 +144,8 @@ static u32 it950x_io (
     Processor     processor,
     int cmd,
     u32         registerAddress,
-    u8          writeBufferLength,
-    u8*         writeBuffer
+    u8          ioBufferLength,
+    u8*         ioBuffer
 ) {
   	u32 error = ModulatorError_NO_ERROR;
 
@@ -159,49 +159,62 @@ static u32 it950x_io (
    
     u8       maxFrameSize = EagleUser_MAXFRAMESIZE;
 
-	if (processor == Processor_LINK) {
-		if (registerAddress > 0x000000FF) {
-			registerAddressLength = 2;
-		} else {
-			registerAddressLength = 1;
-		}
-	} else {
-			registerAddressLength = 2;
+    if (processor == Processor_LINK) {
+	if (registerAddress > 0x000000FF) {
+            registerAddressLength = 2;
+        } else {
+            registerAddressLength = 1;
 	}
+    } else {
+        registerAddressLength = 2;
+    }
 	
-	if (writeBufferLength == 0) goto exit;
+    if (ioBufferLength == 0) goto exit;
+
     if (registerAddressLength > 4) {
         error  = ModulatorError_PROTOCOL_FORMAT_INVALID;
         goto exit;
     }
 
-      
-    if ((writeBufferLength + 12) > maxFrameSize) {
+    if (cmd == Command_REG_DEMOD_WRITE) {
+      if ((ioBufferLength + 12) > maxFrameSize) {
         error = ModulatorError_INVALID_DATA_LENGTH;
         goto exit;
+      }
+    } else if (cmd == Command_REG_DEMOD_READ) {
+      if ((ioBufferLength + 5) > EagleUser_MAX_PKT_SIZE) {
+        error = ModulatorError_INVALID_DATA_LENGTH;
+        goto exit;
+      }
+      if ((ioBufferLength + 5) > maxFrameSize) {
+        error = ModulatorError_INVALID_DATA_LENGTH;
+        goto exit;
+      }
     }
-
 
 
     /** add frame header */
     command   = IT9507Cmd_buildCommand (cmd, processor);
+    //buffer[0] is the total length of the command packet, excluding this byte (filled in by addChecksum)
     buffer[1] = (u8) (command >> 8);
     buffer[2] = (u8) command;
     buffer[3] = (u8) IT9507Cmd_sequence++;
-    buffer[4] = (u8) writeBufferLength;
+    buffer[4] = (u8) ioBufferLength;
     buffer[5] = (u8) registerAddressLength;
     buffer[6] = (u8) ((registerAddress) >> 24); /** Get first byte of reg. address  */
     buffer[7] = (u8) ((registerAddress) >> 16); /** Get second byte of reg. address */
     buffer[8] = (u8) ((registerAddress) >> 8);  /** Get third byte of reg. address  */
     buffer[9] = (u8) (registerAddress );        /** Get fourth byte of reg. address */
 
-    /** add frame data */
-    for (i = 0; i < writeBufferLength; i++) {    
-        buffer[10 + i] = writeBuffer[i];
-    }
+    bufferLength = 10;
+    if ((cmd == Command_REG_DEMOD_WRITE) || (cmd == Command_GENERIC_WRITE)) {
+      /** add frame data */
+      memcpy(buffer+10,ioBuffer,ioBufferLength);
+
+      bufferLength += ioBufferLength;
+    } 
 
     /** add frame check-sum */
-    bufferLength = 10 + writeBufferLength;
     error = IT9507Cmd_addChecksum (modulator, &bufferLength, buffer);
     if (error) goto exit;    
 
@@ -223,7 +236,11 @@ static u32 it950x_io (
     }
 
     /** get reply frame */
-    bufferLength = 5;
+    if (cmd == Command_REG_DEMOD_WRITE) {      
+      bufferLength = 5;
+    } else if (cmd == Command_REG_DEMOD_READ) {
+      bufferLength = 5 + ioBufferLength;
+    }
     
 	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
 		error = EagleUser_busRx (modulator, bufferLength, buffer);
@@ -235,6 +252,10 @@ static u32 it950x_io (
     /** remove check-sum from reply frame */
     error = IT9507Cmd_removeChecksum (modulator, &bufferLength, buffer);
     if (error) goto exit;
+
+    if (cmd == Command_REG_DEMOD_READ) {
+      memcpy(ioBuffer,buffer+3,ioBufferLength);
+    }
 
 exit :
    
@@ -250,7 +271,6 @@ static u32 it950x_wr_regs (
     IN  u8*         writeBuffer
 ) {
   return it950x_io(modulator,processor,Command_REG_DEMOD_WRITE,registerAddress,writeBufferLength,writeBuffer);
-
 }
 
 static u32 it950x_wr_reg (
@@ -259,7 +279,7 @@ static u32 it950x_wr_reg (
     IN  u32           registerAddress,
     IN  u8            value
 ) {
-   	return (it950x_wr_regs(modulator, processor, registerAddress, 1, &value));
+  return (it950x_io(modulator,processor,Command_REG_DEMOD_WRITE,registerAddress, 1, &value));
 }
 
 static u32 it950x_rd_regs (
@@ -269,101 +289,7 @@ static u32 it950x_rd_regs (
     IN  u8            readBufferLength,
     OUT u8*           readBuffer
 ) {
-    u32 error = ModulatorError_NO_ERROR;
-	
-	u8 registerAddressLength;
-	u16        command;
-    u8        buffer[255];
-    u32       bufferLength;
-    u32       sendLength;
-    u32       remainLength;
-    u32       i, k, cnt;
-    
-    u8       maxFrameSize = EagleUser_MAXFRAMESIZE;
-		
-	if (processor == Processor_LINK) {
-		if (registerAddress > 0x000000FF) {
-			registerAddressLength = 2;
-		} else {
-			registerAddressLength = 1;
-		}
-	} else {
-		registerAddressLength = 2;
-	}
-
-    if (readBufferLength == 0) goto exit;
-    if (registerAddressLength > 4) {
-        error  = ModulatorError_PROTOCOL_FORMAT_INVALID;
-        goto exit;
-    }
-
-    if ((readBufferLength + 5) > EagleUser_MAX_PKT_SIZE) {
-        error = ModulatorError_INVALID_DATA_LENGTH;
-        goto exit;
-    }
-
-    if ((readBufferLength + 5) > maxFrameSize) {
-        error = ModulatorError_INVALID_DATA_LENGTH;
-        goto exit;
-    }
-
-
-
-    /** add frame header */
-    command   = IT9507Cmd_buildCommand (Command_REG_DEMOD_READ, processor);
-    buffer[1] = (u8) (command >> 8);
-    buffer[2] = (u8) command;
-    buffer[3] = (u8) IT9507Cmd_sequence++;
-    buffer[4] = (u8) readBufferLength;
-    buffer[5] = (u8) registerAddressLength;
-    buffer[6] = (u8) (registerAddress >> 24); /** Get first byte of reg. address  */
-    buffer[7] = (u8) (registerAddress >> 16); /** Get second byte of reg. address */
-    buffer[8] = (u8) (registerAddress >> 8);  /** Get third byte of reg. address  */
-    buffer[9] = (u8) (registerAddress);       /** Get fourth byte of reg. address */
-
-    /** add frame check-sum */
-    bufferLength = 10;
-    error = IT9507Cmd_addChecksum (modulator, &bufferLength, buffer);
-    if (error) goto exit;
-
-
-    /** send frame */
-    i = 0;
-    sendLength   = 0;
-    remainLength = bufferLength;
-    while (remainLength > 0) {
-        i     = (remainLength > EagleUser_MAX_PKT_SIZE) ? (EagleUser_MAX_PKT_SIZE) : (remainLength);        
-      	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
-			error = EagleUser_busTx (modulator, i, &buffer[sendLength]);
-			if (error == 0) break;
-			msleep(1);
-		}
-        if (error) goto exit;
-
-        sendLength   += i;
-        remainLength -= i;
-    }
-
-    /** get reply frame */
-    bufferLength = 5 + readBufferLength;
-
-	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
-		error = EagleUser_busRx (modulator, bufferLength, buffer);
-		if (error == 0) break;
-		msleep(1);
-	}
-    if (error) goto exit;
-
-    /** remove check-sum from reply frame */
-    error = IT9507Cmd_removeChecksum (modulator, &bufferLength, buffer);
-    if (error) goto exit;
-
-    for (k = 0; k < readBufferLength; k++) {
-        readBuffer[k] = buffer[k + 3];
-    }
-	
-exit:
-	return (error);
+  return it950x_io(modulator,processor,Command_REG_DEMOD_READ,registerAddress,readBufferLength,readBuffer);
 }
 
 static u32 it950x_rd_reg (
@@ -372,7 +298,7 @@ static u32 it950x_rd_reg (
     IN  u32           registerAddress,
     OUT u8*           value
 ) {
-    return (it950x_rd_regs (modulator, processor, registerAddress, 1, value));
+  return it950x_io(modulator,processor,Command_REG_DEMOD_READ,registerAddress,1,value);
 }
 
 
