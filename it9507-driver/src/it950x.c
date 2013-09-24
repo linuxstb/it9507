@@ -101,8 +101,8 @@ static u32 EagleUser_busTx (
 	if (pTmpBuffer) 
 		memcpy(pTmpBuffer, buffer, bufferLength);
 //deb_data(" ---------Usb2_writeControlBus----------\n", ret);	
-	ret = usb_bulk_msg(usb_get_dev( modulator->userData),
-			usb_sndbulkpipe(usb_get_dev(modulator->userData), 0x02),
+	ret = usb_bulk_msg(usb_get_dev( modulator->udev),
+			usb_sndbulkpipe(usb_get_dev(modulator->udev), 0x02),
 			pTmpBuffer,
 			bufferLength,
 			&act_len,
@@ -125,8 +125,8 @@ static u32 EagleUser_busRx (
 	ret = 0;
 
 //deb_data(" ---------Usb2_readControlBus----------\n", ret);			
-   ret = usb_bulk_msg(usb_get_dev(modulator->userData),
-				usb_rcvbulkpipe(usb_get_dev(modulator->userData),129),
+   ret = usb_bulk_msg(usb_get_dev(modulator->udev),
+				usb_rcvbulkpipe(usb_get_dev(modulator->udev),129),
 				pTmpBuffer,
 				bufferLength,
 				&nu8sRead,
@@ -139,12 +139,13 @@ static u32 EagleUser_busRx (
 	return (Error_NO_ERROR);
 }
 
-static u32 it950x_wr_regs (
-    IN  Modulator*    modulator,
-    IN  Processor     processor,
-    IN  u32         registerAddress,
-    IN  u8          writeBufferLength,
-    IN  u8*         writeBuffer
+static u32 it950x_io (
+    Modulator*    modulator,
+    Processor     processor,
+    int cmd,
+    u32         registerAddress,
+    u8          writeBufferLength,
+    u8*         writeBuffer
 ) {
   	u32 error = ModulatorError_NO_ERROR;
 
@@ -183,7 +184,7 @@ static u32 it950x_wr_regs (
 
 
     /** add frame header */
-    command   = IT9507Cmd_buildCommand (Command_REG_DEMOD_WRITE, processor);
+    command   = IT9507Cmd_buildCommand (cmd, processor);
     buffer[1] = (u8) (command >> 8);
     buffer[2] = (u8) command;
     buffer[3] = (u8) IT9507Cmd_sequence++;
@@ -239,6 +240,17 @@ exit :
    
 	
 return (error);
+}
+
+static u32 it950x_wr_regs (
+    IN  Modulator*    modulator,
+    IN  Processor     processor,
+    IN  u32         registerAddress,
+    IN  u8          writeBufferLength,
+    IN  u8*         writeBuffer
+) {
+  return it950x_io(modulator,processor,Command_REG_DEMOD_WRITE,registerAddress,writeBufferLength,writeBuffer);
+
 }
 
 static u32 it950x_wr_reg (
@@ -3955,7 +3967,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	u8 filterIdx=0;
 	int errcount=0;
 
-	PDC->modulator.userData = (void *)udev;
+	PDC->modulator.udev = udev;
 	dev_set_drvdata(&udev->dev, PDC);
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);

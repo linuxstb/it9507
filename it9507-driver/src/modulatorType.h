@@ -414,7 +414,7 @@ typedef struct _TPS{
  */
 typedef struct {
     /** Basic structure */
-    Handle userData;
+    struct usb_device *udev;
 	u8 i2cAddr;
     u8* firmwareCodes;
     Segment* firmwareSegments;
