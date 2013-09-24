@@ -24,7 +24,6 @@
 #include <asm/uaccess.h>
 #include "error.h"
 #include "modulatorIocontrol.h"
-#include "IT9507.h"
 #include "modulatorFirmware.h"
 #include "modulatorType.h"
 #include <linux/version.h>

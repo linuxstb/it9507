@@ -3,7 +3,6 @@
 
 
 //#include <stdio.h>
-#include "IT9507.h"
 #include "modulatorType.h"
 
 #define EagleUser_MAX_PKT_SIZE               255
