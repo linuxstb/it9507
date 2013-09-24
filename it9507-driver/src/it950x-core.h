@@ -187,7 +187,6 @@ typedef struct _DEVICE_CONTEXT {
 	
 	Modulator modulator;
 	u8 deviceType;    
-	Handle handle_driver;
     
     bool ForceWrite;
     u8 chip_version;

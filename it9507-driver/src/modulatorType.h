@@ -34,11 +34,6 @@
 
 
 /**
- * The type of handle.
- */
-typedef void* Handle;
-
-/**
  * The type defination of ValueSet.
  */
 typedef struct {
