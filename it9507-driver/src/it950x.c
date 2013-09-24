@@ -2866,8 +2866,8 @@ static u32 DRV_getFirmwareVersionFromFile(
     u32 LINK_VER4;    
     
 
-	error = it950x_rd_reg((Modulator*) &pdc->modulator, processor, chip_version_7_0, &chip_version);
-	error = it950x_rd_regs((Modulator*) &pdc->modulator, processor, chip_version_7_0+1, 2, var);
+	error = it950x_rd_reg(&pdc->modulator, processor, chip_version_7_0, &chip_version);
+	error = it950x_rd_regs(&pdc->modulator, processor, chip_version_7_0+1, 2, var);
 	
 	if(error) deb_data("DRV_getFirmwareVersionFromFile fail");
 	
@@ -2921,10 +2921,10 @@ static u32  DRV_Initialize(
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
-	if(EagleUser_getDeviceType((Modulator*) &pdc->modulator, &pdc->deviceType) != 0)
+	if(EagleUser_getDeviceType(&pdc->modulator, &pdc->deviceType) != 0)
 		printk("- EagleUser_getDeviceType fail -\n");
 
-	if(IT9507_setSlaveIICAddress((Modulator*) &pdc->modulator, SLAVE_DEMOD_2WIREADDR) != 0)
+	if(IT9507_setSlaveIICAddress(&pdc->modulator, SLAVE_DEMOD_2WIREADDR) != 0)
 		printk("- IT9507_setSlaveIICAddress fail -\n");	
 	
 	
@@ -2934,13 +2934,13 @@ static u32  DRV_Initialize(
         	error = DRV_getFirmwareVersionFromFile(handle, Processor_OFDM, &fileVersion);
 
         	//use "Command_QUERYINFO" to get fw version 
-        	error = IT9507_getFirmwareVersion((Modulator*) &pdc->modulator, Processor_OFDM, &cmdVersion);
+        	error = IT9507_getFirmwareVersion(&pdc->modulator, Processor_OFDM, &cmdVersion);
         	if(error) deb_data("DRV_Initialize : IT9507_getFirmwareVersion : error = 0x%08u\n", error);
 
         	if(cmdVersion != fileVersion)
         	{
             		deb_data("Reboot: Outside Fw = 0x%x, Inside Fw = 0x%x", fileVersion, cmdVersion);
-            		error = IT9507_TXreboot((Modulator*) &pdc->modulator);
+            		error = IT9507_TXreboot(&pdc->modulator);
             		pdc->bBootCode = true;
             		if(error) 
             		{
@@ -2960,14 +2960,14 @@ static u32  DRV_Initialize(
 
 	//			case StreamType_DVBT_DATAGRAM:
 	deb_data("    StreamType_DVBT_DATAGRAM\n");
-	error = IT9507_initialize ((Modulator*) &pdc->modulator, 0);
+	error = IT9507_initialize (&pdc->modulator, 0);
 				 
 	if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 	else deb_data("    Device initialize TX Ok\n");
 
-    IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_OFDM, &cmdVersion);
+    IT9507_getFirmwareVersion (&pdc->modulator, Processor_OFDM, &cmdVersion);
     deb_data("    FwVer OFDM = 0x%x, ", cmdVersion);
-    IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_LINK, &cmdVersion);
+    IT9507_getFirmwareVersion (&pdc->modulator, Processor_LINK, &cmdVersion);
     deb_data("FwVer LINK = 0x%x\n", cmdVersion);
     
 	/* Solve 0-byte packet error. write Link 0xDD8D[3] = 1 */
@@ -3024,8 +3024,8 @@ static u32 DRV_GetEEPROMConfig(
 	deb_data("- Enter %s Function -",__FUNCTION__);
 
 	//patch for read eeprom valid bit
-	dwError = it950x_rd_reg((Modulator*) &pdc->modulator, Processor_LINK, chip_version_7_0, &chip_version);
-	dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, chip_version_7_0+1, 2, var);
+	dwError = it950x_rd_reg(&pdc->modulator, Processor_LINK, chip_version_7_0, &chip_version);
+	dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, chip_version_7_0+1, 2, var);
 
 	if(dwError) deb_data("DRV_GetEEPROMConfig fail---cant read chip version");
 
@@ -3033,13 +3033,13 @@ static u32 DRV_GetEEPROMConfig(
 	if(chip_Type==0x9135 && chip_version == 2) //Om2
 	{
 		pdc->chip_version = 2;
-		dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, 0x461d, 1, &btmp);
+		dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, 0x461d, 1, &btmp);
 		deb_data("Chip Version is %d---and Read 461d---valid bit = 0x%02X", chip_version, btmp);
 	}
 	else 
 	{
 		pdc->chip_version = 1; //Om1
-		dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, 0x4979, 1, &btmp);
+		dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, 0x4979, 1, &btmp);
 		deb_data("Chip Version is %d---and Read 4979---valid bit = 0x%02X", chip_version, btmp);
 	}
 	if (dwError) 
@@ -3062,7 +3062,7 @@ static u32 DRV_GetEEPROMConfig(
 	else
 	{
 		deb_data("=============Need read eeprom");
-		dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_IRMODE, 1, &btmp);
+		dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, EEPROM_IRMODE, 1, &btmp);
     	if (dwError) goto exit;
     	deb_data("EEPROM_IRMODE = 0x%02X, ", btmp);	
 
@@ -3081,7 +3081,7 @@ static u32 DRV_GetEEPROMConfig(
     	//pdc->modulator.chipNumber = 1;    
     	pdc->bDCAPIP = false;
 
-    	dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_TSMODE, 1, &btmp);
+    	dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, EEPROM_TSMODE, 1, &btmp);
     	if (dwError) goto exit;
     	deb_data("EEPROM_TSMODE = 0x%02X", btmp);
 
@@ -3111,7 +3111,7 @@ static u32 DRV_GetEEPROMConfig(
     	}
 
 //tunerID option, in Omega, not need to read register, just assign 0x38;
-		dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_TUNERID, 1, &btmp);
+		dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, EEPROM_TUNERID, 1, &btmp);
 		if (btmp==0x51) {
 			pdc->fc[0].tunerinfo.TunerId = 0x51;  	
 		}
@@ -3138,7 +3138,7 @@ static u32 DRV_GetEEPROMConfig(
 		}
 
 		//dwError = it950x_wr_reg((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, EEPROM_SUSPEND, 0);
-		dwError = it950x_rd_regs((Modulator*) &pdc->modulator, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
+		dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
 		deb_data("EEPROM susped mode=%d", btmp);
     	
     }
@@ -3166,7 +3166,7 @@ static u32 DRV_SetBusTuner(
 	deb_data("- Enter %s Function -",__FUNCTION__);
 	deb_data("tunerId =0x%x\n", tunerId);
 
-	dwError = IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_LINK, &version);
+	dwError = IT9507_getFirmwareVersion (&pdc->modulator, Processor_LINK, &version);
     	if (version != 0) {
         	pdc->modulator.booted = true;
     	} 
@@ -3190,14 +3190,14 @@ static u32 DRV_NIMReset(
     deb_data("- Enter %s Function -\n",__FUNCTION__);
     //Set AF0350 GPIOH1 to 0 to reset AF0351
 
-    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_en, reg_top_gpioh1_en_pos, reg_top_gpioh1_en_len, 1);
-    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_on, reg_top_gpioh1_on_pos, reg_top_gpioh1_on_len, 1);
-    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 0);
+    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_en, reg_top_gpioh1_en_pos, reg_top_gpioh1_en_len, 1);
+    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_on, reg_top_gpioh1_on_pos, reg_top_gpioh1_on_len, 1);
+    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 0);
 
 //    mdelay(50);
 	msleep(50);
 
-    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 1);
+    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 1);
 
     return(dwError);
 }
@@ -3211,13 +3211,13 @@ static u32 DRV_InitNIMSuspendRegs(
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
     deb_data("- Enter %s Function -\n",__FUNCTION__);
 
-    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 1);
-    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 1);
-    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 1);
+    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 1);
+    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 
-    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_pwrdw, reg_top_pwrdw_pos, reg_top_pwrdw_len, 1);
+    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_pwrdw, reg_top_pwrdw_pos, reg_top_pwrdw_len, 1);
 
-    dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_pwrdw_hwen, reg_top_pwrdw_hwen_pos, reg_top_pwrdw_hwen_len, 1);
+    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_pwrdw_hwen, reg_top_pwrdw_hwen_pos, reg_top_pwrdw_hwen_len, 1);
 
     return(dwError);
 }
@@ -3243,8 +3243,8 @@ static u32 NIM_ResetSeq(IN  void *	handle)
 	//reset 9133 -> boot -> demod init
 
 	//GPIOH5 init
-	dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 0);
-	dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 0);
+	dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 0);
+	dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 0);
 		
 	//dwError = it950x_wr_regbits((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 	//mdelay(100);
@@ -3255,10 +3255,10 @@ static u32 NIM_ResetSeq(IN  void *	handle)
 	dwError = DRV_InitNIMSuspendRegs(handle);
 	
 	deb_data("aaa start writeGenericRegisters");
-	dwError = IT9507_writeGenericRegisters ((Modulator*) &pdc->modulator, 0x3a, 0x06, bootbuffer);
+	dwError = IT9507_writeGenericRegisters (&pdc->modulator, 0x3a, 0x06, bootbuffer);
 	
 	deb_data("aaa start readGenericRegisters");
-	dwError = IT9507_readGenericRegisters ((Modulator*) &pdc->modulator, 0x3a, 0x05, bootbuffer);
+	dwError = IT9507_readGenericRegisters (&pdc->modulator, 0x3a, 0x05, bootbuffer);
 	deb_data("aaa print I2C reply");
 	for(i=0; i<5; i++)
 		deb_data("aaa bootbuffer[%d] = 0x%x", i, bootbuffer[i]);
@@ -3288,10 +3288,10 @@ static u32 DRV_NIMSuspend(
     deb_data("- Enter DRV_NIMSuspend : bSuspend = %s\n", bSuspend ? "ON":"OFF");
 
     if(bSuspend) { //sleep
-    	dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
+    	dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
 		if(dwError) return (dwError);
     } else {        //resume 
-		dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+		dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 		if(dwError) return (dwError);
     }
 
@@ -3336,7 +3336,7 @@ static u32 DRV_ApCtrl(
 			if (pdc->fc[0].bTimerOn || pdc->fc[1].bTimerOn) 
 			{				
 				deb_data("CLOSE 1<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-				IT9507_acquireTxChannel((Modulator*) &pdc->modulator, pdc->fc[!ucSlaveDemod].ucCurrentBandWidth, pdc->fc[!ucSlaveDemod].ulCurrentFrequency);
+				IT9507_acquireTxChannel(&pdc->modulator, pdc->fc[!ucSlaveDemod].ucCurrentBandWidth, pdc->fc[!ucSlaveDemod].ulCurrentFrequency);
 				return 0;
 			}
 		}
@@ -3367,7 +3367,7 @@ static u32 DRV_ApCtrl(
 				for(i=0; i<5 ;i++) 
 				{        
 					deb_data("DRV_ApCtrl::DummyCmd %d\n", i);
-					dwError = IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_LINK, &version);
+					dwError = IT9507_getFirmwareVersion (&pdc->modulator, Processor_LINK, &version);
 //					mdelay(1);
 					msleep(1);
 					//if (!dwError) break;
@@ -3379,7 +3379,7 @@ static u32 DRV_ApCtrl(
 	//			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04ld", dwError);
 
 				deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
-				dwError = IT9507_controlPowerSaving((Modulator*) &pdc->modulator, bOn);
+				dwError = IT9507_controlPowerSaving(&pdc->modulator, bOn);
 				if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x", dwError);
 			}
 		}
@@ -3397,7 +3397,7 @@ static u32 DRV_ApCtrl(
 				for(i=0; i<5 ;i++) 
 				{        
 					deb_data("DRV_ApCtrl::DummyCmd %d\n", i);
-					dwError = IT9507_getFirmwareVersion ((Modulator*) &pdc->modulator, Processor_LINK, &version);
+					dwError = IT9507_getFirmwareVersion (&pdc->modulator, Processor_LINK, &version);
 //					mdelay(1);
 					msleep(1);					
 					//if (!dwError) break;
@@ -3415,7 +3415,7 @@ static u32 DRV_ApCtrl(
 			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04x\n", dwError);
 
 			deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
-			dwError = IT9507_controlPowerSaving((Modulator*) &pdc->modulator, bOn);
+			dwError = IT9507_controlPowerSaving(&pdc->modulator, bOn);
 //			mdelay(50);
 			msleep(50);
 			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
@@ -3437,7 +3437,7 @@ static u32 DRV_ApCtrl(
 		}*/
 	
 		deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
-		dwError = IT9507_controlPowerSaving((Modulator*) &pdc->modulator, bOn);
+		dwError = IT9507_controlPowerSaving(&pdc->modulator, bOn);
 		if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
 		
 		deb_data("aaa IT9507_controlTunerPowerSaving chip_%d", ucSlaveDemod);
@@ -3466,7 +3466,7 @@ static u32 DRV_TunerWakeup(
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
 	//tuner power on
-	dwError = it950x_wr_regbits((Modulator*) &pdc->modulator, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);
+	dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);
 
     return(dwError);
 
@@ -3590,7 +3590,7 @@ u32 DL_ApPwCtrl (
 #if 0
 		if(bOn) {		// resume
 			deb_data("IT9130x Power ON\n");		
-			dwError = it950x_wr_regbits((Modulator*) &PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+			dwError = it950x_wr_regbits(&PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 			dwError = Demodulator_controlPowerSaving ((Demodulator*) &PDC->demodulator, bOn);				
 			if(dwError) { 
 				deb_data("ApCtrl::IT913x chip resume error = 0x%04x\n", dwError); 
@@ -3598,7 +3598,7 @@ u32 DL_ApPwCtrl (
 			}
 		} else {       // suspend
 			deb_data("IT9130x Power OFF\n");	
-			dwError = it950x_wr_regbits((Modulator*) &PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
+			dwError = it950x_wr_regbits(&PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
 			dwError = Demodulator_controlPowerSaving ((Demodulator*) &PDC->demodulator, bOn);	
 			if(dwError) { 
 				deb_data("ApCtrl::IT913x chip suspend error = 0x%04x\n", dwError); 
@@ -3609,20 +3609,20 @@ u32 DL_ApPwCtrl (
 	} else {          // 9507
 		if(bOn) {	  // resume
 			deb_data("IT950x Power ON\n");				
-			dwError = IT9507_controlPowerSaving ((Modulator*) &PDC->modulator, bOn);				
+			dwError = IT9507_controlPowerSaving (&PDC->modulator, bOn);				
 			if(dwError) { 
 				deb_data("ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError); 
 				goto exit;
 			}
 		} else {      // suspend
 			//deb_data("IT950x TxMode RF OFF\n");				
-			dwError = IT9507_setTxModeEnable((Modulator*) &PDC->modulator, 0);
+			dwError = IT9507_setTxModeEnable(&PDC->modulator, 0);
 			if(dwError) {
 				deb_data("ApCtrl::IT9507_setTxModeEnable error = 0x%04x\n", dwError);
 				goto exit;				
 			}
 			deb_data("IT950x Power OFF\n");							
-			dwError = IT9507_controlPowerSaving ((Modulator*) &PDC->modulator, bOn);			
+			dwError = IT9507_controlPowerSaving (&PDC->modulator, bOn);			
 			if(dwError) {
 				deb_data("ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
 				goto exit;
@@ -4081,7 +4081,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	deb_data("	%s success \n",__FUNCTION__);
 
 
-	error = it950x_wr_reg((Modulator*) &PDC->modulator, Processor_OFDM, 0xF7C6, 0x1);
+	error = it950x_wr_reg(&PDC->modulator, Processor_OFDM, 0xF7C6, 0x1);
 	if(error)	printk( "AirHD Reg Write fail!\n");
 	else printk( "AirHD Reg Write ok!\n");
 	
