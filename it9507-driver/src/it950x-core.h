@@ -146,55 +146,37 @@ typedef struct _FILTER_CONTEXT_HW {
 
 typedef struct _DEVICE_CONTEXT {
     FILTER_CONTEXT_HW fc[2];
-    u8 DeviceNo;
     bool bBootCode;
     bool bEP12Error;
     bool bEP45Error;
     //bool bDebugMsg;
     //bool bDevExist;
     bool bDualTs;
-    u8 BulkOutData[256];
-    u32 WriteLength;
     bool bSurpriseRemoval;
     bool bDevNotResp;
     bool bEnterSuspend;
     bool bSupportSuspend;
     bool bSupportSelSuspend;
-    u16 regIdx; 
-    u8 eepromIdx;
     u16 UsbMode;
     u16 MaxPacketSize;
-    u32 MaxIrpSize;
     u32 TsFrames;
     u32 TsFrameSize;
     u32 TsFrameSizeDw;
     u32 TsPacketCount;
-    //u8  ucDemod2WireAddr;
-    //USB_IDLE_CALLBACK_INFO cbinfo;          // callback info for selective suspend          // our selective suspend IRP    
 
     bool    bSelectiveSuspend;
     u32   ulActiveFilter;
-    //u8    ucSerialNo; 
     Architecture architecture;
-    //u8 Tuner_Id;
     bool bDCAPIP;
-    bool bSwapFilter;
     u8 FilterCnt;
     bool  bTunerPowerOff;
-    //PKSPIN PinSave;
     u8 UsbCtrlTimeOut;
-	
-	Modulator modulator;
+    struct it950x_state state;	
 	u8 deviceType;    
     
     bool ForceWrite;
     u8 chip_version;
 
-    u32		nReadTmpBusLength;
-    u32		nWriteTmpBusLength;
-    u8 	*pReadTmpBusBuffer;
-    u8 	*pWriteTmpBusBuffer;
-	
 } DEVICE_CONTEXT, *PDEVICE_CONTEXT;
 
 
@@ -233,7 +215,7 @@ extern u32 DL_isLocked(void *handle,u8 ucSlaveDemod, bool *bLock);
 extern u32 DL_ReSetInterval(void);
 extern u32 DL_Reboot(void* handle);
 extern u32 DL_CheckTunerInited(void *handle, u8 ucSlaveDemod, bool *bOn);
-extern u32 DL_DemodIOCTLFun(Modulator* modulator, u32 IOCTLCode, unsigned long pIOBuffer);
+extern u32 DL_DemodIOCTLFun(struct it950x_state* modulator, u32 IOCTLCode, unsigned long pIOBuffer);
 extern u32 DL_LoadIQtable_Fromfile(void *handle);
 
 #endif

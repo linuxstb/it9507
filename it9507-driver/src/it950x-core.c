@@ -817,7 +817,7 @@ long it950x_usb_tx_unlocked_ioctl(
 			Tx_RingBuffer_cmd(dev, pRequest->cmd, pRequest->len);
 			return 0;		
 	}
-	return DL_DemodIOCTLFun((void *)&dev->DC.modulator, (u32)cmd, parg);
+	return DL_DemodIOCTLFun((void*)&dev->DC.state, (u32)cmd, parg);
 }
 
 

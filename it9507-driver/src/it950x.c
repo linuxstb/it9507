@@ -44,7 +44,7 @@ static ValueSet scripts[] = { {0x0051, 0x01}, };
 
 
 static u32 IT9507Cmd_addChecksum (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     OUT u32*          bufferLength,
     OUT u8*           buffer
 ) {
@@ -54,7 +54,7 @@ static u32 IT9507Cmd_addChecksum (
     u32 i;
     u16  checksum = 0;
 
-	if(modulator == NULL)
+	if(state == NULL)
 		return (ModulatorError_NULL_HANDLE_PTR);
 
     for (i = 0; i < loop; i++)
@@ -73,7 +73,7 @@ static u32 IT9507Cmd_addChecksum (
 
 
 static u32 IT9507Cmd_removeChecksum (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     OUT u32*          bufferLength,
     OUT u8*           buffer
 ) {
@@ -82,7 +82,7 @@ static u32 IT9507Cmd_removeChecksum (
     u32 remain   = (*bufferLength - 3) % 2;
     u32 i;
     u16  checksum = 0;
-	if(modulator == NULL)
+	if(state == NULL)
 		return (ModulatorError_NULL_HANDLE_PTR);
 
     for (i = 0; i < loop; i++)
@@ -106,7 +106,7 @@ exit :
 }
 
 static u32 EagleUser_busTx (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  u32           bufferLength,
     IN  u8*           buffer
 ) {
@@ -118,8 +118,8 @@ static u32 EagleUser_busTx (
 	if (pTmpBuffer) 
 		memcpy(pTmpBuffer, buffer, bufferLength);
 //deb_data(" ---------Usb2_writeControlBus----------\n", ret);	
-	ret = usb_bulk_msg(usb_get_dev( modulator->udev),
-			usb_sndbulkpipe(usb_get_dev(modulator->udev), 0x02),
+	ret = usb_bulk_msg(usb_get_dev( state->udev),
+			usb_sndbulkpipe(usb_get_dev(state->udev), 0x02),
 			pTmpBuffer,
 			bufferLength,
 			&act_len,
@@ -132,7 +132,7 @@ static u32 EagleUser_busTx (
 
 
 static u32 EagleUser_busRx (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  u32           bufferLength,
     OUT u8*           buffer
 ) {
@@ -142,8 +142,8 @@ static u32 EagleUser_busRx (
 	ret = 0;
 
 //deb_data(" ---------Usb2_readControlBus----------\n", ret);			
-   ret = usb_bulk_msg(usb_get_dev(modulator->udev),
-				usb_rcvbulkpipe(usb_get_dev(modulator->udev),129),
+   ret = usb_bulk_msg(usb_get_dev(state->udev),
+				usb_rcvbulkpipe(usb_get_dev(state->udev),129),
 				pTmpBuffer,
 				bufferLength,
 				&nu8sRead,
@@ -157,7 +157,7 @@ static u32 EagleUser_busRx (
 }
 
 static u32 it950x_io (
-    Modulator*    modulator,
+    struct it950x_state*    state,
     Processor     processor,
     int cmd,
     u32         registerAddress,
@@ -232,7 +232,7 @@ static u32 it950x_io (
     } 
 
     /** add frame check-sum */
-    error = IT9507Cmd_addChecksum (modulator, &bufferLength, buffer);
+    error = IT9507Cmd_addChecksum (state, &bufferLength, buffer);
     if (error) goto exit;    
 
     /** send frame */
@@ -242,7 +242,7 @@ static u32 it950x_io (
     while (remainLength > 0) {
         i     = (remainLength > EagleUser_MAX_PKT_SIZE) ? (EagleUser_MAX_PKT_SIZE) : (remainLength);
 		for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
-			error = EagleUser_busTx (modulator, i, &buffer[sendLength]);
+			error = EagleUser_busTx (state, i, &buffer[sendLength]);
 			if (error == 0) break;
 			msleep(1);
 		}
@@ -260,14 +260,14 @@ static u32 it950x_io (
     }
     
 	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
-		error = EagleUser_busRx (modulator, bufferLength, buffer);
+		error = EagleUser_busRx (state, bufferLength, buffer);
 		if (error == 0) break;
 		msleep(1);
 	}
     if (error) goto exit;
 
     /** remove check-sum from reply frame */
-    error = IT9507Cmd_removeChecksum (modulator, &bufferLength, buffer);
+    error = IT9507Cmd_removeChecksum (state, &bufferLength, buffer);
     if (error) goto exit;
 
     if (cmd == Command_REG_DEMOD_READ) {
@@ -281,46 +281,46 @@ return (error);
 }
 
 static u32 it950x_wr_regs (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  Processor     processor,
     IN  u32         registerAddress,
     IN  u8          writeBufferLength,
     IN  u8*         writeBuffer
 ) {
-  return it950x_io(modulator,processor,Command_REG_DEMOD_WRITE,registerAddress,writeBufferLength,writeBuffer);
+  return it950x_io(state,processor,Command_REG_DEMOD_WRITE,registerAddress,writeBufferLength,writeBuffer);
 }
 
 static u32 it950x_wr_reg (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  Processor       processor,
     IN  u32           registerAddress,
     IN  u8            value
 ) {
-  return (it950x_io(modulator,processor,Command_REG_DEMOD_WRITE,registerAddress, 1, &value));
+  return (it950x_io(state,processor,Command_REG_DEMOD_WRITE,registerAddress, 1, &value));
 }
 
 static u32 it950x_rd_regs (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  Processor       processor,
     IN  u32           registerAddress,
     IN  u8            readBufferLength,
     OUT u8*           readBuffer
 ) {
-  return it950x_io(modulator,processor,Command_REG_DEMOD_READ,registerAddress,readBufferLength,readBuffer);
+  return it950x_io(state,processor,Command_REG_DEMOD_READ,registerAddress,readBufferLength,readBuffer);
 }
 
 static u32 it950x_rd_reg (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  Processor       processor,
     IN  u32           registerAddress,
     OUT u8*           value
 ) {
-  return it950x_io(modulator,processor,Command_REG_DEMOD_READ,registerAddress,1,value);
+  return it950x_io(state,processor,Command_REG_DEMOD_READ,registerAddress,1,value);
 }
 
 
 static u32 it950x_wr_regbits (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  Processor       processor,
     IN  u32           registerAddress,
     IN  u8            position,
@@ -333,16 +333,16 @@ static u32 it950x_wr_regbits (
 	u8 temp;
 
 	if (length == 8) {
-		error = it950x_wr_regs (modulator, processor, registerAddress, 1, &value);
+		error = it950x_wr_regs (state, processor, registerAddress, 1, &value);
 		
 	} else {
-		error = it950x_rd_regs (modulator, processor, registerAddress, 1, &temp);
+		error = it950x_rd_regs (state, processor, registerAddress, 1, &temp);
 		if (error) goto exit;
 		
 
 		temp = (u8)REG_CREATE (value, temp, position, length);
 
-		error = it950x_wr_regs (modulator, processor, registerAddress, 1, &temp);
+		error = it950x_wr_regs (state, processor, registerAddress, 1, &temp);
 		if (error) goto exit;
 		
 	}
@@ -353,7 +353,7 @@ exit:
 
 
 static u32 IT9507Cmd_sendCommand (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  u16            command,
     IN  Processor       processor,
     IN  u32           writeBufferLength,
@@ -392,7 +392,7 @@ static u32 IT9507Cmd_sendCommand (
         buffer[2] = (u8) command;
         buffer[3] = (u8) IT9507Cmd_sequence++;
         bufferLength = 4;
-        error = IT9507Cmd_addChecksum (modulator, &bufferLength, buffer);
+        error = IT9507Cmd_addChecksum (state, &bufferLength, buffer);
         if (error) goto exit;
 
         // send command packet
@@ -403,7 +403,7 @@ static u32 IT9507Cmd_sendCommand (
             i = (remainLength > EagleUser_MAX_PKT_SIZE) ? (EagleUser_MAX_PKT_SIZE) : (remainLength);        
 
 			for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
-				error = EagleUser_busTx (modulator, i, &buffer[sendLength]);
+				error = EagleUser_busTx (state, i, &buffer[sendLength]);
 				if (error == 0) break;
 				msleep(1);
 			}
@@ -422,7 +422,7 @@ static u32 IT9507Cmd_sendCommand (
         
         
         bufferLength = 4 + writeBufferLength;
-        error = IT9507Cmd_addChecksum (modulator, &bufferLength, buffer);
+        error = IT9507Cmd_addChecksum (state, &bufferLength, buffer);
         if (error) goto exit;
 
         
@@ -434,7 +434,7 @@ static u32 IT9507Cmd_sendCommand (
             i     = (remainLength > EagleUser_MAX_PKT_SIZE) ? (EagleUser_MAX_PKT_SIZE) : (remainLength);        
 
 			for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
-				error = EagleUser_busTx (modulator, i, &buffer[sendLength]);
+				error = EagleUser_busTx (state, i, &buffer[sendLength]);
 				if (error == 0) break;
 				msleep(1);
 			}
@@ -448,13 +448,13 @@ static u32 IT9507Cmd_sendCommand (
     bufferLength = 5 + readBufferLength;
 
 	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
-		error = EagleUser_busRx (modulator, bufferLength, buffer);
+		error = EagleUser_busRx (state, bufferLength, buffer);
 		if (error == 0) break;
 		msleep(1);
 	}
     if (error) goto exit;
 
-    error = IT9507Cmd_removeChecksum (modulator, &bufferLength, buffer);
+    error = IT9507Cmd_removeChecksum (state, &bufferLength, buffer);
     if (error) goto exit;
 
     if (readBufferLength) {
@@ -469,7 +469,7 @@ exit :
 }
 
 static u32 IT9507_writeGenericRegisters (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  u8            slaveAddress,
     IN  u8            bufferLength,
     IN  u8*           buffer
@@ -484,12 +484,12 @@ static u32 IT9507_writeGenericRegisters (
 	for (i = 0; i < bufferLength; i++) {
 		writeBuffer[3 + i] = buffer[i];
 	}
-	return (IT9507Cmd_sendCommand (modulator, Command_GENERIC_WRITE, Processor_LINK, bufferLength + 3, writeBuffer, 0, NULL));
+	return (IT9507Cmd_sendCommand (state, Command_GENERIC_WRITE, Processor_LINK, bufferLength + 3, writeBuffer, 0, NULL));
 }
 
 
 static u32 IT9507_readGenericRegisters (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  u8            slaveAddress,
     IN  u8            bufferLength,
     IN  u8*           buffer
@@ -500,44 +500,44 @@ static u32 IT9507_readGenericRegisters (
 	writeBuffer[1] = 2;
 	writeBuffer[2] = slaveAddress;
 
-	return (IT9507Cmd_sendCommand (modulator, Command_GENERIC_READ, Processor_LINK, 3, writeBuffer, bufferLength, buffer));
+	return (IT9507Cmd_sendCommand (state, Command_GENERIC_READ, Processor_LINK, 3, writeBuffer, bufferLength, buffer));
 }
 
 
 
 
 static u32 EagleUser_setSystemConfig (
-    IN  Modulator*    modulator
+    IN  struct it950x_state*    state
 ) {
 	u32 error = 0;
 
         /* restSlave */	
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH1), 1);
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_O(GPIOH1), 1);
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_EN(GPIOH1), 1);
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_EN(GPIOH1), 1);
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_ON(GPIOH1), 1);
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_ON(GPIOH1), 1);
 	if (error) goto exit;
 	msleep(10);
 
         /* powerDownSlave */
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH5), 0);
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_O(GPIOH5), 0);
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_EN(GPIOH5), 1);
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_EN(GPIOH5), 1);
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_ON(GPIOH5), 1);
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_ON(GPIOH5), 1);
 	if (error) goto exit;
 
         /* rfEnable */
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_EN(GPIOH2), 1);
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_EN(GPIOH2), 1);
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_ON(GPIOH2), 1);
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_ON(GPIOH2), 1);
 	if (error) goto exit;
 
         /* uvFilter */
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_EN(GPIOH8), 1);
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_EN(GPIOH8), 1);
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_ON(GPIOH8), 1);
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_ON(GPIOH8), 1);
 	if (error) goto exit;
 
 exit:
@@ -546,16 +546,16 @@ exit:
 
 
 static u32 EagleUser_getDeviceType (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	OUT  u8*		  deviceType	   
 ){	
 	u32 error = ModulatorError_NO_ERROR;
 	u8 temp;
 
 	
-	error = it950x_rd_reg (modulator, Processor_LINK, 0x4979, &temp);//has eeprom ??
+	error = it950x_rd_reg (state, Processor_LINK, 0x4979, &temp);//has eeprom ??
 	if((temp == 1) && (error == ModulatorError_NO_ERROR)){
-		error = it950x_rd_reg (modulator, Processor_LINK, 0x49D5, &temp);	
+		error = it950x_rd_reg (state, Processor_LINK, 0x49D5, &temp);	
 		if(error == ModulatorError_NO_ERROR){
 			*deviceType = temp;	
 		}else if(temp == 0){ // No eeprom 
@@ -573,7 +573,7 @@ static u32 EagleUser_getDeviceType (
 
 
 static u32 EagleUser_mpegConfig (
-    IN  Modulator*    modulator
+    IN  struct it950x_state*    state
 ) {
     /*
      *  ToDo:  Add code here
@@ -584,7 +584,7 @@ static u32 EagleUser_mpegConfig (
 
 
  u32 EagleUser_Initialization  (
-    IN  Modulator*    modulator
+    IN  struct it950x_state*    state
 ) {
 	/*
      *  ToDo:  Add code here
@@ -593,11 +593,11 @@ static u32 EagleUser_mpegConfig (
      *  return (0);
      */
 	u32 error = 0;
-	 error = EagleUser_setSystemConfig(modulator);
+	 error = EagleUser_setSystemConfig(state);
 	 if (error) goto exit;
 
 	// RF Enable
-	error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH2), 0); //RF out power down
+	error = it950x_wr_reg (state, Processor_LINK, GPIO_O(GPIOH2), 0); //RF out power down
 	if (error) goto exit;
 exit:
     return (error);
@@ -606,7 +606,7 @@ exit:
 
 
 static u32 EagleUser_acquireChannel (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  u16          bandwidth,
 	IN  u32         frequency
 ){
@@ -620,11 +620,11 @@ static u32 EagleUser_acquireChannel (
 	u32 error = 0;
 
 	if(frequency <= 300000){ // <=300000KHz v-filter gpio set to Lo
-	  error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH8), 0);  /* uvFilter */
+	  error = it950x_wr_reg (state, Processor_LINK, GPIO_O(GPIOH8), 0);  /* uvFilter */
 		if (error) goto exit;
 
 	}else{
-	  error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH8), 1); /* uvFilter */
+	  error = it950x_wr_reg (state, Processor_LINK, GPIO_O(GPIOH8), 1); /* uvFilter */
 		if (error) goto exit;
 	}	
 exit:
@@ -632,7 +632,7 @@ exit:
 }
 
 static u32 EagleUser_setTxModeEnable (
-	IN  Modulator*            modulator,
+	IN  struct it950x_state*            state,
 	IN  u8                    enable	
 ) {
 	/*
@@ -643,10 +643,10 @@ static u32 EagleUser_setTxModeEnable (
      */
 	u32 error = ModulatorError_NO_ERROR;
 	if(enable){
-			error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH2), 1); //RF power up 
+			error = it950x_wr_reg (state, Processor_LINK, GPIO_O(GPIOH2), 1); //RF power up 
 			if (error) goto exit;
 	}else{
-			error = it950x_wr_reg (modulator, Processor_LINK, GPIO_O(GPIOH2), 0); //RF power down 
+			error = it950x_wr_reg (state, Processor_LINK, GPIO_O(GPIOH2), 0); //RF power down 
 			if (error) goto exit;
 	}
 exit :
@@ -807,14 +807,14 @@ static int setIO(const int THETA){
 
 
 static u32 interpolation(
-	Modulator*    modulator,
+	struct it950x_state*    state,
     int fIn, 
     int *ptrdAmp, 
 	int *ptrdPhi
 	)
 {
   // Using binary search to find the frequency interval in the table
-	u16 TABLE_NROW = modulator->calibrationInfo.tableGroups;
+	u16 TABLE_NROW = state->calibrationInfo.tableGroups;
 	u32   error = ModulatorError_NO_ERROR;
     int idx = TABLE_NROW/2;
     int preIdx = -1;
@@ -827,14 +827,14 @@ static u32 interpolation(
 
 	int temp1,temp2,temp3,temp4;
 
-    while( ! ( (fIn - (int)(modulator->calibrationInfo.ptrIQtableEx[idx].frequency)) >= 0 && (fIn - (int)(modulator->calibrationInfo.ptrIQtableEx[idx+1].frequency) < 0) ) ){
-	  if((fIn - (int)modulator->calibrationInfo.ptrIQtableEx[idx].frequency)==0)
+    while( ! ( (fIn - (int)(state->calibrationInfo.ptrIQtableEx[idx].frequency)) >= 0 && (fIn - (int)(state->calibrationInfo.ptrIQtableEx[idx+1].frequency) < 0) ) ){
+	  if((fIn - (int)state->calibrationInfo.ptrIQtableEx[idx].frequency)==0)
 		  break;
       preIdx = idx;
-      if(fIn - (int)(modulator->calibrationInfo.ptrIQtableEx[idx+1].frequency) >= 0){
+      if(fIn - (int)(state->calibrationInfo.ptrIQtableEx[idx+1].frequency) >= 0){
         idx = (preIdx + upper)/2;
         lower = preIdx;
-      }else if(fIn - (int)(modulator->calibrationInfo.ptrIQtableEx[idx].frequency) < 0){
+      }else if(fIn - (int)(state->calibrationInfo.ptrIQtableEx[idx].frequency) < 0){
         idx = (preIdx + lower)/2;
         upper = preIdx;
       }
@@ -843,8 +843,8 @@ static u32 interpolation(
 		  break;
     }
 
-	if((fIn != (int)modulator->calibrationInfo.ptrIQtableEx[idx].frequency) && 
-		((modulator->calibrationInfo.ptrIQtableEx[idx+1].frequency - modulator->calibrationInfo.ptrIQtableEx[idx].frequency)>100000)){
+	if((fIn != (int)state->calibrationInfo.ptrIQtableEx[idx].frequency) && 
+		((state->calibrationInfo.ptrIQtableEx[idx+1].frequency - state->calibrationInfo.ptrIQtableEx[idx].frequency)>100000)){
 		// out of Calibration range
 			error = ModulatorError_OUT_OF_CALIBRATION_RANGE;
 			goto exit;
@@ -854,18 +854,18 @@ static u32 interpolation(
   // Perform linear interpolation
 
 //--------test
-	temp1 = modulator->calibrationInfo.ptrIQtableEx[idx].dAmp;
-	temp2 = (fIn - (int)modulator->calibrationInfo.ptrIQtableEx[idx].frequency);
-	temp3 = (modulator->calibrationInfo.ptrIQtableEx[idx+1].dAmp - modulator->calibrationInfo.ptrIQtableEx[idx].dAmp);
-	temp4 = (modulator->calibrationInfo.ptrIQtableEx[idx+1].frequency - modulator->calibrationInfo.ptrIQtableEx[idx].frequency);
+	temp1 = state->calibrationInfo.ptrIQtableEx[idx].dAmp;
+	temp2 = (fIn - (int)state->calibrationInfo.ptrIQtableEx[idx].frequency);
+	temp3 = (state->calibrationInfo.ptrIQtableEx[idx+1].dAmp - state->calibrationInfo.ptrIQtableEx[idx].dAmp);
+	temp4 = (state->calibrationInfo.ptrIQtableEx[idx+1].frequency - state->calibrationInfo.ptrIQtableEx[idx].frequency);
 	
 	outdAmp = temp1 + temp2*temp3/temp4;
 	
 	//test	
 
-	//outdAmp = modulator->calibrationInfo.ptrIQtableEx[idx].dAmp + ((fIn - (int)modulator->calibrationInfo.ptrIQtableEx[idx].frequency) 
-	//	       * (modulator->calibrationInfo.ptrIQtableEx[idx+1].dAmp - modulator->calibrationInfo.ptrIQtableEx[idx].dAmp)) / (modulator->calibrationInfo.ptrIQtableEx[idx+1].frequency - modulator->calibrationInfo.ptrIQtableEx[idx].frequency);
-	diff = (modulator->calibrationInfo.ptrIQtableEx[idx+1].dPhi - modulator->calibrationInfo.ptrIQtableEx[idx].dPhi);
+	//outdAmp = state->calibrationInfo.ptrIQtableEx[idx].dAmp + ((fIn - (int)state->calibrationInfo.ptrIQtableEx[idx].frequency) 
+	//	       * (state->calibrationInfo.ptrIQtableEx[idx+1].dAmp - state->calibrationInfo.ptrIQtableEx[idx].dAmp)) / (state->calibrationInfo.ptrIQtableEx[idx+1].frequency - state->calibrationInfo.ptrIQtableEx[idx].frequency);
+	diff = (state->calibrationInfo.ptrIQtableEx[idx+1].dPhi - state->calibrationInfo.ptrIQtableEx[idx].dPhi);
 	if(diff <= -8192) {
 		diff = diff+16384;
 	} else if(diff >= 8192) {
@@ -874,15 +874,15 @@ static u32 interpolation(
 	//outdPhi = IQ_table[idx][2] + (fIn - IQ_table[idx][0]) * (IQ_table[idx+1][2] - IQ_table[idx][2]) / (IQ_table[idx+1][0] - IQ_table[idx][0]);
 			
 	//------test---------
-	temp1 = modulator->calibrationInfo.ptrIQtableEx[idx].dPhi;
-	temp2 = (fIn - (int)modulator->calibrationInfo.ptrIQtableEx[idx].frequency);
+	temp1 = state->calibrationInfo.ptrIQtableEx[idx].dPhi;
+	temp2 = (fIn - (int)state->calibrationInfo.ptrIQtableEx[idx].frequency);
 	temp3 = diff;
-	temp4 = (modulator->calibrationInfo.ptrIQtableEx[idx+1].frequency - modulator->calibrationInfo.ptrIQtableEx[idx].frequency);
+	temp4 = (state->calibrationInfo.ptrIQtableEx[idx+1].frequency - state->calibrationInfo.ptrIQtableEx[idx].frequency);
 	outdPhi = temp1 + temp2*temp3/temp4;
 	//----------------
 
 	
-	//outdPhi = modulator->calibrationInfo.ptrIQtableEx[idx].dPhi + ((fIn - (int)modulator->calibrationInfo.ptrIQtableEx[idx].frequency) * diff) / (modulator->calibrationInfo.ptrIQtableEx[idx+1].frequency - modulator->calibrationInfo.ptrIQtableEx[idx].frequency);
+	//outdPhi = state->calibrationInfo.ptrIQtableEx[idx].dPhi + ((fIn - (int)state->calibrationInfo.ptrIQtableEx[idx].frequency) * diff) / (state->calibrationInfo.ptrIQtableEx[idx+1].frequency - state->calibrationInfo.ptrIQtableEx[idx].frequency);
 	
 		
 	if (outdPhi>=16384) {
@@ -898,7 +898,7 @@ exit:
 }
 
 static u32 EagleTuner_setIQCalibration(
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
     IN  u32         frequency	
 ) {
 	u32   error = ModulatorError_NO_ERROR;
@@ -923,7 +923,7 @@ static u32 EagleTuner_setIQCalibration(
 	int test;
 	int test2;
 
-    error = interpolation(modulator, frequency, ptrdAmp, ptrdPhi);
+    error = interpolation(state, frequency, ptrdAmp, ptrdPhi);
 	if(error == ModulatorError_OUT_OF_CALIBRATION_RANGE){
 		//out of range --> set to default
 		val[0] = 0x00;
@@ -981,14 +981,14 @@ static u32 EagleTuner_setIQCalibration(
   val[4] = (u8) c3_tmp_lowbyte;
   val[5] = (u8) c3_tmp_highbyte;
 exit:
-  error = it950x_wr_regs(modulator, Processor_OFDM, reg, 6, val);
+  error = it950x_wr_regs(state, Processor_OFDM, reg, 6, val);
 
   return (error);
 }
 
 
 static u32 EagleTuner_calIQCalibrationValue(
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
     IN  u32         frequency,
 	IN  u8*		  val
 ) {
@@ -1013,7 +1013,7 @@ static u32 EagleTuner_calIQCalibrationValue(
 	int test;
 	int test2;
 
-    error = interpolation(modulator, frequency, ptrdAmp, ptrdPhi);
+    error = interpolation(state, frequency, ptrdAmp, ptrdPhi);
 	if(error == ModulatorError_OUT_OF_CALIBRATION_RANGE){
 		//out of range --> set to default
 		val[0] = 0x00;
@@ -1069,7 +1069,7 @@ static u32 EagleTuner_calIQCalibrationValue(
   val[3] = (u8) c2_tmp_highbyte;
   val[4] = (u8) c3_tmp_lowbyte;
   val[5] = (u8) c3_tmp_highbyte;
-  //error = Eagle_writeRegisters(modulator, Processor_OFDM, reg, 6, val);
+  //error = Eagle_writeRegisters(state, Processor_OFDM, reg, 6, val);
 exit:
   return (error);
 }
@@ -1085,7 +1085,7 @@ static unsigned int c_fN_min[9] = {
 	53000, 74000, 111000, 148000, 222000, 296000, 445000, 573000, 950000
 };
 
-static u32 IT9507_setTsInterface (IN  Modulator*    modulator);
+static u32 IT9507_setTsInterface (IN  struct it950x_state*    state);
 
 unsigned int IT9507_getLoFreq(unsigned int rf_freq_kHz)
 {
@@ -1156,7 +1156,7 @@ unsigned int IT9507_getLoFreq(unsigned int rf_freq_kHz)
 
 
 static u32 IT9507Cmd_reboot (
-    IN  Modulator*    modulator
+    IN  struct it950x_state*    state
 ) {
     u32       error = ModulatorError_NO_ERROR;
     u16        command;
@@ -1168,11 +1168,11 @@ static u32 IT9507Cmd_reboot (
     buffer[2] = (u8) command;
     buffer[3] = (u8) IT9507Cmd_sequence++;
     bufferLength = 4;
-    error = IT9507Cmd_addChecksum (modulator, &bufferLength, buffer);
+    error = IT9507Cmd_addChecksum (state, &bufferLength, buffer);
     if (error) goto exit;
    
 	for (cnt = 0; cnt < EagleUser_RETRY_MAX_LIMIT; cnt++) {
-		error = EagleUser_busTx (modulator, bufferLength, buffer);
+		error = EagleUser_busTx (state, bufferLength, buffer);
 		if (error == 0) break;
 		msleep(1);
 	}
@@ -1184,7 +1184,7 @@ exit :
 }
 
 static u32 IT9507_calOutputGain (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  u8		  *defaultValue,
 	IN  int			  *gain	   
 ) {
@@ -1207,7 +1207,7 @@ static u32 IT9507_calOutputGain (
 	
 	bool overflow = false;
 	
-	if(modulator == NULL){
+	if(state == NULL){
 		error = ModulatorError_NULL_HANDLE_PTR;
 		goto exit;
 	}
@@ -1308,7 +1308,7 @@ exit:
 
 
 static u32 IT9507_selectBandwidth (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  u16          bandwidth          /** KHz              */
 ) {
 	u32 error ;
@@ -1333,7 +1333,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x00;	//0xF741
-			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (state, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;
 			break;
 
@@ -1343,7 +1343,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x00;	//0xF741
-			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (state, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;
 			break; 
 
@@ -1353,7 +1353,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x00;	//0xF741
-			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (state, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1363,7 +1363,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x00;	//0xF741
-			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (state, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1373,7 +1373,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x00;	//0xF741
-			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (state, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1383,7 +1383,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x01;	//0xF741
-			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (state, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1393,7 +1393,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x01;	//0xF741
-			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (state, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1403,7 +1403,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x01;	//0xF741
-			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (state, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;
 			break;
 
@@ -1413,7 +1413,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x02;	//0xF741
-			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (state, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;			
 			break;
 
@@ -1423,7 +1423,7 @@ static u32 IT9507_selectBandwidth (
 			temp3 = 0x01;	//0xFBB8
 			temp4 = 0x03;	//0xD814
 			temp5 = 0x02;	//0xF741
-			error = it950x_wr_reg (modulator, Processor_LINK, 0xD812, 3);
+			error = it950x_wr_reg (state, Processor_LINK, 0xD812, 3);
 			if (error) goto exit;
 			break;
 
@@ -1434,22 +1434,22 @@ static u32 IT9507_selectBandwidth (
 	}
 
 	if(error == ModulatorError_NO_ERROR){
-		error = it950x_wr_reg (modulator, Processor_OFDM, 0xFBB6, temp1);
+		error = it950x_wr_reg (state, Processor_OFDM, 0xFBB6, temp1);
 		if (error) goto exit;
 
-		error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFBB7, 0, 2, temp2);
+		error = it950x_wr_regbits (state, Processor_OFDM, 0xFBB7, 0, 2, temp2);
 		if (error) goto exit;
 
-		error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFBB8, 2, 1, temp3);
+		error = it950x_wr_regbits (state, Processor_OFDM, 0xFBB8, 2, 1, temp3);
 		if (error) goto exit;
 
-		error = it950x_wr_reg (modulator,  Processor_OFDM, 0xF741, temp5);
+		error = it950x_wr_reg (state,  Processor_OFDM, 0xF741, temp5);
 		if (error) goto exit;
 
-		error = it950x_wr_reg (modulator, Processor_LINK, 0xD814, temp4);
+		error = it950x_wr_reg (state, Processor_LINK, 0xD814, temp4);
 		if (error) goto exit;
 
-		error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFBB8, 2, 1, 0);
+		error = it950x_wr_regbits (state, Processor_OFDM, 0xFBB8, 2, 1, 0);
 		if (error) goto exit;
 		
 
@@ -1459,14 +1459,14 @@ static u32 IT9507_selectBandwidth (
 
 exit :
 	if(error)
-		modulator->bandwidth = 0;
+		state->bandwidth = 0;
 	else
-		modulator->bandwidth = bandwidth;
+		state->bandwidth = bandwidth;
 	return (error);
 }
 
 static u32 IT9507_runTxCalibration (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  u16            bandwidth,
     IN  u32           frequency
 ){
@@ -1474,40 +1474,40 @@ static u32 IT9507_runTxCalibration (
 	u8 c1_default_value[2],c2_default_value[2],c3_default_value[2];
 
 	if((bandwidth !=0) && (frequency !=0)){
-		error = EagleTuner_setIQCalibration(modulator,frequency);		
+		error = EagleTuner_setIQCalibration(state,frequency);		
 	}else{
 		error = ModulatorError_FREQ_OUT_OF_RANGE;
 		goto exit;
 	}
 	if (error) goto exit;
-	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, 2, c1_default_value);
+	error = it950x_rd_regs (state, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, 2, c1_default_value);
 	if (error) goto exit;
-	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, 2, c2_default_value);
+	error = it950x_rd_regs (state, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, 2, c2_default_value);
 	if (error) goto exit;
-	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, 2, c3_default_value);
+	error = it950x_rd_regs (state, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, 2, c3_default_value);
 	if (error) goto exit;
 	
-	modulator->calibrationInfo.c1DefaultValue = c1_default_value[1]<<8 | c1_default_value[0];
-	modulator->calibrationInfo.c2DefaultValue = c2_default_value[1]<<8 | c2_default_value[0];
-	modulator->calibrationInfo.c3DefaultValue = c3_default_value[1]<<8 | c3_default_value[0];
-	modulator->calibrationInfo.outputGain = 0;
+	state->calibrationInfo.c1DefaultValue = c1_default_value[1]<<8 | c1_default_value[0];
+	state->calibrationInfo.c2DefaultValue = c2_default_value[1]<<8 | c2_default_value[0];
+	state->calibrationInfo.c3DefaultValue = c3_default_value[1]<<8 | c3_default_value[0];
+	state->calibrationInfo.outputGain = 0;
 
 exit:
 	return (error);
 }
 
 static u32 IT9507_setFrequency (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  u32           frequency
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 	
 	unsigned int tmp;
 	u8 freq_code_H,freq_code_L;
-	u16 TABLE_NROW = modulator->calibrationInfo.tableGroups;
+	u16 TABLE_NROW = state->calibrationInfo.tableGroups;
 	
-	if(modulator->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<frequency 
-		|| modulator->calibrationInfo.ptrIQtableEx[0].frequency>frequency 
+	if(state->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<frequency 
+		|| state->calibrationInfo.ptrIQtableEx[0].frequency>frequency 
 	){
 		error = ModulatorError_FREQ_OUT_OF_RANGE;
 		goto exit;
@@ -1518,35 +1518,35 @@ static u32 IT9507_setFrequency (
 	freq_code_L = (unsigned char) (tmp & 0xFF);
 	freq_code_H = (unsigned char) ((tmp >> 8) & 0xFF);
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFB2A, freq_code_L);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xFB2A, freq_code_L);
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator,  Processor_OFDM, 0xFB2B, freq_code_H);
+	error = it950x_wr_reg (state,  Processor_OFDM, 0xFB2B, freq_code_H);
 	if (error) goto exit;
 
 	if(frequency>950000)
-		error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFB2C, 2, 1,1);
+		error = it950x_wr_regbits (state, Processor_OFDM, 0xFB2C, 2, 1,1);
 	else
-		error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFB2C, 2, 1,0);
+		error = it950x_wr_regbits (state, Processor_OFDM, 0xFB2C, 2, 1,0);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFB2D, 2);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xFB2D, 2);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFB2D, 1);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xFB2D, 1);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFB2D, 0);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xFB2D, 0);
 	if (error) goto exit;
-	modulator->frequency = frequency;
+	state->frequency = frequency;
 
-	error = IT9507_runTxCalibration(modulator, modulator->bandwidth, modulator->frequency);
+	error = IT9507_runTxCalibration(state, state->bandwidth, state->frequency);
 
 exit :
 	return (error);
 }
 
 static u32 IT9507_getFirmwareVersion (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  Processor       processor,
     OUT u32*          version
 ) {
@@ -1557,7 +1557,7 @@ static u32 IT9507_getFirmwareVersion (
 
 	/** Check chip version */
 	writeBuffer[0] = 1;
-	error = IT9507Cmd_sendCommand (modulator, Command_QUERYINFO, processor, 1, writeBuffer, 4, readBuffer);
+	error = IT9507Cmd_sendCommand (state, Command_QUERYINFO, processor, 1, writeBuffer, 4, readBuffer);
 	if (error) goto exit;
 	
 	*version = (u32) (((u32) readBuffer[0] << 24) + ((u32) readBuffer[1] << 16) + ((u32) readBuffer[2] << 8) + (u32) readBuffer[3]);
@@ -1567,7 +1567,7 @@ exit :
 }
 
 static int it950x_load_firmware (
-	IN  Modulator*    modulator
+	IN  struct it950x_state*    state
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 	u32 version;
@@ -1589,10 +1589,10 @@ static int it950x_load_firmware (
 
 	/** Set I2C master clock speed. */
 	temp = EagleUser_IIC_SPEED;
-	error = it950x_wr_regs (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, 1, &temp);
+	error = it950x_wr_regs (state, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, 1, &temp);
 	if (error) goto exit;
 
-	if (request_firmware(&fw, IT9507_FIRMWARE, &modulator->udev->dev)) {
+	if (request_firmware(&fw, IT9507_FIRMWARE, &state->udev->dev)) {
 	  printk("it950x:%s: firmware %s not found\n", __func__, IT9507_FIRMWARE);
 	  return ModulatorError_INVALID_FW_TYPE; /* FIXME */
 	}
@@ -1606,7 +1606,7 @@ static int it950x_load_firmware (
         p = fw->data;
         while (chunk_sizes[j]) {
           for (i=0;i<chunk_sizes[j+1];i++) {
-            error = IT9507Cmd_sendCommand (modulator, Command_SCATTER_WRITE, Processor_LINK, chunk_sizes[j], p, 0, NULL);
+            error = IT9507Cmd_sendCommand (state, Command_SCATTER_WRITE, Processor_LINK, chunk_sizes[j], p, 0, NULL);
             if (error) goto exit;
             p += chunk_sizes[j];
           }
@@ -1616,14 +1616,14 @@ static int it950x_load_firmware (
         release_firmware(fw);
 
 	/** Boot */
-	error = IT9507Cmd_sendCommand (modulator, Command_BOOT, Processor_LINK, 0, NULL, 0, NULL);
+	error = IT9507Cmd_sendCommand (state, Command_BOOT, Processor_LINK, 0, NULL, 0, NULL);
 	if (error) goto exit;
 
 	msleep(10);
 
 	/** Check if firmware is running */
 	version = 0;
-	error = IT9507_getFirmwareVersion (modulator, Processor_LINK, &version);
+	error = IT9507_getFirmwareVersion (state, Processor_LINK, &version);
 	if (error) goto exit;
 	if (version == 0)
 		error = ModulatorError_BOOT_FAIL;
@@ -1634,7 +1634,7 @@ exit :
 }
 
 static u32 IT9507_loadScript (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  u16*           scriptSets,
 	IN  ValueSet*       scripts
 ) {
@@ -1648,14 +1648,14 @@ static u32 IT9507_loadScript (
 	u32 tunerAddr, tunerAddrTemp;
 	
 	/** Querry SupportRelayCommandWrite **/
-	error = it950x_rd_regs (modulator, Processor_OFDM, 0x004D, 1, &supportRelay);
+	error = it950x_rd_regs (state, Processor_OFDM, 0x004D, 1, &supportRelay);
 	if (error) goto exit;
 
 	
 	/** Enable RelayCommandWrite **/
 	if (supportRelay) {
 		temp = 1;
-		error = it950x_wr_regs (modulator, Processor_OFDM, 0x004E, 1, &temp);
+		error = it950x_wr_regs (state, Processor_OFDM, 0x004E, 1, &temp);
 		if (error) goto exit;
 	}
 
@@ -1679,7 +1679,7 @@ static u32 IT9507_loadScript (
 					j ++;
 				}
 
-				error = it950x_wr_regs (modulator, Processor_OFDM, tunerAddr, bufferLens, buffer);
+				error = it950x_wr_regs (state, Processor_OFDM, tunerAddr, bufferLens, buffer);
 				if (error) goto exit;
 				bufferLens = 1;
 			}
@@ -1689,7 +1689,7 @@ static u32 IT9507_loadScript (
 	/** Disable RelayCommandWrite **/
 	if (supportRelay) {
 		temp = 0;
-		error = it950x_wr_regs (modulator, Processor_OFDM, 0x004E, 1, &temp);
+		error = it950x_wr_regs (state, Processor_OFDM, 0x004E, 1, &temp);
 		if (error) goto exit;
 	}
 
@@ -1698,7 +1698,7 @@ exit :
 }
 
 static u32 IT9507_writeEepromValues (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  u16            registerAddress,
     IN  u8            writeBufferLength,
     IN  u8*           writeBuffer
@@ -1742,7 +1742,7 @@ static u32 IT9507_writeEepromValues (
 
     /** add frame check-sum */
     bufferLength = 9 + writeBufferLength;
-    error = IT9507Cmd_addChecksum (modulator, &bufferLength, buffer);
+    error = IT9507Cmd_addChecksum (state, &bufferLength, buffer);
     if (error) goto exit;
 
     /** send frame */
@@ -1751,7 +1751,7 @@ static u32 IT9507_writeEepromValues (
     remainLength = bufferLength;
     while (remainLength > 0) {
         i     = (remainLength > EagleUser_MAX_PKT_SIZE) ? (EagleUser_MAX_PKT_SIZE) : (remainLength);        
-        error = EagleUser_busTx (modulator, i, &buffer[sendLength]);
+        error = EagleUser_busTx (state, i, &buffer[sendLength]);
         if (error) goto exit;
 
         sendLength   += i;
@@ -1760,11 +1760,11 @@ static u32 IT9507_writeEepromValues (
 
     /** get reply frame */
     bufferLength = 5;
-    error = EagleUser_busRx (modulator, bufferLength, buffer);
+    error = EagleUser_busRx (state, bufferLength, buffer);
     if (error) goto exit;
 
     /** remove check-sum from reply frame */
-    error = IT9507Cmd_removeChecksum (modulator, &bufferLength, buffer);
+    error = IT9507Cmd_removeChecksum (state, &bufferLength, buffer);
     if (error) goto exit;
 
 exit :
@@ -1773,7 +1773,7 @@ exit :
 
 
 static u32 IT9507_readEepromValues (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  u16            registerAddress,
     IN  u8            readBufferLength,
     OUT u8*           readBuffer
@@ -1819,7 +1819,7 @@ static u32 IT9507_readEepromValues (
 
     /** add frame check-sum */
     bufferLength = 9;
-    error = IT9507Cmd_addChecksum (modulator, &bufferLength, buffer);
+    error = IT9507Cmd_addChecksum (state, &bufferLength, buffer);
     if (error) goto exit;
 
     /** send frame */
@@ -1828,7 +1828,7 @@ static u32 IT9507_readEepromValues (
     remainLength = bufferLength;
     while (remainLength > 0) {
         i = (remainLength > EagleUser_MAX_PKT_SIZE) ? (EagleUser_MAX_PKT_SIZE) : (remainLength);        
-        error = EagleUser_busTx (modulator, i, &buffer[sendLength]);
+        error = EagleUser_busTx (state, i, &buffer[sendLength]);
         if (error) goto exit;
 
         sendLength   += i;
@@ -1837,11 +1837,11 @@ static u32 IT9507_readEepromValues (
 
     /** get reply frame */
     bufferLength = 5 + readBufferLength;
-    error = EagleUser_busTx (modulator, bufferLength, buffer);
+    error = EagleUser_busTx (state, bufferLength, buffer);
     if (error) goto exit;
 
     /** remove frame check-sum */
-    error = IT9507Cmd_removeChecksum (modulator, &bufferLength, buffer);
+    error = IT9507Cmd_removeChecksum (state, &bufferLength, buffer);
     if (error) goto exit;
 
     for (k = 0; k < readBufferLength; k++) {
@@ -1854,7 +1854,7 @@ exit :
 
 
 static u32 it950x_rd_regbits (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  Processor       processor,
     IN  u32           registerAddress,
     IN  u8            position,
@@ -1864,7 +1864,7 @@ static u32 it950x_rd_regbits (
         u32 error = ModulatorError_NO_ERROR;
 	
 	u8 temp = 0;
-	error = it950x_rd_regs (modulator, processor, registerAddress, 1, &temp);
+	error = it950x_rd_regs (state, processor, registerAddress, 1, &temp);
 	if (error) goto exit;
 
 	if (length == 8) {
@@ -1880,7 +1880,7 @@ exit :
 
 
 static u32 IT9507_initialize (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
 	IN  u8            i2cAddr
 ) {
 
@@ -1889,98 +1889,98 @@ static u32 IT9507_initialize (
 	u32 version = 0;
 	u8 c1_default_value[2],c2_default_value[2],c3_default_value[2];
 
-	modulator->frequency = 642000;	
-	modulator->calibrationInfo.ptrIQtableEx =  IQ_fixed_table0;
-	modulator->calibrationInfo.tableGroups = IQ_TABLE_NROW;
-	modulator->i2cAddr = i2cAddr;
+	state->frequency = 642000;	
+	state->calibrationInfo.ptrIQtableEx =  IQ_fixed_table0;
+	state->calibrationInfo.tableGroups = IQ_TABLE_NROW;
+	state->i2cAddr = i2cAddr;
 
-	error = IT9507_getFirmwareVersion (modulator, Processor_LINK, &version);
+	error = IT9507_getFirmwareVersion (state, Processor_LINK, &version);
 	if (error) goto exit;
 	if (version != 0) {
-		modulator->booted = true;
+		state->booted = true;
 	} else {
-		modulator->booted = false;	
+		state->booted = false;	
 	}
 
 	/** Write secondary I2C address to device */
-	//error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, EagleUser_IIC_SPEED);
+	//error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, EagleUser_IIC_SPEED);
 	//if (error) goto exit;	
 	
-	error = it950x_wr_reg (modulator, Processor_LINK, second_i2c_address, 0x00);
+	error = it950x_wr_reg (state, Processor_LINK, second_i2c_address, 0x00);
 	if (error) goto exit;
 
 	
 	/** Load firmware */
-	error = it950x_load_firmware (modulator);
+	error = it950x_load_firmware (state);
         printk("it950x - returned from loadFirmware\n");
 	if (error) goto exit;
-	modulator->booted = true;
+	state->booted = true;
 
-	error = it950x_wr_reg (modulator, Processor_LINK, 0xD924, 0);//set UART -> GPIOH4
+	error = it950x_wr_reg (state, Processor_LINK, 0xD924, 0);//set UART -> GPIOH4
 	if (error) goto exit;
 
 
 	/** Set I2C master clock 100k in order to support tuner I2C. */
-	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, 0x7);//1a
+	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, 0x7);//1a
 	if (error) goto exit;
 
 	/** Load script */
 	if (scripts != NULL) {
-		error = IT9507_loadScript (modulator, scriptSets, scripts);
+		error = IT9507_loadScript (state, scriptSets, scripts);
 		if (error) goto exit;
 	}
 
 
-	error = it950x_wr_regbits (modulator, Processor_OFDM, 0xFB26, 7, 1, 1);
+	error = it950x_wr_regbits (state, Processor_OFDM, 0xFB26, 7, 1, 1);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFBBD, 0xE0);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xFBBD, 0xE0);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF99A, 0);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xF99A, 0);
 	if (error) goto exit;
 
-	error = EagleUser_Initialization(modulator);
+	error = EagleUser_Initialization(state);
 	if (error) goto exit;
 
 	/** Set the desired stream type */
-	error = IT9507_setTsInterface (modulator);
+	error = IT9507_setTsInterface (state);
 	if (error) goto exit;
 
 	/** Set H/W MPEG2 locked detection **/
-	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_lock3_out, 1);
+	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_top_lock3_out, 1);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_padmiscdrsr, 1);
+	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_top_padmiscdrsr, 1);
 	if (error) goto exit;
 	/** Set registers for driving power 0xD830 **/
-	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_padmiscdr2, 0);
+	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_top_padmiscdr2, 0);
 	if (error) goto exit;
 	
 
 	/** Set registers for driving power 0xD831 **/
-	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_padmiscdr4, 0);
+	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_top_padmiscdr4, 0);
 	if (error) goto exit;
 
 	/** Set registers for driving power 0xD832 **/
-	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_padmiscdr8, 0);
+	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_top_padmiscdr8, 0);
 	if (error) goto exit;   
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFB2E, 0x11);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xFB2E, 0x11);
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xFBB3, 0x98);
-	if (error) goto exit;
-
-	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, 2, c1_default_value);
-	if (error) goto exit;
-	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, 2, c2_default_value);
-	if (error) goto exit;
-	error = it950x_rd_regs (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, 2, c3_default_value);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xFBB3, 0x98);
 	if (error) goto exit;
 
-	modulator->calibrationInfo.c1DefaultValue = c1_default_value[1]<<8 | c1_default_value[0];
-	modulator->calibrationInfo.c2DefaultValue = c2_default_value[1]<<8 | c2_default_value[0];
-	modulator->calibrationInfo.c3DefaultValue = c3_default_value[1]<<8 | c3_default_value[0];
+	error = it950x_rd_regs (state, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, 2, c1_default_value);
+	if (error) goto exit;
+	error = it950x_rd_regs (state, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, 2, c2_default_value);
+	if (error) goto exit;
+	error = it950x_rd_regs (state, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, 2, c3_default_value);
+	if (error) goto exit;
+
+	state->calibrationInfo.c1DefaultValue = c1_default_value[1]<<8 | c1_default_value[0];
+	state->calibrationInfo.c2DefaultValue = c2_default_value[1]<<8 | c2_default_value[0];
+	state->calibrationInfo.c3DefaultValue = c3_default_value[1]<<8 | c3_default_value[0];
 
 exit:
 
@@ -1989,7 +1989,7 @@ exit:
 
 
 static u32 IT9507_setTxModeEnable (
-    IN  Modulator*            modulator,
+    IN  struct it950x_state*            state,
     IN  u8                    enable
 ) {
 	u32 error = ModulatorError_NO_ERROR;
@@ -1997,35 +1997,35 @@ static u32 IT9507_setTxModeEnable (
 	if(enable){
 
 		//afe Power up
-		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 0);
+		error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_afe_mem0, 0);
 		if (error) goto exit;
-		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_afe_mem1, 0xFC);
+		error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_afe_mem1, 0xFC);
 		if (error) goto exit;
 			
-		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_fec_sw_rst, 0);
+		error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_fec_sw_rst, 0);
 		if (error) goto exit;
 
-		error = it950x_wr_reg (modulator, Processor_LINK, 0xDDAB, 0);
+		error = it950x_wr_reg (state, Processor_LINK, 0xDDAB, 0);
 		if (error) goto exit;
 	
-		error = it950x_wr_reg (modulator, Processor_OFDM, eagle_reg_tx_fifo_overflow, 1); //clear
+		error = it950x_wr_reg (state, Processor_OFDM, eagle_reg_tx_fifo_overflow, 1); //clear
 		if (error) goto exit;
 		
 	}else{
 
-		error = it950x_wr_reg (modulator, Processor_LINK, 0xDDAB, 1);
+		error = it950x_wr_reg (state, Processor_LINK, 0xDDAB, 1);
 		if (error) goto exit;
-		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_fec_sw_rst, 1);
+		error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_fec_sw_rst, 1);
 		if (error) goto exit;
 
 		//afe Power down
-		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 1);
+		error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_afe_mem0, 1);
 		if (error) goto exit;
-		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_afe_mem1, 0xFE);
+		error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_afe_mem1, 0xFE);
 		if (error) goto exit;
 			
 	}
-	error = EagleUser_setTxModeEnable(modulator, enable);
+	error = EagleUser_setTxModeEnable(state, enable);
 exit :
 	msleep(100);
 	return (error);
@@ -2033,7 +2033,7 @@ exit :
 
 
 static u32 IT9507_setTXChannelModulation (
-    IN  Modulator*            modulator,
+    IN  struct it950x_state*            state,
     IN  ChannelModulation*      channelModulation
 ) {
 	u32 error = ModulatorError_NO_ERROR;
@@ -2041,31 +2041,31 @@ static u32 IT9507_setTXChannelModulation (
 	u8 temp;
 
 	//u8 temp;
-	error = IT9507_setTxModeEnable(modulator,0);
+	error = IT9507_setTxModeEnable(state,0);
 	if (error) goto exit;
 	/** Set constellation type */
 	temp=(u8)channelModulation->constellation;
 
-	modulator->channelModulation.constellation=channelModulation->constellation;
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xf721, temp);
+	state->channelModulation.constellation=channelModulation->constellation;
+	error = it950x_wr_reg (state, Processor_OFDM, 0xf721, temp);
 	if (error) goto exit;
 
-	modulator->channelModulation.highCodeRate=channelModulation->highCodeRate;
+	state->channelModulation.highCodeRate=channelModulation->highCodeRate;
 	temp=(u8)channelModulation->highCodeRate;
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xf723, temp);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xf723, temp);
 	if (error) goto exit;
 	/** Set low code rate */
 
 	/** Set guard interval */
-	modulator->channelModulation.interval=channelModulation->interval;
+	state->channelModulation.interval=channelModulation->interval;
 	temp=(u8)channelModulation->interval;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_tps_gi, temp);
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_tps_gi, temp);
 	if (error) goto exit;
 	/** Set FFT mode */
-	modulator->channelModulation.transmissionMode=channelModulation->transmissionMode;
+	state->channelModulation.transmissionMode=channelModulation->transmissionMode;
 	temp=(u8)channelModulation->transmissionMode;
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xf726, temp);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xf726, temp);
 	if (error) goto exit;
 
 
@@ -2092,10 +2092,10 @@ static u32 IT9507_setTXChannelModulation (
 
 	if(error)
 		goto exit;
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xf7C1, temp);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xf7C1, temp);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xf7C6, 1);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xf7C6, 1);
 	if (error) goto exit;
 
 exit :
@@ -2103,57 +2103,57 @@ exit :
 }
 
 static u32 IT9507_acquireTxChannel (
-	IN  Modulator*            modulator,
+	IN  struct it950x_state*            state,
     IN  u16            bandwidth,
     IN  u32           frequency
 ) {
 	u32 error = ModulatorError_NO_ERROR;
-	u16 TABLE_NROW = modulator->calibrationInfo.tableGroups;
-	if(modulator->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<frequency 
-		|| modulator->calibrationInfo.ptrIQtableEx[0].frequency>frequency 
+	u16 TABLE_NROW = state->calibrationInfo.tableGroups;
+	if(state->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<frequency 
+		|| state->calibrationInfo.ptrIQtableEx[0].frequency>frequency 
 	){
 		error = ModulatorError_FREQ_OUT_OF_RANGE;
 		goto exit;
 	}
 
-	error = IT9507_selectBandwidth (modulator, bandwidth);
+	error = IT9507_selectBandwidth (state, bandwidth);
 	if (error) goto exit;
-	modulator->bandwidth = bandwidth;
+	state->bandwidth = bandwidth;
 	
 	/** Set frequency */
 	
-	error = IT9507_setFrequency (modulator, frequency);
+	error = IT9507_setFrequency (state, frequency);
 	if (error) goto exit;
 	
-	error = EagleUser_acquireChannel(modulator, bandwidth, frequency);
+	error = EagleUser_acquireChannel(state, bandwidth, frequency);
 exit :
 	return (error);
 }
 
 #if 0
 static u32 IT9507_resetPSBBuffer (
-	IN  Modulator*    modulator
+	IN  struct it950x_state*    state
 ){
 	u32 error = ModulatorError_NO_ERROR;
 	u32 temp;
 
-	if(modulator->tsInterfaceType == PARALLEL_TS_INPUT)
+	if(state->tsInterfaceType == PARALLEL_TS_INPUT)
 		temp = 0xF9CC;
 	else
 		temp = 0xF9CD;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF9A4, 1);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xF9A4, 1);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, temp, 0);
+	error = it950x_wr_reg (state, Processor_OFDM, temp, 0);
 	if (error) goto exit;
 
 
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF9A4, 0);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xF9A4, 0);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, temp, 1);
+	error = it950x_wr_reg (state, Processor_OFDM, temp, 1);
 
 exit :
 
@@ -2163,145 +2163,145 @@ exit :
 #endif
 
 static u32 IT9507_setTsInterface (
-    IN  Modulator*    modulator
+    IN  struct it950x_state*    state
 ) {
     u32 error = ModulatorError_NO_ERROR;
 	u16 frameSize;
 	u8 packetSize;
 	u8 buffer[2];
 
-	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_dvbt_inten, eagle_reg_dvbt_inten_pos, eagle_reg_dvbt_inten_len, 1);
+	error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_dvbt_inten, eagle_reg_dvbt_inten_pos, eagle_reg_dvbt_inten_len, 1);
 	if (error) goto exit;
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mpeg_full_speed, eagle_reg_mpeg_full_speed_pos, eagle_reg_mpeg_full_speed_len, 0);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_mpeg_full_speed, eagle_reg_mpeg_full_speed_pos, eagle_reg_mpeg_full_speed_len, 0);
 	if (error) goto exit;
 
 	/** Enable DVB-T mode */
-	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_dvbt_en, eagle_reg_dvbt_en_pos, eagle_reg_dvbt_en_len, 1);
+	error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_dvbt_en, eagle_reg_dvbt_en_pos, eagle_reg_dvbt_en_len, 1);
 	if (error) goto exit;
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_mp2if_mpeg_ser_mode, mp2if_mpeg_ser_mode_pos, mp2if_mpeg_ser_mode_len, 0);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_mp2if_mpeg_ser_mode, mp2if_mpeg_ser_mode_pos, mp2if_mpeg_ser_mode_len, 0);
 	if (error) goto exit;
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_mp2if_mpeg_par_mode, mp2if_mpeg_par_mode_pos, mp2if_mpeg_par_mode_len, 0);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_mp2if_mpeg_par_mode, mp2if_mpeg_par_mode_pos, mp2if_mpeg_par_mode_len, 0);
 	if (error) goto exit;
 	/** Fix current leakage */
-	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
+	error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
 	if (error) goto exit;
-	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 0);
+	error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 0);
 	if (error) goto exit;
 	
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF714, 0);
+	error = it950x_wr_reg (state, Processor_OFDM, 0xF714, 0);
 	if (error) goto exit;
 
 	frameSize = EagleUser_USB20_FRAME_SIZE_DW;
 	packetSize = (u8) (EagleUser_USB20_MAX_PACKET_SIZE / 4);
 
 	
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2_sw_rst, eagle_reg_mp2_sw_rst_pos, eagle_reg_mp2_sw_rst_len, 1);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_mp2_sw_rst, eagle_reg_mp2_sw_rst_pos, eagle_reg_mp2_sw_rst_len, 1);
 	if (error) goto exit;
 
 	/** Reset EP5 */
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_sw_rst, eagle_reg_mp2if2_sw_rst_pos, eagle_reg_mp2if2_sw_rst_len, 1);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_mp2if2_sw_rst, eagle_reg_mp2if2_sw_rst_pos, eagle_reg_mp2if2_sw_rst_len, 1);
 	if (error) goto exit;
 
 	
 	/** Disable EP5 */
-	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep5_tx_en, eagle_reg_ep5_tx_en_pos, eagle_reg_ep5_tx_en_len, 0);
+	error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_ep5_tx_en, eagle_reg_ep5_tx_en_pos, eagle_reg_ep5_tx_en_len, 0);
 	if (error) goto exit;
 
 	/** Disable EP5 NAK */
-	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep5_tx_nak, eagle_reg_ep5_tx_nak_pos, eagle_reg_ep5_tx_nak_len, 0);
+	error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_ep5_tx_nak, eagle_reg_ep5_tx_nak_pos, eagle_reg_ep5_tx_nak_len, 0);
 	if (error) goto exit;
 
 
 	/** Enable EP5 */
-	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep5_tx_en, eagle_reg_ep5_tx_en_pos, eagle_reg_ep5_tx_en_len, 1);
+	error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_ep5_tx_en, eagle_reg_ep5_tx_en_pos, eagle_reg_ep5_tx_en_len, 1);
 	if (error) goto exit;
 
 	/** Set EP5 transfer length */
 	buffer[p_eagle_reg_ep5_tx_len_7_0 - p_eagle_reg_ep5_tx_len_7_0] = (u8) frameSize;
 	buffer[p_eagle_reg_ep5_tx_len_15_8 - p_eagle_reg_ep5_tx_len_7_0] = (u8) (frameSize >> 8);
-	error = it950x_wr_regs (modulator, Processor_LINK, p_eagle_reg_ep5_tx_len_7_0, 2, buffer);
+	error = it950x_wr_regs (state, Processor_LINK, p_eagle_reg_ep5_tx_len_7_0, 2, buffer);
 
 	/** Set EP5 packet size */
-	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_ep5_max_pkt, packetSize);
+	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_ep5_max_pkt, packetSize);
 	if (error) goto exit;
 
 	/** Disable 15 SER/PAR mode */
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_mp2if_mpeg_ser_mode, mp2if_mpeg_ser_mode_pos, mp2if_mpeg_ser_mode_len, 0);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_mp2if_mpeg_ser_mode, mp2if_mpeg_ser_mode_pos, mp2if_mpeg_ser_mode_len, 0);
 	if (error) goto exit;
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_mp2if_mpeg_par_mode, mp2if_mpeg_par_mode_pos, mp2if_mpeg_par_mode_len, 0);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_mp2if_mpeg_par_mode, mp2if_mpeg_par_mode_pos, mp2if_mpeg_par_mode_len, 0);
 	if (error) goto exit;
 
 	
 	/** Enable mp2if2 */
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_en, eagle_reg_mp2if2_en_pos, eagle_reg_mp2if2_en_len, 1);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_mp2if2_en, eagle_reg_mp2if2_en_pos, eagle_reg_mp2if2_en_len, 1);
 	if (error) goto exit;
 
 		/** Enable tsis */
-		error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_tsip_en, eagle_reg_tsip_en_pos, eagle_reg_tsip_en_len, 0);
+		error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_tsip_en, eagle_reg_tsip_en_pos, eagle_reg_tsip_en_len, 0);
 		if (error) goto exit;
-		error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_tsis_en, eagle_reg_tsis_en_pos, eagle_reg_tsis_en_len, 1);
+		error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_tsis_en, eagle_reg_tsis_en_pos, eagle_reg_tsis_en_len, 1);
 		if (error) goto exit;
-		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_ts_in_src, 0);
+		error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_ts_in_src, 0);
 		if (error) goto exit;
 
 	/** Negate EP4 reset */
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2_sw_rst, eagle_reg_mp2_sw_rst_pos, eagle_reg_mp2_sw_rst_len, 0);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_mp2_sw_rst, eagle_reg_mp2_sw_rst_pos, eagle_reg_mp2_sw_rst_len, 0);
 	if (error) goto exit;
 
 	/** Negate EP5 reset */
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_sw_rst, eagle_reg_mp2if2_sw_rst_pos, eagle_reg_mp2if2_sw_rst_len, 0);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_mp2if2_sw_rst, eagle_reg_mp2if2_sw_rst_pos, eagle_reg_mp2if2_sw_rst_len, 0);
 	if (error) goto exit;
 
 
 	/** Split 15 PSB to 1K + 1K and enable flow control */
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2if2_half_psb, eagle_reg_mp2if2_half_psb_pos, eagle_reg_mp2if2_half_psb_len, 0);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_mp2if2_half_psb, eagle_reg_mp2if2_half_psb_pos, eagle_reg_mp2if2_half_psb_len, 0);
 	if (error) goto exit;
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_mp2if_stop_en, eagle_reg_mp2if_stop_en_pos, eagle_reg_mp2if_stop_en_len, 1);
+	error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_mp2if_stop_en, eagle_reg_mp2if_stop_en_pos, eagle_reg_mp2if_stop_en_len, 1);
 	if (error) goto exit;			
 
-	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_top_host_reverse, 0);
+	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_top_host_reverse, 0);
 	if (error) goto exit;
 
-	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep6_rx_en, eagle_reg_ep6_rx_en_pos, eagle_reg_ep6_rx_en_len, 0);
+	error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_ep6_rx_en, eagle_reg_ep6_rx_en_pos, eagle_reg_ep6_rx_en_len, 0);
 	if (error) goto exit;
 
-	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep6_rx_nak, eagle_reg_ep6_rx_nak_pos, eagle_reg_ep6_rx_nak_len, 0);
+	error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_ep6_rx_nak, eagle_reg_ep6_rx_nak_pos, eagle_reg_ep6_rx_nak_len, 0);
 	if (error) goto exit;
 
 
-	error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_ep6_rx_en, eagle_reg_ep6_rx_en_pos, eagle_reg_ep6_rx_en_len, 1);
+	error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_ep6_rx_en, eagle_reg_ep6_rx_en_pos, eagle_reg_ep6_rx_en_len, 1);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_ep6_max_pkt, 0x80);
+	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_ep6_max_pkt, 0x80);
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_ep6_cnt_num_7_0, 0x16);
+	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_ep6_cnt_num_7_0, 0x16);
 	if (error) goto exit;
 
-	error = EagleUser_mpegConfig (modulator);
+	error = EagleUser_mpegConfig (state);
 
 exit :
 	return (error);
 }
 
 static u32 IT9507_TXreboot (
-    IN  Modulator*    modulator
+    IN  struct it950x_state*    state
 )  {
 	u32 error = ModulatorError_NO_ERROR;
 	u32 version;
 	u8 i;
 	
-	error = IT9507_getFirmwareVersion (modulator, Processor_LINK, &version);
+	error = IT9507_getFirmwareVersion (state, Processor_LINK, &version);
 	if (error) goto exit;
 	if (version == 0xFFFFFFFF) goto exit;       
 	if (version != 0) {
 		
-		error = IT9507Cmd_reboot (modulator);
+		error = IT9507Cmd_reboot (state);
 		msleep(1);
 		goto exit;
 	}
 
-	modulator->booted = false;
+	state->booted = false;
 
 exit :
 	return (error);
@@ -2309,33 +2309,33 @@ exit :
 
 
 static u32 IT9507_controlPowerSaving (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  u8            control
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 
 	if (control) {
 		/** Power up case */
-		error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 0);
+		error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 0);
 		if (error) goto exit;
-		error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_dyn0_clk, 0);
+		error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_dyn0_clk, 0);
 		if (error) goto exit;
 
 		/** Fixed current leakage */
-		error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
+		error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
 		if (error) goto exit;
 		/** Disable HostB parallel */  
-		error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 0);
+		error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 0);
 		if (error) goto exit;
 	} else {
 		/** Power down case */
-		error = it950x_wr_regbits (modulator, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 1);
+		error = it950x_wr_regbits (state, Processor_OFDM, p_eagle_reg_afe_mem0, 3, 1, 1);
 
 		/** Fixed current leakage */
 		/** Enable HostB parallel */
-		error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
+		error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_top_hostb_mpeg_ser_mode, eagle_reg_top_hostb_mpeg_ser_mode_pos, eagle_reg_top_hostb_mpeg_ser_mode_len, 0);
 		if (error) goto exit;
-		error = it950x_wr_regbits (modulator, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 1);
+		error = it950x_wr_regbits (state, Processor_LINK, p_eagle_reg_top_hostb_mpeg_par_mode, eagle_reg_top_hostb_mpeg_par_mode_pos, eagle_reg_top_hostb_mpeg_par_mode_len, 1);
 		if (error) goto exit;						
 	}
 
@@ -2347,7 +2347,7 @@ exit :
 
 
 static u32 IT9507_sendHwPSITable (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  u8*            pbuffer
 ) {
  	u32 error = ModulatorError_NO_ERROR;
@@ -2355,36 +2355,36 @@ static u32 IT9507_sendHwPSITable (
 	u8 tempbuf[10] ;
 	u8 i,temp;
 	
-	error = it950x_rd_regs (modulator, Processor_OFDM, psi_table1_timer_H, 10, temp_timer);		//save pei table timer	
+	error = it950x_rd_regs (state, Processor_OFDM, psi_table1_timer_H, 10, temp_timer);		//save pei table timer	
 	if (error) goto exit;
 
 	for(i=0;i<10;i++)
 		tempbuf[i] = 0;
 
-	error = it950x_wr_regs (modulator, Processor_OFDM, psi_table1_timer_H, 10, tempbuf);		//stop send FW psi table	
+	error = it950x_wr_regs (state, Processor_OFDM, psi_table1_timer_H, 10, tempbuf);		//stop send FW psi table	
 	if (error) goto exit;
 
 	for(i=0 ; i<50 ;i++){
-		error = it950x_rd_reg (modulator, Processor_OFDM, p_reg_psi_access, &temp);		//wait per table send	
+		error = it950x_rd_reg (state, Processor_OFDM, p_reg_psi_access, &temp);		//wait per table send	
 		if (error) goto exit;
 		if(temp == 0) break;
 		msleep(1);
 	}
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_reg_psi_index, 0);
+	error = it950x_wr_reg (state, Processor_OFDM, p_reg_psi_index, 0);
 	if (error) goto exit;
 
 	for(i=0;i<188;i++){
 		temp = pbuffer[i];	
-		error = it950x_wr_reg (modulator, Processor_OFDM, p_reg_psi_dat,  temp); //write data to HW psi table buffer
+		error = it950x_wr_reg (state, Processor_OFDM, p_reg_psi_dat,  temp); //write data to HW psi table buffer
 		if (error) goto exit;
 	}
 
-	error = it950x_wr_regbits (modulator, Processor_OFDM, p_reg_psi_access, reg_psi_access_pos, reg_psi_access_len, 1); //send psi tabledata
+	error = it950x_wr_regbits (state, Processor_OFDM, p_reg_psi_access, reg_psi_access_pos, reg_psi_access_len, 1); //send psi tabledata
 	if (error) goto exit;
 
 	
-	error = it950x_wr_regs (modulator, Processor_OFDM, psi_table1_timer_H, 10, temp_timer);		//set org timer	
+	error = it950x_wr_regs (state, Processor_OFDM, psi_table1_timer_H, 10, temp_timer);		//set org timer	
 	if (error) goto exit;
 
 	
@@ -2395,7 +2395,7 @@ exit :
 }
 
 static u32 IT9507_accessFwPSITable (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  u8		  psiTableIndex,
 	IN  u8*         pbuffer
 ) {
@@ -2407,11 +2407,11 @@ static u32 IT9507_accessFwPSITable (
 	temp[0] = 0;
 	temp[1] = 0;
 	if((psiTableIndex>0)&&(psiTableIndex<6)){
-		error = it950x_wr_regs (modulator, Processor_OFDM, psi_table1_timer_H+(psiTableIndex-1)*2, 2, temp);		//set timer	= 0 & stop
+		error = it950x_wr_regs (state, Processor_OFDM, psi_table1_timer_H+(psiTableIndex-1)*2, 2, temp);		//set timer	= 0 & stop
 		if (error) goto exit;
 
 		for(i=0;i<188;i++){
-			error = it950x_wr_reg (modulator, Processor_OFDM, (PSI_table1+(psiTableIndex-1)*188)+i, pbuffer[i]);
+			error = it950x_wr_reg (state, Processor_OFDM, (PSI_table1+(psiTableIndex-1)*188)+i, pbuffer[i]);
 			if (error) goto exit;
 
 		}
@@ -2427,7 +2427,7 @@ exit :
 }
 
 static u32 IT9507_setFwPSITableTimer (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  u8		  psiTableIndex,
 	IN  u16          timer_ms
 ) {
@@ -2441,7 +2441,7 @@ static u32 IT9507_setFwPSITableTimer (
 
 
 	if((psiTableIndex>0)&&(psiTableIndex<6)){	
-		error = it950x_wr_regs (modulator, Processor_OFDM, psi_table1_timer_H+(psiTableIndex-1)*2, 2,temp);		
+		error = it950x_wr_regs (state, Processor_OFDM, psi_table1_timer_H+(psiTableIndex-1)*2, 2,temp);		
 	}else{
 		error = ModulatorError_INVALID_INDEX;
 	}	
@@ -2450,20 +2450,20 @@ static u32 IT9507_setFwPSITableTimer (
 
 
 static u32 IT9507_setSlaveIICAddress (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
 	IN  u8          SlaveAddress
 ){
 	u32 error = ModulatorError_NO_ERROR;
 
-	if(modulator != NULL)
-		modulator->slaveIICAddr = SlaveAddress;
+	if(state != NULL)
+		state->slaveIICAddr = SlaveAddress;
 	else
 		error  = ModulatorError_NULL_HANDLE_PTR;
     return (error);
 }
 
 static u32 IT9507_adjustOutputGain (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  int			  *gain	   
 ){
 	u32 error = ModulatorError_NO_ERROR;
@@ -2484,9 +2484,9 @@ static u32 IT9507_adjustOutputGain (
 	int gain_X10 = *gain * 10;
 	bool overflow = false;
 
-	c1value_default = modulator->calibrationInfo.c1DefaultValue;
-	c2value_default = modulator->calibrationInfo.c2DefaultValue;
-	c3value_default = modulator->calibrationInfo.c3DefaultValue;	
+	c1value_default = state->calibrationInfo.c1DefaultValue;
+	c2value_default = state->calibrationInfo.c2DefaultValue;
+	c3value_default = state->calibrationInfo.c3DefaultValue;	
 	
 	if (c1value_default>1023) c1value_default = c1value_default-2048;
 	if (c2value_default>1023) c2value_default = c2value_default-2048;
@@ -2580,19 +2580,19 @@ static u32 IT9507_adjustOutputGain (
 	c2value = (c2value%2048);
 	c3value = (c3value%2048);
 	*gain = i/10;
-	modulator->calibrationInfo.outputGain = *gain;
+	state->calibrationInfo.outputGain = *gain;
 	
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, (u8)(c1value&0x00ff));
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_iqik_c1_7_0, (u8)(c1value&0x00ff));
 	if (error) goto exit;		
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c1_10_8, (u8)(c1value>>8));
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_iqik_c1_10_8, (u8)(c1value>>8));
 	if (error) goto exit;		
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, (u8)(c2value&0x00ff));
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_iqik_c2_7_0, (u8)(c2value&0x00ff));
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c2_10_8, (u8)(c2value>>8));
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_iqik_c2_10_8, (u8)(c2value>>8));
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, (u8)(c3value&0x00ff));
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_iqik_c3_7_0, (u8)(c3value&0x00ff));
 	if (error) goto exit;
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_c3_10_8, (u8)(c3value>>8));
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_iqik_c3_10_8, (u8)(c3value>>8));
 	if (error) goto exit;
 
 exit:
@@ -2601,7 +2601,7 @@ exit:
 }
 
 static u32 IT9507_getGainRange (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	IN  u32           frequency,
 	IN  u16            bandwidth,    
 	OUT int*			maxGain,
@@ -2609,52 +2609,52 @@ static u32 IT9507_getGainRange (
 ){
 	u32 error = ModulatorError_NO_ERROR;
 	u8 val[6];
-	u16 TABLE_NROW = modulator->calibrationInfo.tableGroups;
-	if(modulator->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<frequency 
-		|| modulator->calibrationInfo.ptrIQtableEx[0].frequency>frequency 
+	u16 TABLE_NROW = state->calibrationInfo.tableGroups;
+	if(state->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<frequency 
+		|| state->calibrationInfo.ptrIQtableEx[0].frequency>frequency 
 	){
 		error = ModulatorError_FREQ_OUT_OF_RANGE;
 		goto exit;
 	}
 
 	if((bandwidth !=0) && (frequency !=0)){
-		error = EagleTuner_calIQCalibrationValue(modulator,frequency,val);
+		error = EagleTuner_calIQCalibrationValue(state,frequency,val);
 	}else{
 		error = ModulatorError_FREQ_OUT_OF_RANGE;
 		goto exit;
 	}
 
 	*maxGain = 100;
-	IT9507_calOutputGain(modulator, val, maxGain);
+	IT9507_calOutputGain(state, val, maxGain);
 
 	*minGain = -100;
-	IT9507_calOutputGain(modulator, val, minGain);
+	IT9507_calOutputGain(state, val, minGain);
 exit:		
 	return (error);
 }
 
 static u32 IT9507_getOutputGain (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
 	OUT  int			  *gain	   
 ){
    
-    *gain = modulator->calibrationInfo.outputGain;
+    *gain = state->calibrationInfo.outputGain;
 
     return(ModulatorError_NO_ERROR);
 }
 
 static u32 IT9507_setTPS (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  TPS           tps
 ){
 	u32   error = ModulatorError_NO_ERROR;
 	//---- set TPS Cell ID
 	
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF727, (u8)(tps.cellid>>8));
+	error = it950x_wr_reg (state, Processor_OFDM, 0xF727, (u8)(tps.cellid>>8));
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, 0xF728, (u8)(tps.cellid));
+	error = it950x_wr_reg (state, Processor_OFDM, 0xF728, (u8)(tps.cellid));
 		
 exit:	
 	return (error);
@@ -2662,7 +2662,7 @@ exit:
 }
 
 static u32 IT9507_getTPS (
-    IN  Modulator*    modulator,
+    IN  struct it950x_state*    state,
     IN  pTPS           pTps
 ){
 	u32   error = ModulatorError_NO_ERROR;
@@ -2670,11 +2670,11 @@ static u32 IT9507_getTPS (
 	u8 temp;
 	u16 cellID = 0;
 
-	error = it950x_rd_reg (modulator, Processor_OFDM, 0xF727, &temp);//get cell id
+	error = it950x_rd_reg (state, Processor_OFDM, 0xF727, &temp);//get cell id
 	if (error) goto exit;
 	cellID = temp<<8;
 
-	error = it950x_rd_reg (modulator, Processor_OFDM, 0xF728, &temp);//get cell id
+	error = it950x_rd_reg (state, Processor_OFDM, 0xF728, &temp);//get cell id
 	cellID = cellID | temp;	
 	pTps->cellid = cellID;
 
@@ -2683,7 +2683,7 @@ exit:
 }
 
 static u32 IT9507_setIQtable (
-	IN  Modulator*    modulator,
+	IN  struct it950x_state*    state,
     IN  IQtable *IQ_table_ptr,
 	IN  u16 tableGroups
 ){
@@ -2691,18 +2691,18 @@ static u32 IT9507_setIQtable (
 
 	if(IQ_table_ptr == NULL){
 		error = ModulatorError_NULL_PTR;
-		modulator->calibrationInfo.ptrIQtableEx =  IQ_fixed_table0; // set to default table
-		modulator->calibrationInfo.tableGroups = IQ_TABLE_NROW;
+		state->calibrationInfo.ptrIQtableEx =  IQ_fixed_table0; // set to default table
+		state->calibrationInfo.tableGroups = IQ_TABLE_NROW;
 	}else{
-		modulator->calibrationInfo.ptrIQtableEx = IQ_table_ptr;
-		modulator->calibrationInfo.tableGroups = tableGroups;
+		state->calibrationInfo.ptrIQtableEx = IQ_table_ptr;
+		state->calibrationInfo.tableGroups = tableGroups;
 	}
 	return (error);
 }
 
 
 static u32 IT9507_setDCCalibrationValue (
-	IN  Modulator*	modulator,
+	IN  struct it950x_state*	state,
     IN	int			dc_i,
 	IN	int			dc_q
 ){
@@ -2719,16 +2719,16 @@ static u32 IT9507_setDCCalibrationValue (
 	else
 		dc_q_temp = ((u16)dc_q) & 0x01FF;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_i_7_0, (u8)(dc_i_temp));
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_iqik_dc_i_7_0, (u8)(dc_i_temp));
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_i_8, (u8)(dc_i_temp>>8));
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_iqik_dc_i_8, (u8)(dc_i_temp>>8));
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_q_7_0, (u8)(dc_q_temp));
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_iqik_dc_q_7_0, (u8)(dc_q_temp));
 	if (error) goto exit;
 
-	error = it950x_wr_reg (modulator, Processor_OFDM, p_eagle_reg_iqik_dc_q_8, (u8)(dc_q_temp>>8));
+	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_iqik_dc_q_8, (u8)(dc_q_temp>>8));
 	if (error) goto exit;
 exit:
 	return (error);
@@ -2801,23 +2801,23 @@ static u32  DRV_Initialize(
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
-	if(EagleUser_getDeviceType(&pdc->modulator, &pdc->deviceType) != 0)
+	if(EagleUser_getDeviceType(&pdc->state, &pdc->deviceType) != 0)
 		printk("- EagleUser_getDeviceType fail -\n");
 
-	if(IT9507_setSlaveIICAddress(&pdc->modulator, SLAVE_DEMOD_2WIREADDR) != 0)
+	if(IT9507_setSlaveIICAddress(&pdc->state, SLAVE_DEMOD_2WIREADDR) != 0)
 		printk("- IT9507_setSlaveIICAddress fail -\n");	
 	
 	
-	if(pdc->modulator.booted) //from Standard_setBusTuner() > Standard_getFirmwareVersion()
+	if(pdc->state.booted) //from Standard_setBusTuner() > Standard_getFirmwareVersion()
     	{
         	//use "Command_QUERYINFO" to get fw version 
-        	error = IT9507_getFirmwareVersion(&pdc->modulator, Processor_OFDM, &cmdVersion);
+        	error = IT9507_getFirmwareVersion(&pdc->state, Processor_OFDM, &cmdVersion);
         	if(error) deb_data("DRV_Initialize : IT9507_getFirmwareVersion : error = 0x%08u\n", error);
 
         	if(cmdVersion != DVB_OFDM_VERSION)
         	{
             		deb_data("Reboot: Outside Fw = 0x%x, Inside Fw = 0x%x", DVB_OFDM_VERSION, cmdVersion);
-            		error = IT9507_TXreboot(&pdc->modulator);
+            		error = IT9507_TXreboot(&pdc->state);
             		pdc->bBootCode = true;
             		if(error) 
             		{
@@ -2837,20 +2837,20 @@ static u32  DRV_Initialize(
 
 	//			case StreamType_DVBT_DATAGRAM:
 	deb_data("    StreamType_DVBT_DATAGRAM\n");
-	error = IT9507_initialize (&pdc->modulator, 0);
+	error = IT9507_initialize (&pdc->state, 0);
 				 
 	if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 	else deb_data("    Device initialize TX Ok\n");
 
-    IT9507_getFirmwareVersion (&pdc->modulator, Processor_OFDM, &cmdVersion);
+    IT9507_getFirmwareVersion (&pdc->state, Processor_OFDM, &cmdVersion);
     deb_data("    FwVer OFDM = 0x%x, ", cmdVersion);
-    IT9507_getFirmwareVersion (&pdc->modulator, Processor_LINK, &cmdVersion);
+    IT9507_getFirmwareVersion (&pdc->state, Processor_LINK, &cmdVersion);
     deb_data("FwVer LINK = 0x%x\n", cmdVersion);
     
 	/* Solve 0-byte packet error. write Link 0xDD8D[3] = 1 */
-	//error = Demodulator_readRegister((Demodulator*) &pdc->demodulator, Processor_LINK, 0xdd8d, &usb_dma_reg);
+	//error = Destate_readRegister((Destate*) &pdc->destate, Processor_LINK, 0xdd8d, &usb_dma_reg);
 	//usb_dma_reg |= 0x08;             /*reg_usb_min_len*/
-	//error = Demodulator_writeRegister((Demodulator*) &pdc->demodulator, Processor_LINK, 0xdd8d, usb_dma_reg);
+	//error = Destate_writeRegister((Destate*) &pdc->destate, Processor_LINK, 0xdd8d, usb_dma_reg);
     
     return error;
 	
@@ -2901,8 +2901,8 @@ static u32 DRV_GetEEPROMConfig(
 	deb_data("- Enter %s Function -",__FUNCTION__);
 
 	//patch for read eeprom valid bit
-	dwError = it950x_rd_reg(&pdc->modulator, Processor_LINK, chip_version_7_0, &chip_version);
-	dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, chip_version_7_0+1, 2, var);
+	dwError = it950x_rd_reg(&pdc->state, Processor_LINK, chip_version_7_0, &chip_version);
+	dwError = it950x_rd_regs(&pdc->state, Processor_LINK, chip_version_7_0+1, 2, var);
 
 	if(dwError) deb_data("DRV_GetEEPROMConfig fail---cant read chip version");
 
@@ -2910,13 +2910,13 @@ static u32 DRV_GetEEPROMConfig(
 	if(chip_Type==0x9135 && chip_version == 2) //Om2
 	{
 		pdc->chip_version = 2;
-		dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, 0x461d, 1, &btmp);
+		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, 0x461d, 1, &btmp);
 		deb_data("Chip Version is %d---and Read 461d---valid bit = 0x%02X", chip_version, btmp);
 	}
 	else 
 	{
 		pdc->chip_version = 1; //Om1
-		dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, 0x4979, 1, &btmp);
+		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, 0x4979, 1, &btmp);
 		deb_data("Chip Version is %d---and Read 4979---valid bit = 0x%02X", chip_version, btmp);
 	}
 	if (dwError) 
@@ -2932,21 +2932,21 @@ static u32 DRV_GetEEPROMConfig(
 		pdc->bSupportSelSuspend = false;
 		pdc->bDualTs = false;
     	pdc->architecture = Architecture_DCA;
-    	//pdc->modulator.chipNumber = 1;    
+    	//pdc->state.chipNumber = 1;    
     	pdc->bDCAPIP = false;
 		pdc->fc[0].tunerinfo.TunerId = 0x38;
 	}
 	else
 	{
 		deb_data("=============Need read eeprom");
-		dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, EEPROM_IRMODE, 1, &btmp);
+		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_IRMODE, 1, &btmp);
     	if (dwError) goto exit;
     	deb_data("EEPROM_IRMODE = 0x%02X, ", btmp);	
 
 //selective suspend
     	pdc->bSupportSelSuspend = false;
 	    //btmp = 0; //not support in v8.12.12.3
-   		//dwError = it950x_rd_regs((Demodulator*) &pdc->Demodulator, Processor_LINK, EEPROM_SELSUSPEND, 1, &btmp);
+   		//dwError = it950x_rd_regs((Destate*) &pdc->Destate, Processor_LINK, EEPROM_SELSUSPEND, 1, &btmp);
    	 	//if (dwError) goto exit;
     	//if(btmp<2)
     	//	PDC->bSupportSelSuspend = btmp ? true:false; 
@@ -2955,10 +2955,10 @@ static u32 DRV_GetEEPROMConfig(
 //bDualTs option   
     	pdc->bDualTs = false;
     	pdc->architecture = Architecture_DCA;
-    	//pdc->modulator.chipNumber = 1;    
+    	//pdc->state.chipNumber = 1;    
     	pdc->bDCAPIP = false;
 
-    	dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, EEPROM_TSMODE, 1, &btmp);
+    	dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_TSMODE, 1, &btmp);
     	if (dwError) goto exit;
     	deb_data("EEPROM_TSMODE = 0x%02X", btmp);
 
@@ -2970,25 +2970,25 @@ static u32 DRV_GetEEPROMConfig(
    		{
         	deb_data("TSMode = DCA+PIP mode\n");
 			pdc->architecture = Architecture_DCA;
-        	//pdc->modulator.chipNumber = 2;
+        	//pdc->state.chipNumber = 2;
         	pdc->bDualTs = true;
         	pdc->bDCAPIP = true;
     	}
     	else if (btmp == 2) 
     	{ 
         	deb_data("TSMode = DCA mode\n");
-        	//pdc->modulator.chipNumber = 2;
+        	//pdc->state.chipNumber = 2;
     	}
     	else if (btmp == 3) 
     	{
         	deb_data("TSMode = PIP mode\n");
         	pdc->architecture = Architecture_PIP;
-        	//pdc->modulator.chipNumber = 2;
+        	//pdc->state.chipNumber = 2;
         	pdc->bDualTs = true;
     	}
 
 //tunerID option, in Omega, not need to read register, just assign 0x38;
-		dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, EEPROM_TUNERID, 1, &btmp);
+		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_TUNERID, 1, &btmp);
 		if (btmp==0x51) {
 			pdc->fc[0].tunerinfo.TunerId = 0x51;  	
 		}
@@ -3014,12 +3014,12 @@ static u32 DRV_GetEEPROMConfig(
 			deb_data("pdc->fc[1].tunerinfo.TunerId = 0x%x", pdc->fc[1].tunerinfo.TunerId);
 		}
 
-		//dwError = it950x_wr_reg((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, EEPROM_SUSPEND, 0);
-		dwError = it950x_rd_regs(&pdc->modulator, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
+		//dwError = it950x_wr_reg((Destate*) &pdc->Destate, 0, Processor_LINK, EEPROM_SUSPEND, 0);
+		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
 		deb_data("EEPROM susped mode=%d", btmp);
     	
     }
-		//pdc->modulator.chipNumber = 1; 
+		//pdc->state.chipNumber = 1; 
 //init some device info
 	for(ucSlaveDemod = 0; ucSlaveDemod <= (u8)pdc->bDualTs; ucSlaveDemod++)
 	{
@@ -3043,14 +3043,14 @@ static u32 DRV_SetBusTuner(
 	deb_data("- Enter %s Function -",__FUNCTION__);
 	deb_data("tunerId =0x%x\n", tunerId);
 
-	dwError = IT9507_getFirmwareVersion (&pdc->modulator, Processor_LINK, &version);
+	dwError = IT9507_getFirmwareVersion (&pdc->state, Processor_LINK, &version);
     	if (version != 0) {
-        	pdc->modulator.booted = true;
+        	pdc->state.booted = true;
     	} 
     	else {
-        	pdc->modulator.booted = false;
+        	pdc->state.booted = false;
     	}
-	if (dwError) {deb_data("Demodulator_getFirmwareVersion  error\n");}
+	if (dwError) {deb_data("Destate_getFirmwareVersion  error\n");}
 
     	return(dwError); 
 }
@@ -3067,14 +3067,14 @@ static u32 DRV_NIMReset(
     deb_data("- Enter %s Function -\n",__FUNCTION__);
     //Set AF0350 GPIOH1 to 0 to reset AF0351
 
-    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_en, reg_top_gpioh1_en_pos, reg_top_gpioh1_en_len, 1);
-    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_on, reg_top_gpioh1_on_pos, reg_top_gpioh1_on_len, 1);
-    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 0);
+    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK,  p_reg_top_gpioh1_en, reg_top_gpioh1_en_pos, reg_top_gpioh1_en_len, 1);
+    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK,  p_reg_top_gpioh1_on, reg_top_gpioh1_on_pos, reg_top_gpioh1_on_len, 1);
+    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 0);
 
 //    mdelay(50);
 	msleep(50);
 
-    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 1);
+    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 1);
 
     return(dwError);
 }
@@ -3088,13 +3088,13 @@ static u32 DRV_InitNIMSuspendRegs(
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
     deb_data("- Enter %s Function -\n",__FUNCTION__);
 
-    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 1);
-    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 1);
-    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 1);
+    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 1);
+    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 
-    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_pwrdw, reg_top_pwrdw_pos, reg_top_pwrdw_len, 1);
+    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_pwrdw, reg_top_pwrdw_pos, reg_top_pwrdw_len, 1);
 
-    dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_pwrdw_hwen, reg_top_pwrdw_hwen_pos, reg_top_pwrdw_hwen_len, 1);
+    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_pwrdw_hwen, reg_top_pwrdw_hwen_pos, reg_top_pwrdw_hwen_len, 1);
 
     return(dwError);
 }
@@ -3120,10 +3120,10 @@ static u32 NIM_ResetSeq(IN  void *	handle)
 	//reset 9133 -> boot -> demod init
 
 	//GPIOH5 init
-	dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 0);
-	dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 0);
+	dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 0);
+	dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 0);
 		
-	//dwError = it950x_wr_regbits((Demodulator*) &pdc->Demodulator, 0, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+	//dwError = it950x_wr_regbits((Destate*) &pdc->Destate, 0, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 	//mdelay(100);
 
 	deb_data("aaa start DRV_NIMReset");
@@ -3132,10 +3132,10 @@ static u32 NIM_ResetSeq(IN  void *	handle)
 	dwError = DRV_InitNIMSuspendRegs(handle);
 	
 	deb_data("aaa start writeGenericRegisters");
-	dwError = IT9507_writeGenericRegisters (&pdc->modulator, 0x3a, 0x06, bootbuffer);
+	dwError = IT9507_writeGenericRegisters (&pdc->state, 0x3a, 0x06, bootbuffer);
 	
 	deb_data("aaa start readGenericRegisters");
-	dwError = IT9507_readGenericRegisters (&pdc->modulator, 0x3a, 0x05, bootbuffer);
+	dwError = IT9507_readGenericRegisters (&pdc->state, 0x3a, 0x05, bootbuffer);
 	deb_data("aaa print I2C reply");
 	for(i=0; i<5; i++)
 		deb_data("aaa bootbuffer[%d] = 0x%x", i, bootbuffer[i]);
@@ -3143,7 +3143,7 @@ static u32 NIM_ResetSeq(IN  void *	handle)
 //	mdelay(50); //delay for Fw boot	
 	msleep(50); //delay for Fw boot	
 
-	//it950x_rd_reg((Demodulator*) &pdc->Demodulator, Processor_LINK, 0x4100, &ucValue);
+	//it950x_rd_reg((Destate*) &pdc->Destate, Processor_LINK, 0x4100, &ucValue);
 	
 	//Demod & Tuner init
 	deb_data("aaa DL_Initialize");
@@ -3165,10 +3165,10 @@ static u32 DRV_NIMSuspend(
     deb_data("- Enter DRV_NIMSuspend : bSuspend = %s\n", bSuspend ? "ON":"OFF");
 
     if(bSuspend) { //sleep
-    	dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
+    	dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
 		if(dwError) return (dwError);
     } else {        //resume 
-		dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+		dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
 		if(dwError) return (dwError);
     }
 
@@ -3213,7 +3213,7 @@ static u32 DRV_ApCtrl(
 			if (pdc->fc[0].bTimerOn || pdc->fc[1].bTimerOn) 
 			{				
 				deb_data("CLOSE 1<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-				IT9507_acquireTxChannel(&pdc->modulator, pdc->fc[!ucSlaveDemod].ucCurrentBandWidth, pdc->fc[!ucSlaveDemod].ulCurrentFrequency);
+				IT9507_acquireTxChannel(&pdc->state, pdc->fc[!ucSlaveDemod].ucCurrentBandWidth, pdc->fc[!ucSlaveDemod].ulCurrentFrequency);
 				return 0;
 			}
 		}
@@ -3244,7 +3244,7 @@ static u32 DRV_ApCtrl(
 				for(i=0; i<5 ;i++) 
 				{        
 					deb_data("DRV_ApCtrl::DummyCmd %d\n", i);
-					dwError = IT9507_getFirmwareVersion (&pdc->modulator, Processor_LINK, &version);
+					dwError = IT9507_getFirmwareVersion (&pdc->state, Processor_LINK, &version);
 //					mdelay(1);
 					msleep(1);
 					//if (!dwError) break;
@@ -3252,11 +3252,11 @@ static u32 DRV_ApCtrl(
 				pdc->UsbCtrlTimeOut = 5;
 				
 				deb_data("aaa IT9507_controlTunerPowerSaving chip_%d\n", ucSlaveDemod);
-	//			dwError = IT9507_controlTunerPower((Demodulator*) &pdc->Demodulator, bOn);
+	//			dwError = IT9507_controlTunerPower((Destate*) &pdc->Destate, bOn);
 	//			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04ld", dwError);
 
 				deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
-				dwError = IT9507_controlPowerSaving(&pdc->modulator, bOn);
+				dwError = IT9507_controlPowerSaving(&pdc->state, bOn);
 				if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x", dwError);
 			}
 		}
@@ -3274,7 +3274,7 @@ static u32 DRV_ApCtrl(
 				for(i=0; i<5 ;i++) 
 				{        
 					deb_data("DRV_ApCtrl::DummyCmd %d\n", i);
-					dwError = IT9507_getFirmwareVersion (&pdc->modulator, Processor_LINK, &version);
+					dwError = IT9507_getFirmwareVersion (&pdc->state, Processor_LINK, &version);
 //					mdelay(1);
 					msleep(1);					
 					//if (!dwError) break;
@@ -3288,11 +3288,11 @@ static u32 DRV_ApCtrl(
 			//if(dwError) TUNER_KdPrint(("DRV_ApCtrl::DRV_TunerSuspend Fail: 0x%04x", dwError));
 
 			deb_data("aaa IT9507_controlTunerPowerSaving chip_%d\n", ucSlaveDemod);
-	//		dwError = IT9507_controlTunerPower((Demodulator*) &pdc->Demodulator, bOn);
+	//		dwError = IT9507_controlTunerPower((Destate*) &pdc->Destate, bOn);
 			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04x\n", dwError);
 
 			deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
-			dwError = IT9507_controlPowerSaving(&pdc->modulator, bOn);
+			dwError = IT9507_controlPowerSaving(&pdc->state, bOn);
 //			mdelay(50);
 			msleep(50);
 			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
@@ -3302,10 +3302,10 @@ static u32 DRV_ApCtrl(
 	else //pwr down:  DCA DUT: 36(all) -> 47-159(no GPIOH5, sequence change)
 	{
 		deb_data("aaa Power OFF\n");
-	/*	if ( (ucSlaveDemod == 0) && (pdc->Demodulator.chipNumber == 2) ){
+	/*	if ( (ucSlaveDemod == 0) && (pdc->Destate.chipNumber == 2) ){
 			
 			//deb_data("aaa IT9507_controlTunerLeakage for Chip_1");
-			//dwError = IT9507_controlTunerLeakage((Demodulator*) &pdc->Demodulator, 1, bOn);
+			//dwError = IT9507_controlTunerLeakage((Destate*) &pdc->Destate, 1, bOn);
 			//if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerLeakage error = 0x%04x", dwError);
 
 			//deb_data("aaa GPIOH5 on");
@@ -3314,11 +3314,11 @@ static u32 DRV_ApCtrl(
 		}*/
 	
 		deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
-		dwError = IT9507_controlPowerSaving(&pdc->modulator, bOn);
+		dwError = IT9507_controlPowerSaving(&pdc->state, bOn);
 		if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
 		
 		deb_data("aaa IT9507_controlTunerPowerSaving chip_%d", ucSlaveDemod);
-//		dwError = IT9507_controlTunerPower((Demodulator*) &pdc->Demodulator, bOn);
+//		dwError = IT9507_controlTunerPower((Destate*) &pdc->Destate, bOn);
 		if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04x\n", dwError);
 		//deb_data("aaa DRV_TunerSuspend chip_%d", ucSlaveDemod);
 		//dwError = DRV_TunerSuspend(handle, ucSlaveDemod, !bOn);
@@ -3343,7 +3343,7 @@ static u32 DRV_TunerWakeup(
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
 	//tuner power on
-	dwError = it950x_wr_regbits(&pdc->modulator, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);
+	dwError = it950x_wr_regbits(&pdc->state, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);
 
     return(dwError);
 
@@ -3437,7 +3437,7 @@ u32 DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
 
 	deb_data("enter DL_TunerPowerCtrl:  bOn = %s\n", bPowerOn?"ON":"OFF");
 
-/*    for (ucSlaveDemod=0; ucSlaveDemod<PDC->modulator.chipNumber; ucSlaveDemod++)
+/*    for (ucSlaveDemod=0; ucSlaveDemod<PDC->state.chipNumber; ucSlaveDemod++)
     {
     	dwError = DRV_TunerPowerCtrl(PDC, ucSlaveDemod, bPowerOn);
     	if(dwError) deb_data("  DRV_TunerPowerCtrl Fail: 0x%08x\n", dwError);
@@ -3467,16 +3467,16 @@ u32 DL_ApPwCtrl (
 #if 0
 		if(bOn) {		// resume
 			deb_data("IT9130x Power ON\n");		
-			dwError = it950x_wr_regbits(&PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
-			dwError = Demodulator_controlPowerSaving ((Demodulator*) &PDC->demodulator, bOn);				
+			dwError = it950x_wr_regbits(&PDC->state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
+			dwError = Destate_controlPowerSaving ((Destate*) &PDC->destate, bOn);				
 			if(dwError) { 
 				deb_data("ApCtrl::IT913x chip resume error = 0x%04x\n", dwError); 
 				goto exit;
 			}
 		} else {       // suspend
 			deb_data("IT9130x Power OFF\n");	
-			dwError = it950x_wr_regbits(&PDC->modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
-			dwError = Demodulator_controlPowerSaving ((Demodulator*) &PDC->demodulator, bOn);	
+			dwError = it950x_wr_regbits(&PDC->state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
+			dwError = Destate_controlPowerSaving ((Destate*) &PDC->destate, bOn);	
 			if(dwError) { 
 				deb_data("ApCtrl::IT913x chip suspend error = 0x%04x\n", dwError); 
 				goto exit;
@@ -3486,20 +3486,20 @@ u32 DL_ApPwCtrl (
 	} else {          // 9507
 		if(bOn) {	  // resume
 			deb_data("IT950x Power ON\n");				
-			dwError = IT9507_controlPowerSaving (&PDC->modulator, bOn);				
+			dwError = IT9507_controlPowerSaving (&PDC->state, bOn);				
 			if(dwError) { 
 				deb_data("ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError); 
 				goto exit;
 			}
 		} else {      // suspend
 			//deb_data("IT950x TxMode RF OFF\n");				
-			dwError = IT9507_setTxModeEnable(&PDC->modulator, 0);
+			dwError = IT9507_setTxModeEnable(&PDC->state, 0);
 			if(dwError) {
 				deb_data("ApCtrl::IT9507_setTxModeEnable error = 0x%04x\n", dwError);
 				goto exit;				
 			}
 			deb_data("IT950x Power OFF\n");							
-			dwError = IT9507_controlPowerSaving (&PDC->modulator, bOn);			
+			dwError = IT9507_controlPowerSaving (&PDC->state, bOn);			
 			if(dwError) {
 				deb_data("ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
 				goto exit;
@@ -3530,9 +3530,9 @@ u32 DL_ApCtrl (
     if(PDC->architecture != Architecture_PIP)
     {
 
-	//	if ( PDC->modulator.chipNumber == 2 && bOn) dwError = DL_NIMSuspend(PDC, false);
+	//	if ( PDC->state.chipNumber == 2 && bOn) dwError = DL_NIMSuspend(PDC, false);
 
-		/*for (i=0; i<PDC->modulator.chipNumber; i++)
+		/*for (i=0; i<PDC->state.chipNumber; i++)
 		{	 
 		   if (bOn) 
 			dwError = DRV_ApCtrl (PDC, i, bOn);
@@ -3546,7 +3546,7 @@ u32 DL_ApCtrl (
 			}
 		}*/
 
-	//	if(PDC->modulator.chipNumber == 2 && !bOn) dwError = DL_NIMSuspend(PDC, true);
+	//	if(PDC->state.chipNumber == 2 && !bOn) dwError = DL_NIMSuspend(PDC, true);
 	}
     else
     {
@@ -3593,7 +3593,7 @@ u32 DL_CheckTunerInited(
     return(dwError);
 }
 
-u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffer)
+u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pIOBuffer)
 {
     u32 dwError = Error_NO_ERROR;
 
@@ -3606,14 +3606,14 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         case IOCTL_ITE_DEMOD_GETDEVICETYPE_TX:
         {
             PTxGetDeviceTypeRequest pRequest = (PTxGetDeviceTypeRequest) pIOBuffer;
-            pRequest->error = EagleUser_getDeviceType(modulator, &pRequest->DeviceType);
+            pRequest->error = EagleUser_getDeviceType(state, &pRequest->DeviceType);
             break;
         }
         case IOCTL_ITE_DEMOD_SETDEVICETYPE_TX:
         {
             PTxSetDeviceTypeRequest pRequest = (PTxSetDeviceTypeRequest) pIOBuffer;
 
-            if(EagleUser_setSystemConfig(modulator) != 0)
+            if(EagleUser_setSystemConfig(state) != 0)
                 printk("\n- EagleUser_setSystemConfig fail -\n");    
             else 
                 printk("\n- EagleUser_setSystemConfig ok -\n");                
@@ -3622,13 +3622,13 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         case IOCTL_ITE_DEMOD_ADJUSTOUTPUTGAIN_TX: 
         {
             PSetGainRequest pRequest = (PSetGainRequest) pIOBuffer;
-            pRequest->error = IT9507_adjustOutputGain(modulator, &pRequest->GainValue);
+            pRequest->error = IT9507_adjustOutputGain(state, &pRequest->GainValue);
             break;
         }
         case IOCTL_ITE_DEMOD_ENABLETXMODE_TX:
         {
             PTxModeRequest pRequest = (PTxModeRequest) pIOBuffer;
-            pRequest->error = IT9507_setTxModeEnable(modulator, pRequest->OnOff);
+            pRequest->error = IT9507_setTxModeEnable(state, pRequest->OnOff);
             deb_data("IT950x TxMode RF %s\n", pRequest->OnOff?"ON":"OFF");    
             break;
         }
@@ -3640,63 +3640,63 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
             temp.highCodeRate = pRequest->highCodeRate;
             temp.interval = pRequest->interval;
             temp.transmissionMode = pRequest->transmissionMode;
-            pRequest->error = IT9507_setTXChannelModulation(modulator, &temp);
-            pRequest->error = IT9507_setTxModeEnable(modulator, 1);
+            pRequest->error = IT9507_setTXChannelModulation(state, &temp);
+            pRequest->error = IT9507_setTxModeEnable(state, 1);
             deb_data("IT950x TxMode RF ON\n");                
             break;
         }
         case IOCTL_ITE_DEMOD_ACQUIRECHANNEL_TX:
         {
             PTxAcquireChannelRequest pRequest = (PTxAcquireChannelRequest) pIOBuffer;
-            pRequest->error = IT9507_acquireTxChannel(modulator, pRequest->bandwidth, pRequest->frequency);
+            pRequest->error = IT9507_acquireTxChannel(state, pRequest->bandwidth, pRequest->frequency);
             break;
         }
         case IOCTL_ITE_DEMOD_GETFIRMWAREVERSION_TX:
         {
             PTxGetFirmwareVersionRequest pRequest = (PTxGetFirmwareVersionRequest) pIOBuffer;
-            pRequest->error = IT9507_getFirmwareVersion (modulator, pRequest->processor, pRequest->version);
+            pRequest->error = IT9507_getFirmwareVersion (state, pRequest->processor, pRequest->version);
             break;
         }
         case IOCTL_ITE_DEMOD_CONTROLPOWERSAVING:
         {
             PControlPowerSavingRequest pRequest = (PControlPowerSavingRequest) pIOBuffer;
-            //DAVE: pRequest->error = Demodulator_controlPowerSaving ((Demodulator*) handle, pRequest->control);
-            pRequest->error = it950x_wr_regbits(modulator, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, !pRequest->control);
+            //DAVE: pRequest->error = Destate_controlPowerSaving ((Destate*) handle, pRequest->control);
+            pRequest->error = it950x_wr_regbits(state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, !pRequest->control);
             break;
         }
         case IOCTL_ITE_DEMOD_CONTROLPOWERSAVING_TX:
         {
             PTxControlPowerSavingRequest pRequest = (PTxControlPowerSavingRequest) pIOBuffer;
-            pRequest->error = IT9507_setTxModeEnable(modulator, pRequest->control);
-            pRequest->error = IT9507_controlPowerSaving (modulator, pRequest->control);            
+            pRequest->error = IT9507_setTxModeEnable(state, pRequest->control);
+            pRequest->error = IT9507_controlPowerSaving (state, pRequest->control);            
             break;
         }
         case IOCTL_ITE_DEMOD_WRITEGENERICREGISTERS_TX:
         {
             PWriteGenericRegistersRequest pRequest = (PWriteGenericRegistersRequest) pIOBuffer;
-            pRequest->error = IT9507_writeGenericRegisters (modulator, pRequest->slaveAddress, pRequest->bufferLength, pRequest->buffer);
+            pRequest->error = IT9507_writeGenericRegisters (state, pRequest->slaveAddress, pRequest->bufferLength, pRequest->buffer);
 
             break;
         }
         case IOCTL_ITE_DEMOD_READGENERICREGISTERS_TX:
         {
             PReadGenericRegistersRequest pRequest = (PReadGenericRegistersRequest) pIOBuffer;
-            pRequest->error = IT9507_readGenericRegisters (modulator, pRequest->slaveAddress, pRequest->bufferLength, pRequest->buffer);
+            pRequest->error = IT9507_readGenericRegisters (state, pRequest->slaveAddress, pRequest->bufferLength, pRequest->buffer);
 
             break;
         }
         case IOCTL_ITE_DEMOD_FINALIZE:
         {
             PFinalizeRequest pRequest = (PFinalizeRequest) pIOBuffer;
-            //pRequest->error = Demodulator_finalize ((Demodulator*) handle);
-            //pRequest->error = Demodulator_controlPowerSaving ((Demodulator*) handle, 0);
+            //pRequest->error = Destate_finalize ((Destate*) handle);
+            //pRequest->error = Destate_controlPowerSaving ((Destate*) handle, 0);
             break;
         }
         case IOCTL_ITE_DEMOD_FINALIZE_TX:
         {
             PTxFinalizeRequest pRequest = (PTxFinalizeRequest) pIOBuffer;
-            //pRequest->error = IT9507_finalize (modulator);
-            //pRequest->error = IT9507_controlPowerSaving (modulator, 0);
+            //pRequest->error = IT9507_finalize (state);
+            //pRequest->error = IT9507_controlPowerSaving (state, 0);
             break;
         }
         case IOCTL_ITE_DEMOD_GETDRIVERINFO_TX:
@@ -3710,13 +3710,13 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
             strcpy((char *)pDriverInfo->DriverVerion, DRIVER_RELEASE_VERSION);
             sprintf((char *)pDriverInfo->APIVerion, "%X.%X.%X.%X", (u8)(Eagle_Version_NUMBER>>8), (u8)(Eagle_Version_NUMBER), Eagle_Version_DATE, Eagle_Version_BUILD);
 
-            IT9507_getFirmwareVersion (modulator, Processor_LINK, &dwFWVerionLink);
+            IT9507_getFirmwareVersion (state, Processor_LINK, &dwFWVerionLink);
             sprintf((char *)pDriverInfo->FWVerionLink, "%X.%X.%X.%X", (u8)(dwFWVerionLink>>24), (u8)(dwFWVerionLink>>16), (u8)(dwFWVerionLink>>8), (u8)dwFWVerionLink);
-            deb_data("Modulator_getFirmwareVersion Processor_LINK %s\n", (char *)pDriverInfo->FWVerionLink);
+            deb_data("State_getFirmwareVersion Processor_LINK %s\n", (char *)pDriverInfo->FWVerionLink);
  
-            IT9507_getFirmwareVersion (modulator, Processor_OFDM, &dwFWVerionOFDM);
+            IT9507_getFirmwareVersion (state, Processor_OFDM, &dwFWVerionOFDM);
             sprintf((char *)pDriverInfo->FWVerionOFDM, "%X.%X.%X.%X", (u8)(dwFWVerionOFDM>>24), (u8)(dwFWVerionOFDM>>16), (u8)(dwFWVerionOFDM>>8), (u8)dwFWVerionOFDM);
-            deb_data("Modulator_getFirmwareVersion Processor_OFDM %s\n", (char *)pDriverInfo->FWVerionOFDM);
+            deb_data("State_getFirmwareVersion Processor_OFDM %s\n", (char *)pDriverInfo->FWVerionOFDM);
 
             strcpy((char *)pDriverInfo->Company, "ITEtech");
             strcpy((char *)pDriverInfo->SupportHWInfo, "Ganymede DVBT");
@@ -3728,21 +3728,21 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         case IOCTL_ITE_DEMOD_WRITEREGISTERS_TX:
         {
             PTxWriteRegistersRequest pRequest = (PTxWriteRegistersRequest) pIOBuffer;
-            pRequest->error = it950x_wr_regs (modulator, pRequest->processor, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
+            pRequest->error = it950x_wr_regs (state, pRequest->processor, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
 
             break;
         }
         case IOCTL_ITE_DEMOD_WRITEEEPROMVALUES_TX:
         {
             PWriteEepromValuesRequest pRequest = (PWriteEepromValuesRequest) pIOBuffer;
-            pRequest->error = IT9507_writeEepromValues (modulator, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
+            pRequest->error = IT9507_writeEepromValues (state, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
 
             break;
         }
         case IOCTL_ITE_DEMOD_WRITEREGISTERBITS_TX:
         {
             PTxWriteRegisterBitsRequest pRequest = (PTxWriteRegisterBitsRequest) pIOBuffer;
-            pRequest->error = it950x_wr_regbits (modulator, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
+            pRequest->error = it950x_wr_regbits (state, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
 
             break;
         }
@@ -3750,70 +3750,70 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         {
         //    deb_data("IOCTL_ITE_DEMOD_READREGISTERS\n");
             PTxReadRegistersRequest pRequest = (PTxReadRegistersRequest) pIOBuffer;
-            pRequest->error = it950x_rd_regs (modulator, pRequest->processor, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
+            pRequest->error = it950x_rd_regs (state, pRequest->processor, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
 
             break;
         }
         case IOCTL_ITE_DEMOD_READEEPROMVALUES_TX:
         {
             PTxReadEepromValuesRequest pRequest = (PTxReadEepromValuesRequest) pIOBuffer;
-            pRequest->error = IT9507_readEepromValues (modulator, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
+            pRequest->error = IT9507_readEepromValues (state, pRequest->registerAddress, pRequest->bufferLength, pRequest->buffer);
 
             break;
         }
         case IOCTL_ITE_DEMOD_READREGISTERBITS_TX:
         {
             PTxReadRegisterBitsRequest pRequest = (PTxReadRegisterBitsRequest) pIOBuffer;
-            pRequest->error = it950x_rd_regbits (modulator, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
+            pRequest->error = it950x_rd_regbits (state, pRequest->processor, pRequest->registerAddress, pRequest->position, pRequest->length, pRequest->value);
 
             break;
         }        
         case IOCTL_ITE_DEMOD_GETGAINRANGE_TX:
         {
             PGetGainRangeRequest pRequest = (PGetGainRangeRequest) pIOBuffer;        
-            pRequest->error = IT9507_getGainRange (modulator, pRequest->frequency, pRequest->bandwidth, pRequest->maxGain, pRequest->minGain);
+            pRequest->error = IT9507_getGainRange (state, pRequest->frequency, pRequest->bandwidth, pRequest->maxGain, pRequest->minGain);
             break;
         }
         case IOCTL_ITE_DEMOD_GETTPS_TX:
         {
             PGetTPSRequest pRequest = (PGetTPSRequest) pIOBuffer;        
-            pRequest->error = IT9507_getTPS (modulator, pRequest->pTps);
+            pRequest->error = IT9507_getTPS (state, pRequest->pTps);
             break;
         }
         case IOCTL_ITE_DEMOD_SETTPS_TX:
         {
             PSetTPSRequest pRequest = (PSetTPSRequest) pIOBuffer;        
-            pRequest->error = IT9507_setTPS (modulator, pRequest->tps);
+            pRequest->error = IT9507_setTPS (state, pRequest->tps);
             break;
         }
         case IOCTL_ITE_DEMOD_GETOUTPUTGAIN_TX:
         {
             PGetOutputGainRequest pRequest = (PGetOutputGainRequest) pIOBuffer;        
-            pRequest->error = IT9507_getOutputGain (modulator, pRequest->gain);
+            pRequest->error = IT9507_getOutputGain (state, pRequest->gain);
             break;
         }
         case IOCTL_ITE_DEMOD_SENDHWPSITABLE_TX:
         {
             PSendHwPSITableRequest pRequest = (PSendHwPSITableRequest) pIOBuffer;        
-            pRequest->error = IT9507_sendHwPSITable (modulator, pRequest->pbuffer);
+            pRequest->error = IT9507_sendHwPSITable (state, pRequest->pbuffer);
             break;
         }
         case IOCTL_ITE_DEMOD_ACCESSFWPSITABLE_TX:
         {
             PAccessFwPSITableRequest pRequest = (PAccessFwPSITableRequest) pIOBuffer;        
-            pRequest->error = IT9507_accessFwPSITable (modulator, pRequest->psiTableIndex, pRequest->pbuffer);
+            pRequest->error = IT9507_accessFwPSITable (state, pRequest->psiTableIndex, pRequest->pbuffer);
             break;
         }        
         case IOCTL_ITE_DEMOD_SETFWPSITABLETIMER_TX:
         {
             PSetFwPSITableTimerRequest pRequest = (PSetFwPSITableTimerRequest) pIOBuffer;        
-            pRequest->error = IT9507_setFwPSITableTimer (modulator, pRequest->psiTableIndex, pRequest->timer);
+            pRequest->error = IT9507_setFwPSITableTimer (state, pRequest->psiTableIndex, pRequest->timer);
             break;
         }        
         case IOCTL_ITE_DEMOD_SETIQTABLE_TX:
         {
             PTxSetIQTableRequest pRequest = (PTxSetIQTableRequest) pIOBuffer;        
-            pRequest->error = IT9507_setIQtable (modulator, pRequest->IQ_table_ptr, pRequest->tableGroups);
+            pRequest->error = IT9507_setIQtable (state, pRequest->IQ_table_ptr, pRequest->tableGroups);
             printk("Set IQtable group length is %d\n", pRequest->tableGroups);
             break;
         }            
@@ -3821,7 +3821,7 @@ u32 DL_DemodIOCTLFun(Modulator *modulator, u32 IOCTLCode, unsigned long pIOBuffe
         case IOCTL_ITE_DEMOD_SETDCCALIBRATIONVALUE_TX:
         {
             PTxSetDCCalibrationValueRequest pRequest = (PTxSetDCCalibrationValueRequest) pIOBuffer;        
-            pRequest->error = IT9507_setDCCalibrationValue (modulator, pRequest->dc_i, pRequest->dc_q);
+            pRequest->error = IT9507_setDCCalibrationValue (state, pRequest->dc_i, pRequest->dc_q);
             printk("Set DC Calibration dc_i %d, dc_q %d\n", pRequest->dc_i, pRequest->dc_q);
             break;
         }
@@ -3844,7 +3844,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	u8 filterIdx=0;
 	int errcount=0;
 
-	PDC->modulator.udev = udev;
+	PDC->state.udev = udev;
 	dev_set_drvdata(&udev->dev, PDC);
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
@@ -3864,12 +3864,12 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	if (bBoot)
 	{
 		PDC->bSupportSelSuspend = false;
-//		PDC->modulator.userData = (Handle)PDC;
-//		PDC->modulator.chipNumber = 1; 
-//		PDC->demodulator.userData = (Handle)PDC;
+//		PDC->state.userData = (Handle)PDC;
+//		PDC->state.chipNumber = 1; 
+//		PDC->destate.userData = (Handle)PDC;
 		PDC->architecture=Architecture_DCA;
-		PDC->modulator.frequency = 666000;
-		PDC->modulator.bandwidth = 8000;
+		PDC->state.frequency = 666000;
+		PDC->state.bandwidth = 8000;
 		PDC->fc[0].tunerinfo.TunerId = 0;
 		PDC->fc[1].tunerinfo.TunerId = 0;
 		PDC->bDualTs=false;	
@@ -3929,19 +3929,19 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
     	}
 
 	
-	 /*if (PDC->modulator.chipNumber == 2 && !PDC->modulator.booted) //plug/cold-boot/S4
+	 /*if (PDC->state.chipNumber == 2 && !PDC->state.booted) //plug/cold-boot/S4
     	{
         	error = DL_NIMReset(PDC);            
     	}
-    	else if(PDC->modulator.chipNumber == 2 && PDC->modulator.booted) //warm-boot/(S1)
+    	else if(PDC->state.chipNumber == 2 && PDC->state.booted) //warm-boot/(S1)
     	{
         	error = DL_NIMSuspend(PDC, false); 
 		error = DL_TunerWakeup(PDC); //actually for mt2266
     	}*/
 	
 	
-	//if(PDC->modulator.chipNumber == 1 && PDC->modulator.booted) //warm-boot/(S1)
-	if(PDC->modulator.booted) //warm-boot/(S1)
+	//if(PDC->state.chipNumber == 1 && PDC->state.booted) //warm-boot/(S1)
+	if(PDC->state.booted) //warm-boot/(S1)
 	{
 		error = DL_TunerWakeup(PDC);
 	}
@@ -3957,7 +3957,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	deb_data("	%s success \n",__FUNCTION__);
 
 
-	error = it950x_wr_reg(&PDC->modulator, Processor_OFDM, 0xF7C6, 0x1);
+	error = it950x_wr_reg(&PDC->state, Processor_OFDM, 0xF7C6, 0x1);
 	if(error)	printk( "AirHD Reg Write fail!\n");
 	else printk( "AirHD Reg Write ok!\n");
 	

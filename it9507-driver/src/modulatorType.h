@@ -407,17 +407,17 @@ typedef struct _TPS{
 /**
  * The data structure of Eagle
  */
-typedef struct {
-    /** Basic structure */
-    struct usb_device *udev;
+struct it950x_state {
+	/** Basic structure */
+	struct usb_device *udev;
 	u8 i2cAddr;
-    u16 bandwidth;
-    u32 frequency;    
-    bool booted;
+	u16 bandwidth;
+	u32 frequency;    
+	bool booted;
 	u8 slaveIICAddr;  
 	ChannelModulation channelModulation;
 	CalibrationInfo calibrationInfo;
-} Modulator;
+};
 
 
 extern const u8 Eagle_bitMask[8];
