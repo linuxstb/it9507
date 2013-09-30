@@ -18,13 +18,30 @@
 #include "modulatorType.h"
 #include "modulatorError.h"
 #include "modulatorUser.h"
-#include "modulatorFirmware.h"
 #include "modulatorRegister.h"
 #include "modulatorVariable.h"
 #include "modulatorVersion.h"
 #include "IQ_fixed_table.h"
 
+/* LINK processor firmware extracted from modulatorFirmware.h in ITE driver 
+   md5sum should be b4217064db5436e8c3ade7c6e982d12e 
+ */
+#define IT9507_FIRMWARE "dvb-mod-it9507.fw"
+
 static u8 IT9507Cmd_sequence = 0;
+
+/* TODO: What are these for? */
+#define EagleFirmware_SCRIPTSETLENGTH   0x00000001
+static u16 scriptSets[] = { 0x0	};
+static ValueSet scripts[] = { {0x0051, 0x01}, };
+
+/* These were hard-coded in the ITE driver */
+#define DVB_OFDM_VERSION1 255
+#define DVB_OFDM_VERSION2 9
+#define DVB_OFDM_VERSION3 8
+#define DVB_OFDM_VERSION4 0
+#define DVB_OFDM_VERSION ((u32)0xff090800)
+
 
 static u32 IT9507Cmd_addChecksum (
     IN  Modulator*    modulator,
@@ -340,7 +357,7 @@ static u32 IT9507Cmd_sendCommand (
     IN  u16            command,
     IN  Processor       processor,
     IN  u32           writeBufferLength,
-    IN  u8*           writeBuffer,
+    IN  const u8*           writeBuffer,
     IN  u32           readBufferLength,
     OUT u8*           readBuffer
 ) {
@@ -1549,44 +1566,54 @@ exit :
 	return (error);
 }
 
-static u32 IT9507_loadFirmware (
-	IN  Modulator*    modulator,
-	IN  u8*           firmwareCodes,
-	IN  Segment*        firmwareSegments,
-	IN  u16*           firmwarePartitions
+static int it950x_load_firmware (
+	IN  Modulator*    modulator
 ) {
 	u32 error = ModulatorError_NO_ERROR;
-	u32 beginPartition = 0;
-	u32 endPartition = 0;
 	u32 version;
-	u32 firmwareLength;
-	u8* firmwareCodesPointer;
-	u32 i;
+        const u8 *p;
+        size_t remaining;
 	u8 temp;
-	
+        int to_send;
+	const struct firmware *fw = NULL;
+        int i,j;
+        /* ITE driver uploads 23 chunks of 48 bytes, then 1 chunk of 14, 
+           then 71 chunks of 48 bytes, then 1 chunk of 34. */
+        int chunk_sizes[] = { 
+	  48, 23,
+          14, 1,
+          48, 71,
+          34, 1,
+          0
+	};
+
 	/** Set I2C master clock speed. */
 	temp = EagleUser_IIC_SPEED;
 	error = it950x_wr_regs (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, 1, &temp);
 	if (error) goto exit;
 
-	firmwareCodesPointer = firmwareCodes;
-
-	beginPartition = 0;
-	endPartition = firmwarePartitions[0];
-
-
-	for (i = beginPartition; i < endPartition; i++) {
-		firmwareLength = firmwareSegments[i].segmentLength;
-		if (firmwareSegments[i].segmentType == 1) {
-			/** Copy firmware */
-			error = IT9507Cmd_sendCommand (modulator, Command_SCATTER_WRITE, Processor_LINK, firmwareLength, firmwareCodesPointer, 0, NULL);
-			if (error) goto exit;
-		}else{
-			error = ModulatorError_INVALID_FW_TYPE;
-			goto exit;
-		}
-		firmwareCodesPointer += firmwareLength;
+	if (request_firmware(&fw, IT9507_FIRMWARE, &modulator->udev->dev)) {
+	  printk("it950x:%s: firmware %s not found\n", __func__, IT9507_FIRMWARE);
+	  return ModulatorError_INVALID_FW_TYPE; /* FIXME */
 	}
+
+        if (fw->size != 4560) {
+	  printk("it950x:%s: Unexpected firmware size (%d, expected 4560)\n", __func__, (int)fw->size);
+	  return ModulatorError_INVALID_FW_TYPE; /* FIXME */
+        }
+
+        j = 0;
+        p = fw->data;
+        while (chunk_sizes[j]) {
+          for (i=0;i<chunk_sizes[j+1];i++) {
+            error = IT9507Cmd_sendCommand (modulator, Command_SCATTER_WRITE, Processor_LINK, chunk_sizes[j], p, 0, NULL);
+            if (error) goto exit;
+            p += chunk_sizes[j];
+          }
+          j += 2;
+        }
+
+        release_firmware(fw);
 
 	/** Boot */
 	error = IT9507Cmd_sendCommand (modulator, Command_BOOT, Processor_LINK, 0, NULL, 0, NULL);
@@ -1601,6 +1628,7 @@ static u32 IT9507_loadFirmware (
 	if (version == 0)
 		error = ModulatorError_BOOT_FAIL;
 
+        printk("it950x: LINK firmware uploaded successfully - version=0x%08x\n",version);
 exit :
 	return (error);
 }
@@ -1874,12 +1902,6 @@ static u32 IT9507_initialize (
 		modulator->booted = false;	
 	}
 
-	modulator->firmwareCodes = EagleFirmware_codes;
-	modulator->firmwareSegments = EagleFirmware_segments;
-	modulator->firmwarePartitions = EagleFirmware_partitions;
-	modulator->scriptSets = EagleFirmware_scriptSets;
-	modulator->scripts = EagleFirmware_scripts;
-	
 	/** Write secondary I2C address to device */
 	//error = it950x_wr_reg (modulator, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, EagleUser_IIC_SPEED);
 	//if (error) goto exit;	
@@ -1889,13 +1911,11 @@ static u32 IT9507_initialize (
 
 	
 	/** Load firmware */
-	if (modulator->firmwareCodes != NULL) {
-		if (modulator->booted == false) {
-			error = IT9507_loadFirmware (modulator, modulator->firmwareCodes, modulator->firmwareSegments, modulator->firmwarePartitions);
-			if (error) goto exit;
-			modulator->booted = true;
-		}
-	}
+	error = it950x_load_firmware (modulator);
+        printk("it950x - returned from loadFirmware\n");
+	if (error) goto exit;
+	modulator->booted = true;
+
 	error = it950x_wr_reg (modulator, Processor_LINK, 0xD924, 0);//set UART -> GPIOH4
 	if (error) goto exit;
 
@@ -1905,8 +1925,8 @@ static u32 IT9507_initialize (
 	if (error) goto exit;
 
 	/** Load script */
-	if (modulator->scripts != NULL) {
-		error = IT9507_loadScript (modulator, modulator->scriptSets, modulator->scripts);
+	if (scripts != NULL) {
+		error = IT9507_loadScript (modulator, scriptSets, scripts);
 		if (error) goto exit;
 	}
 
@@ -2767,72 +2787,6 @@ module_param_named(debug,dvb_usb_it950x_debug, int, 0644);
 
 static DEFINE_MUTEX(mymutex);
 
-static u32 DRV_getFirmwareVersionFromFile( 
-		void* handle,
-	 	Processor	processor, 
-		u32* 		version
-)
-{
-
-	
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	u8 chip_version = 0;
-	u32 chip_Type;
-	u8 var[2];
-	u32 error = Error_NO_ERROR;
-
-	u32 OFDM_VER1;
-    u32 OFDM_VER2;
-    u32 OFDM_VER3;
-    u32 OFDM_VER4;
-
-    u32 LINK_VER1;
-    u32 LINK_VER2;
-    u32 LINK_VER3;    
-    u32 LINK_VER4;    
-    
-
-	error = it950x_rd_reg(&pdc->modulator, processor, chip_version_7_0, &chip_version);
-	error = it950x_rd_regs(&pdc->modulator, processor, chip_version_7_0+1, 2, var);
-	
-	if(error) deb_data("DRV_getFirmwareVersionFromFile fail");
-	
-	chip_Type = var[1]<<8 | var[0];	
-	if(chip_Type == 0x9135 && chip_version == 2){
-#if 0
-	  /* NOT USED */
-		OFDM_VER1 = DVB_V2_OFDM_VERSION1;
-		OFDM_VER2 = DVB_V2_OFDM_VERSION2;
-		OFDM_VER3 = DVB_V2_OFDM_VERSION3;
-		OFDM_VER4 = DVB_V2_OFDM_VERSION4;
-
-		LINK_VER1 = DVB_V2_LL_VERSION1;
-		LINK_VER2 = DVB_V2_LL_VERSION2;
-		LINK_VER3 = DVB_V2_LL_VERSION3;    
-		LINK_VER4 = DVB_V2_LL_VERSION4;
-#endif
-	}else{
-		OFDM_VER1 = DVB_OFDM_VERSION1;
-    	OFDM_VER2 = DVB_OFDM_VERSION2;
-   	 	OFDM_VER3 = DVB_OFDM_VERSION3;
-    	OFDM_VER4 = DVB_OFDM_VERSION4;
-
-   		LINK_VER1 = DVB_LL_VERSION1;
-    	LINK_VER2 = DVB_LL_VERSION2;
-    	LINK_VER3 = DVB_LL_VERSION3;    
-    	LINK_VER4 = DVB_LL_VERSION4;
-	}
-
-    if(processor == Processor_OFDM) {
-        *version = (u32)( (OFDM_VER1 << 24) + (OFDM_VER2 << 16) + (OFDM_VER3 << 8) + OFDM_VER4);
-    }
-    else { //LINK
-        *version = (u32)( (LINK_VER1 << 24) + (LINK_VER2 << 16) + (LINK_VER3 << 8) + LINK_VER4);    
-    }
-    
-    return *version;
-}
-
 static u32  DRV_Initialize(
 	    void *      handle
 )
@@ -2843,7 +2797,7 @@ static u32  DRV_Initialize(
 	u8 temp = 0;
 	//u8 usb_dma_reg;
 	u8 chip_version = 0; 
-	u32 fileVersion, cmdVersion = 0; 
+        u32 cmdVersion = 0; 
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
@@ -2856,16 +2810,13 @@ static u32  DRV_Initialize(
 	
 	if(pdc->modulator.booted) //from Standard_setBusTuner() > Standard_getFirmwareVersion()
     	{
-        	//use "#define version" to get fw version (from firmware.h title)
-        	error = DRV_getFirmwareVersionFromFile(handle, Processor_OFDM, &fileVersion);
-
         	//use "Command_QUERYINFO" to get fw version 
         	error = IT9507_getFirmwareVersion(&pdc->modulator, Processor_OFDM, &cmdVersion);
         	if(error) deb_data("DRV_Initialize : IT9507_getFirmwareVersion : error = 0x%08u\n", error);
 
-        	if(cmdVersion != fileVersion)
+        	if(cmdVersion != DVB_OFDM_VERSION)
         	{
-            		deb_data("Reboot: Outside Fw = 0x%x, Inside Fw = 0x%x", fileVersion, cmdVersion);
+            		deb_data("Reboot: Outside Fw = 0x%x, Inside Fw = 0x%x", DVB_OFDM_VERSION, cmdVersion);
             		error = IT9507_TXreboot(&pdc->modulator);
             		pdc->bBootCode = true;
             		if(error) 
@@ -3899,7 +3850,6 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
         printk("        DRIVER_RELEASE_VERSION  : %s\n", DRIVER_RELEASE_VERSION);
-	printk("        EAGLE_FW_RELEASE_LINK_VERSION: %d.%d.%d.%d\n", DVB_LL_VERSION1, DVB_LL_VERSION2, DVB_LL_VERSION3, DVB_LL_VERSION4);
 	printk("        EAGLE_FW_RELEASE_OFDM_VERSION: %d.%d.%d.%d\n", DVB_OFDM_VERSION1, DVB_OFDM_VERSION2, DVB_OFDM_VERSION3, DVB_OFDM_VERSION4);	
 	printk("        API_TX_RELEASE_VERSION  : %X.%X.%X\n", Eagle_Version_NUMBER, Eagle_Version_DATE, Eagle_Version_BUILD);
 

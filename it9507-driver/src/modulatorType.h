@@ -411,11 +411,6 @@ typedef struct {
     /** Basic structure */
     struct usb_device *udev;
 	u8 i2cAddr;
-    u8* firmwareCodes;
-    Segment* firmwareSegments;
-    u16*  firmwarePartitions;
-    u16* scriptSets;
-    ValueSet* scripts;
     u16 bandwidth;
     u32 frequency;    
     bool booted;
