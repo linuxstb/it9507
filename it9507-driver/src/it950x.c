@@ -29,11 +29,6 @@
 
 static u8 IT9507Cmd_sequence = 0;
 
-/* TODO: What are these for? */
-#define EagleFirmware_SCRIPTSETLENGTH   0x00000001
-static u16 scriptSets[] = { 0x0	};
-static ValueSet scripts[] = { {0x0051, 0x01}, };
-
 /* These were hard-coded in the ITE driver */
 #define DVB_OFDM_VERSION1 255
 #define DVB_OFDM_VERSION2 9
@@ -1653,70 +1648,6 @@ exit :
 	return (error);
 }
 
-static u32 IT9507_loadScript (
-	IN  struct it950x_state*    state,
-	IN  u16*           scriptSets,
-	IN  ValueSet*       scripts
-) {
-	u32 error = ModulatorError_NO_ERROR;
-	u16 beginScript;
-	u16 endScript;
-	u8 i, supportRelay = 0, chipNumber = 0, bufferLens = 1;
-	u16 j;
-	u8 temp;
-	u8 buffer[20] = {0,};
-	u32 tunerAddr, tunerAddrTemp;
-	
-	/** Querry SupportRelayCommandWrite **/
-	error = it950x_rd_regs (state, Processor_OFDM, 0x004D, 1, &supportRelay);
-	if (error) goto exit;
-
-	
-	/** Enable RelayCommandWrite **/
-	if (supportRelay) {
-		temp = 1;
-		error = it950x_wr_regs (state, Processor_OFDM, 0x004E, 1, &temp);
-		if (error) goto exit;
-	}
-
-	if ((scriptSets[0] != 0) && (scripts != NULL)) {
-		beginScript = 0;
-		endScript = scriptSets[0];
-
-		for (i = 0; i < chipNumber; i++) {
-			/** Load OFSM init script */
-			for (j = beginScript; j < endScript; j++) {
-				tunerAddr = tunerAddrTemp = scripts[j].address;
-				buffer[0] = scripts[j].value;
-
-				while (j < endScript && bufferLens < 20) {
-					tunerAddrTemp += 1;
-					if (tunerAddrTemp != scripts[j+1].address)
-						break;
-
-					buffer[bufferLens] = scripts[j+1].value;
-					bufferLens ++;
-					j ++;
-				}
-
-				error = it950x_wr_regs (state, Processor_OFDM, tunerAddr, bufferLens, buffer);
-				if (error) goto exit;
-				bufferLens = 1;
-			}
-		}
-	}
-
-	/** Disable RelayCommandWrite **/
-	if (supportRelay) {
-		temp = 0;
-		error = it950x_wr_regs (state, Processor_OFDM, 0x004E, 1, &temp);
-		if (error) goto exit;
-	}
-
-exit :
-	return (error);
-}
-
 static u32 IT9507_writeEepromValues (
     IN  struct it950x_state*    state,
     IN  u16            registerAddress,
@@ -1944,11 +1875,6 @@ static u32 IT9507_initialize (
 	error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, 0x7);//1a
 	if (error) goto exit;
 
-	/** Load script */
-	if (scripts != NULL) {
-		error = IT9507_loadScript (state, scriptSets, scripts);
-		if (error) goto exit;
-	}
 
 
 	error = it950x_wr_regbits (state, Processor_OFDM, 0xFB26, 7, 1, 1);
