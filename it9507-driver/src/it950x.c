@@ -17,7 +17,6 @@
 #include "it950x-priv.h"
 #include "modulatorType.h"
 #include "modulatorError.h"
-#include "modulatorUser.h"
 #include "modulatorRegister.h"
 #include "modulatorVariable.h"
 #include "modulatorVersion.h"
@@ -41,6 +40,27 @@ static ValueSet scripts[] = { {0x0051, 0x01}, };
 #define DVB_OFDM_VERSION3 8
 #define DVB_OFDM_VERSION4 0
 #define DVB_OFDM_VERSION ((u32)0xff090800)
+
+/* From modulatorUser.h */
+#define EagleUser_MAX_PKT_SIZE               255
+#define EagleUser_RETRY_MAX_LIMIT            10
+
+/** Define I2C master speed, the default value 0x07 means 366KHz (1000000000 / (24.4 * 16 * EagleUser_I2C_SPEED)). */
+#define EagleUser_IIC_SPEED              0x07
+
+/** Define I2C address of secondary chip when Diversity mode or PIP mode is active. */
+#define EagleUser_IIC_ADDRESS            0x38
+#define EagleUser_SlaveIIC_ADDRESS       0x3A
+#define EagleUser_DEVICETYPE			 0
+
+/** Define USB frame size */
+#define EagleUser_USB20_MAX_PACKET_SIZE      512
+#define EagleUser_USB20_FRAME_SIZE           (188 * 348)
+#define EagleUser_USB20_FRAME_SIZE_DW        (EagleUser_USB20_FRAME_SIZE / 4)
+#define EagleUser_USB11_MAX_PACKET_SIZE      64
+#define EagleUser_USB11_FRAME_SIZE           (188 * 21)
+#define EagleUser_USB11_FRAME_SIZE_DW        (EagleUser_USB11_FRAME_SIZE / 4)
+#define EagleUser_MAXFRAMESIZE			63
 
 
 static u32 IT9507Cmd_addChecksum (
