@@ -149,24 +149,14 @@ typedef struct _DEVICE_CONTEXT {
     bool bBootCode;
     bool bEP12Error;
     bool bEP45Error;
-    //bool bDebugMsg;
-    //bool bDevExist;
-    bool bSurpriseRemoval;
-    bool bDevNotResp;
-    bool bEnterSuspend;
-    bool bSupportSuspend;
     u16 UsbMode;
     u16 MaxPacketSize;
     u32 TsFrames;
     u32 TsFrameSize;
     u32 TsFrameSizeDw;
     u32 TsPacketCount;
-
-    bool    bSelectiveSuspend;
     u32   ulActiveFilter;
-    bool bDCAPIP;
     u8 FilterCnt;
-    bool  bTunerPowerOff;
     u8 UsbCtrlTimeOut;
     struct it950x_state state;	
 	u8 deviceType;    

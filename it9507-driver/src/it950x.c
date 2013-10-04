@@ -3400,12 +3400,6 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 
 
 	//************* Set Device init Info *************//
-	PDC->bEnterSuspend = false;
-    	PDC->bSurpriseRemoval = false;
-    	PDC->bDevNotResp = false;
-    	PDC->bSelectiveSuspend = false; 
-	PDC->bTunerPowerOff = false;
-
 	if (bBoot)
 	{
 		PDC->state.frequency = 666000;
