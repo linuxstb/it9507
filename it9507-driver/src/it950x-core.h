@@ -151,12 +151,10 @@ typedef struct _DEVICE_CONTEXT {
     bool bEP45Error;
     //bool bDebugMsg;
     //bool bDevExist;
-    bool bDualTs;
     bool bSurpriseRemoval;
     bool bDevNotResp;
     bool bEnterSuspend;
     bool bSupportSuspend;
-    bool bSupportSelSuspend;
     u16 UsbMode;
     u16 MaxPacketSize;
     u32 TsFrames;
@@ -166,7 +164,6 @@ typedef struct _DEVICE_CONTEXT {
 
     bool    bSelectiveSuspend;
     u32   ulActiveFilter;
-    Architecture architecture;
     bool bDCAPIP;
     u8 FilterCnt;
     bool  bTunerPowerOff;

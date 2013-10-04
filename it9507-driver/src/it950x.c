@@ -2875,11 +2875,7 @@ static u32 DRV_GetEEPROMConfig(
 	{
 	  printk("it905x: btmp=%d\n",btmp);
 		deb_data("=============No need read eeprom");
-		pdc->bSupportSelSuspend = false;
-		pdc->bDualTs = false;
-    	pdc->architecture = Architecture_DCA;
     	//pdc->state.chipNumber = 1;    
-    	pdc->bDCAPIP = false;
 		pdc->fc[0].tunerinfo.TunerId = 0x38;
 	}
 	else
@@ -2889,49 +2885,15 @@ static u32 DRV_GetEEPROMConfig(
     	if (dwError) goto exit;
     	deb_data("EEPROM_IRMODE = 0x%02X, ", btmp);	
 
-//selective suspend
-    	pdc->bSupportSelSuspend = false;
-	    //btmp = 0; //not support in v8.12.12.3
-   		//dwError = it950x_rd_regs((Destate*) &pdc->Destate, Processor_LINK, EEPROM_SELSUSPEND, 1, &btmp);
-   	 	//if (dwError) goto exit;
-    	//if(btmp<2)
-    	//	PDC->bSupportSelSuspend = btmp ? true:false; 
-    	deb_data("SelectiveSuspend = %s", pdc->bSupportSelSuspend?"ON":"OFF");
-    	    
 //bDualTs option   
-    	pdc->bDualTs = false;
-    	pdc->architecture = Architecture_DCA;
     	//pdc->state.chipNumber = 1;    
-    	pdc->bDCAPIP = false;
 
+#if 0
     	dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_TSMODE, 1, &btmp);
     	if (dwError) goto exit;
     	deb_data("EEPROM_TSMODE = 0x%02X", btmp);
-
-    	if (btmp == 0)     
-    	{  
-        	deb_data("TSMode = TS1 mode\n");
-    	}
-    	else if (btmp == 1) 
-   		{
-        	deb_data("TSMode = DCA+PIP mode\n");
-			pdc->architecture = Architecture_DCA;
-        	//pdc->state.chipNumber = 2;
-        	pdc->bDualTs = true;
-        	pdc->bDCAPIP = true;
-    	}
-    	else if (btmp == 2) 
-    	{ 
-        	deb_data("TSMode = DCA mode\n");
-        	//pdc->state.chipNumber = 2;
-    	}
-    	else if (btmp == 3) 
-    	{
-        	deb_data("TSMode = PIP mode\n");
-        	pdc->architecture = Architecture_PIP;
-        	//pdc->state.chipNumber = 2;
-        	pdc->bDualTs = true;
-    	}
+	// We know this is 0 - i.e. single TS mode.
+#endif
 
 //tunerID option, in Omega, not need to read register, just assign 0x38;
 		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_TUNERID, 1, &btmp);
@@ -2955,11 +2917,6 @@ static u32 DRV_GetEEPROMConfig(
 		}		
 	
 		deb_data("pdc->fc[0].tunerinfo.TunerId = 0x%x", pdc->fc[0].tunerinfo.TunerId);
-		if (pdc->bDualTs) {
-			pdc->fc[1].tunerinfo.TunerId = pdc->fc[0].tunerinfo.TunerId;
-			deb_data("pdc->fc[1].tunerinfo.TunerId = 0x%x", pdc->fc[1].tunerinfo.TunerId);
-		}
-
 		//dwError = it950x_wr_reg((Destate*) &pdc->Destate, 0, Processor_LINK, EEPROM_SUSPEND, 0);
 		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
 		deb_data("EEPROM susped mode=%d", btmp);
@@ -2967,10 +2924,7 @@ static u32 DRV_GetEEPROMConfig(
     }
 		//pdc->state.chipNumber = 1; 
 //init some device info
-	for(ucSlaveDemod = 0; ucSlaveDemod <= (u8)pdc->bDualTs; ucSlaveDemod++)
-	{
-		dwError = DRV_InitDevInfo(handle, ucSlaveDemod);
-	}
+		dwError = DRV_InitDevInfo(handle, 0);
 	
 exit:
     return(dwError);
@@ -3001,283 +2955,6 @@ static u32 DRV_SetBusTuner(
     	return(dwError); 
 }
 
-static u32 DRV_NIMReset(
-    void *      handle
-)
-{
-
-
-    u32   dwError = Error_NO_ERROR;
-
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-    deb_data("- Enter %s Function -\n",__FUNCTION__);
-    //Set AF0350 GPIOH1 to 0 to reset AF0351
-
-    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK,  p_reg_top_gpioh1_en, reg_top_gpioh1_en_pos, reg_top_gpioh1_en_len, 1);
-    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK,  p_reg_top_gpioh1_on, reg_top_gpioh1_on_pos, reg_top_gpioh1_on_len, 1);
-    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 0);
-
-//    mdelay(50);
-	msleep(50);
-
-    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK,  p_reg_top_gpioh1_o, reg_top_gpioh1_o_pos, reg_top_gpioh1_o_len, 1);
-
-    return(dwError);
-}
-
-static u32 DRV_InitNIMSuspendRegs(
-    void *      handle
-)
-{
-    u32 dwError = Error_NO_ERROR;
-
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
-    deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 1);
-    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 1);
-    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
-
-    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_pwrdw, reg_top_pwrdw_pos, reg_top_pwrdw_len, 1);
-
-    dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_pwrdw_hwen, reg_top_pwrdw_hwen_pos, reg_top_pwrdw_hwen_len, 1);
-
-    return(dwError);
-}
-
-
-static u32 NIM_ResetSeq(IN  void *	handle)
-{
-	u32 dwError = Error_NO_ERROR;
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	int i;
-	//u8 ucValue = 0;
-	
-	u8 bootbuffer[6];
-	//checksum = 0xFEDC
-	bootbuffer[0] = 0x05;
-	bootbuffer[1] = 0x00;
-	bootbuffer[2] = 0x23;
-	bootbuffer[3] = 0x01;
-	bootbuffer[4] = 0xFE;
-	bootbuffer[5] = 0xDC;	
-
-	//aaa
-	//reset 9133 -> boot -> demod init
-
-	//GPIOH5 init
-	dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_en, reg_top_gpioh5_en_pos, reg_top_gpioh5_en_len, 0);
-	dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_on, reg_top_gpioh5_on_pos, reg_top_gpioh5_on_len, 0);
-		
-	//dwError = it950x_wr_regbits((Destate*) &pdc->Destate, 0, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
-	//mdelay(100);
-
-	deb_data("aaa start DRV_NIMReset");
-	dwError = DRV_NIMReset(handle);
-
-	dwError = DRV_InitNIMSuspendRegs(handle);
-	
-	deb_data("aaa start writeGenericRegisters");
-	dwError = IT9507_writeGenericRegisters (&pdc->state, 0x3a, 0x06, bootbuffer);
-	
-	deb_data("aaa start readGenericRegisters");
-	dwError = IT9507_readGenericRegisters (&pdc->state, 0x3a, 0x05, bootbuffer);
-	deb_data("aaa print I2C reply");
-	for(i=0; i<5; i++)
-		deb_data("aaa bootbuffer[%d] = 0x%x", i, bootbuffer[i]);
-	
-//	mdelay(50); //delay for Fw boot	
-	msleep(50); //delay for Fw boot	
-
-	//it950x_rd_reg((Destate*) &pdc->Destate, Processor_LINK, 0x4100, &ucValue);
-	
-	//Demod & Tuner init
-	deb_data("aaa DL_Initialize");
-	dwError = DRV_Initialize(handle);
-
-	return dwError;
-}
-
-static u32 DRV_NIMSuspend(
-    void *      handle,
-    bool        bSuspend
-
-)
-{
-    u32 dwError = Error_NO_ERROR;
-
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
-
-    deb_data("- Enter DRV_NIMSuspend : bSuspend = %s\n", bSuspend ? "ON":"OFF");
-
-    if(bSuspend) { //sleep
-    	dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
-		if(dwError) return (dwError);
-    } else {        //resume 
-		dwError = it950x_wr_regbits(&pdc->state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
-		if(dwError) return (dwError);
-    }
-
-    return(dwError);
-}
-
-
-//set tuner power saving and control
-static u32 DRV_ApCtrl(
-	void* handle,
-	u8 ucSlaveDemod,
-	bool bOn)
-{
-	u32 dwError = Error_NO_ERROR;
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	int i;
-    u32 version = 0;
-	
-	deb_data("- Enter %s Function -\n",__FUNCTION__);
-	deb_data("ucSlaveDemod = %d, bOn = %s \n", ucSlaveDemod, bOn?"ON":"OFF");
-
-	if(bOn) 
-	{
-		pdc->fc[ucSlaveDemod].tunerinfo.bTunerInited = true;
-		//[OMEGA] 
-		if (pdc->architecture == Architecture_PIP)
-		{
-			if (pdc->fc[0].bTimerOn || pdc->fc[1].bTimerOn) {				
-				deb_data("Already all power on ");
-				return 0;
-			}
-		}
-	}
-	else 
-	{	
-		pdc->fc[ucSlaveDemod].tunerinfo.bTunerInited = false;	
-		pdc->fc[ucSlaveDemod].tunerinfo.bTunerLock = false;
-		
-		//[OMEGA] if other one still alive, do not pwr down, just need to set freq;
-		if (pdc->architecture == Architecture_PIP)
-		{
-			if (pdc->fc[0].bTimerOn || pdc->fc[1].bTimerOn) 
-			{				
-				deb_data("CLOSE 1<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-				IT9507_acquireTxChannel(&pdc->state, pdc->fc[!ucSlaveDemod].ucCurrentBandWidth, pdc->fc[!ucSlaveDemod].ulCurrentFrequency);
-				return 0;
-			}
-		}
-	}
-   	//[OMEGA] clock from tuner, so close sequence demod->tuner, and 9133->9137. vice versa.
-   	// BUT! demod->tuner:57mADC, tuner->demod:37mADC
-	if (bOn)  //pwr on
-	{
-		if(pdc->chip_version == 1)
-		{
-			deb_data("aaa Power On\n");
-			if (ucSlaveDemod == 1){
-				dwError = NIM_ResetSeq(pdc);
-				if(dwError)
-				{								
-					NIM_ResetSeq(pdc);
-				}
-			}
-			else
-			{
-				//aaa			
-				//CAP_KdPrint(("aaa DRV_TunerSuspend chip_%d", ucSlaveDemod));
-				//dwError = DRV_TunerSuspend(handle, ucSlaveDemod, !bOn);
-				//dwError = DRV_TunerPowerCtrl(handle, ucSlaveDemod, bOn);
-				//if(dwError) TUNER_KdPrint(("DRV_ApCtrl::DRV_TunerSuspend Fail: 0x%04X", dwError));
-				//DummyCmd
-				pdc->UsbCtrlTimeOut = 1;
-				for(i=0; i<5 ;i++) 
-				{        
-					deb_data("DRV_ApCtrl::DummyCmd %d\n", i);
-					dwError = IT9507_getFirmwareVersion (&pdc->state, Processor_LINK, &version);
-//					mdelay(1);
-					msleep(1);
-					//if (!dwError) break;
-				}
-				pdc->UsbCtrlTimeOut = 5;
-				
-				deb_data("aaa IT9507_controlTunerPowerSaving chip_%d\n", ucSlaveDemod);
-	//			dwError = IT9507_controlTunerPower((Destate*) &pdc->Destate, bOn);
-	//			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04ld", dwError);
-
-				deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
-				dwError = IT9507_controlPowerSaving(&pdc->state, bOn);
-				if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x", dwError);
-			}
-		}
-		else
-		{
-			deb_data("aaa Power On\n");
-			if (ucSlaveDemod == 1){
-					deb_data("aaa GPIOH5 off\n");
-					dwError = DRV_NIMSuspend(handle, false);
-			}
-			else
-			{
-				//DummyCmd
-				pdc->UsbCtrlTimeOut = 1;
-				for(i=0; i<5 ;i++) 
-				{        
-					deb_data("DRV_ApCtrl::DummyCmd %d\n", i);
-					dwError = IT9507_getFirmwareVersion (&pdc->state, Processor_LINK, &version);
-//					mdelay(1);
-					msleep(1);					
-					//if (!dwError) break;
-				}
-				pdc->UsbCtrlTimeOut = 5;
-			}
-			//aaa			
-			//CAP_KdPrint(("aaa DRV_TunerSuspend chip_%d", ucSlaveDemod));
-			//dwError = DRV_TunerSuspend(handle, ucSlaveDemod, !bOn);
-			//dwError = DRV_TunerPowerCtrl(handle, ucSlaveDemod, bOn);
-			//if(dwError) TUNER_KdPrint(("DRV_ApCtrl::DRV_TunerSuspend Fail: 0x%04x", dwError));
-
-			deb_data("aaa IT9507_controlTunerPowerSaving chip_%d\n", ucSlaveDemod);
-	//		dwError = IT9507_controlTunerPower((Destate*) &pdc->Destate, bOn);
-			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04x\n", dwError);
-
-			deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
-			dwError = IT9507_controlPowerSaving(&pdc->state, bOn);
-//			mdelay(50);
-			msleep(50);
-			if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
-		}
-        deb_data("aaa Power On End-----------\n");		
-    }
-	else //pwr down:  DCA DUT: 36(all) -> 47-159(no GPIOH5, sequence change)
-	{
-		deb_data("aaa Power OFF\n");
-	/*	if ( (ucSlaveDemod == 0) && (pdc->Destate.chipNumber == 2) ){
-			
-			//deb_data("aaa IT9507_controlTunerLeakage for Chip_1");
-			//dwError = IT9507_controlTunerLeakage((Destate*) &pdc->Destate, 1, bOn);
-			//if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerLeakage error = 0x%04x", dwError);
-
-			//deb_data("aaa GPIOH5 on");
-			//dwError = DRV_NIMSuspend(handle, true);
-			
-		}*/
-	
-		deb_data("aaa IT9507_controlPowerSaving chip_%d\n", ucSlaveDemod);
-		dwError = IT9507_controlPowerSaving(&pdc->state, bOn);
-		if(dwError) deb_data("DRV_ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
-		
-		deb_data("aaa IT9507_controlTunerPowerSaving chip_%d", ucSlaveDemod);
-//		dwError = IT9507_controlTunerPower((Destate*) &pdc->Destate, bOn);
-		if(dwError) deb_data("DRV_ApCtrl::IT9507_controlTunerPowerSaving error = 0x%04x\n", dwError);
-		//deb_data("aaa DRV_TunerSuspend chip_%d", ucSlaveDemod);
-		//dwError = DRV_TunerSuspend(handle, ucSlaveDemod, !bOn);
-		//dwError = DRV_TunerPowerCtrl(handle, ucSlaveDemod, bOn);		
-		//if(dwError) deb_data("DRV_ApCtrl::DRV_TunerSuspend Fail: 0x%04x", dwError);
-	
-		deb_data("aaa Power OFF End-----------\n");
-    }
-
-	return(dwError);
-}
-
-
 static u32 DRV_TunerWakeup(
       void *     handle
 )
@@ -3296,22 +2973,6 @@ static u32 DRV_TunerWakeup(
 }
 
 //************** DL_ *************//
-
-static u32 DL_NIMSuspend(
-    void *      handle,
-    bool	bSuspend
-)
-{
-	u32 dwError = Error_NO_ERROR;
-
-	mutex_lock(&mymutex);
-
-    dwError = DRV_NIMSuspend(handle, bSuspend);
-
-    mutex_unlock(&mymutex);
-
-    return (dwError);
-}
 
 static u32 DL_Initialize(
 	    void *      handle
@@ -3457,68 +3118,6 @@ exit:
     mutex_unlock(&mymutex);
     	return(dwError);
 }
-
-u32 DL_ApCtrl (
-	void* handle,
-    u8  ucSlaveDemod,
-    bool  bOn
-)
-{
-    u32 dwError = Error_NO_ERROR;
-	u8    i = 0;
-	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT)handle;
-	
-	mutex_lock(&mymutex);
-
-	deb_data("- Enter %s Function -",__FUNCTION__);
-	deb_data("  chip =  %d  bOn = %s\n", ucSlaveDemod, bOn?"ON":"OFF");
-
-    if(PDC->architecture != Architecture_PIP)
-    {
-
-	//	if ( PDC->state.chipNumber == 2 && bOn) dwError = DL_NIMSuspend(PDC, false);
-
-		/*for (i=0; i<PDC->state.chipNumber; i++)
-		{	 
-		   if (bOn) 
-			dwError = DRV_ApCtrl (PDC, i, bOn);
-		   else 
-			if (PDC->bTunerPowerOff != true) dwError = DRV_ApCtrl (PDC, i, bOn);
-
-			if(!bOn)
-			{
-					PDC->fc[i].ulDesiredFrequency = 0;
-			PDC->fc[i].ucDesiredBandWidth = 0;
-			}
-		}*/
-
-	//	if(PDC->state.chipNumber == 2 && !bOn) dwError = DL_NIMSuspend(PDC, true);
-	}
-    else
-    {
-		if (bOn) {
-
-			PDC->fc[ucSlaveDemod].GraphBuilt = 1;
-
-			if (PDC->fc[0].GraphBuilt == 0 ||  PDC->fc[1].GraphBuilt == 0)
-			dwError = DL_NIMSuspend(PDC, false);
-
-			dwError = DRV_ApCtrl (PDC, ucSlaveDemod, bOn);
-		} else {
-
-			PDC->fc[ucSlaveDemod].GraphBuilt = 0;
-
-			if (PDC->bTunerPowerOff != true) dwError = DRV_ApCtrl (PDC, ucSlaveDemod, bOn);
-
-			if (PDC->fc[0].GraphBuilt == 0 && PDC->fc[1].GraphBuilt == 0 && PDC->bTunerPowerOff == true)
-			dwError = DL_NIMSuspend(PDC, true);
-		}
-    }
-    mutex_unlock(&mymutex);
-
-   	return(dwError);
-}
-
 
 u32 DL_CheckTunerInited(
 	void* handle,
@@ -3809,16 +3408,10 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 
 	if (bBoot)
 	{
-		PDC->bSupportSelSuspend = false;
-//		PDC->state.userData = (Handle)PDC;
-//		PDC->state.chipNumber = 1; 
-//		PDC->destate.userData = (Handle)PDC;
-		PDC->architecture=Architecture_DCA;
 		PDC->state.frequency = 666000;
 		PDC->state.bandwidth = 8000;
 		PDC->fc[0].tunerinfo.TunerId = 0;
 		PDC->fc[1].tunerinfo.TunerId = 0;
-		PDC->bDualTs=false;	
         	PDC->FilterCnt = 0;
 		PDC->UsbCtrlTimeOut = 1;
 	}
@@ -3844,10 +3437,6 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	
 	if(bBoot)
     	{
-		//patch for eeepc
-        	//error = DL_SetBusTuner (PDC, Bus_USB, 0x38);
-        	//PDC->UsbCtrlTimeOut = 5;
-        
         	error = DL_SetBusTuner (PDC, 0x38);
         	if (error)
         	{ 
@@ -3875,23 +3464,11 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
     	}
 
 	
-	 /*if (PDC->state.chipNumber == 2 && !PDC->state.booted) //plug/cold-boot/S4
-    	{
-        	error = DL_NIMReset(PDC);            
-    	}
-    	else if(PDC->state.chipNumber == 2 && PDC->state.booted) //warm-boot/(S1)
-    	{
-        	error = DL_NIMSuspend(PDC, false); 
-		error = DL_TunerWakeup(PDC); //actually for mt2266
-    	}*/
-	
-	
-	//if(PDC->state.chipNumber == 1 && PDC->state.booted) //warm-boot/(S1)
 	if(PDC->state.booted) //warm-boot/(S1)
 	{
 		error = DL_TunerWakeup(PDC);
+		if(error) deb_data("DL_TunerWakeup fail!\n"); 
 	}
-	if(error) deb_data("DL_NIMReset or DL_NIMSuspend or DL_TunerWakeup fail!\n"); 
 
 	error = DL_Initialize(PDC);
 	if (error) {

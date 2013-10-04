@@ -956,12 +956,6 @@ static int it950x_suspend(struct usb_interface *intf, pm_message_t state)
 		error = DL_CheckTunerInited(&dev->DC, 0, &dev->TunerInited0);
 		error = DL_CheckTunerInited(&dev->DC, 1, &dev->TunerInited1);
 
-		error = DL_ApCtrl(&dev->DC, 0, 0);
-		error = DL_ApCtrl(&dev->DC, 1, 0);
-		if (error) {
-			deb_data("DL_ApCtrl error : 0x%x\n", error);
-		}
-
 		dev->DeviceReboot = true;
     }
 #endif
@@ -988,10 +982,6 @@ static int it950x_resume(struct usb_interface *intf)
 		if(retval)
 			deb_data("Device_init Fail: 0x%08x\n", retval);
 
-		if (dev->TunerInited0)
-			error = DL_ApCtrl(&dev->DC, 0, 1);
-		if (dev->TunerInited1)
-			error = DL_ApCtrl(&dev->DC, 1, 1);
     }
 #endif
 	
