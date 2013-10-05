@@ -2792,11 +2792,6 @@ static u32  DRV_Initialize(
     IT9507_getFirmwareVersion (&pdc->state, Processor_LINK, &cmdVersion);
     deb_data("FwVer LINK = 0x%x\n", cmdVersion);
     
-	/* Solve 0-byte packet error. write Link 0xDD8D[3] = 1 */
-	//error = Destate_readRegister((Destate*) &pdc->destate, Processor_LINK, 0xdd8d, &usb_dma_reg);
-	//usb_dma_reg |= 0x08;             /*reg_usb_min_len*/
-	//error = Destate_writeRegister((Destate*) &pdc->destate, Processor_LINK, 0xdd8d, usb_dma_reg);
-    
     return error;
 	
 }
@@ -3015,7 +3010,6 @@ u32 DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
 
 u32 DL_ApPwCtrl (
 	void* handle,
-    bool  bChipCtl,
     bool  bOn
 )
 {
@@ -3026,29 +3020,8 @@ u32 DL_ApPwCtrl (
 	mutex_lock(&mymutex);
 
 	deb_data("- Enter %s Function -",__FUNCTION__);
-	deb_data("  chip =  %d  bOn = %s\n", bChipCtl, bOn?"ON":"OFF");
+	deb_data("  bOn = %s\n", bOn?"ON":"OFF");
 
-	if(bChipCtl) {    // 913x
-#if 0
-		if(bOn) {		// resume
-			deb_data("IT9130x Power ON\n");		
-			dwError = it950x_wr_regbits(&PDC->state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 0);
-			dwError = Destate_controlPowerSaving ((Destate*) &PDC->destate, bOn);				
-			if(dwError) { 
-				deb_data("ApCtrl::IT913x chip resume error = 0x%04x\n", dwError); 
-				goto exit;
-			}
-		} else {       // suspend
-			deb_data("IT9130x Power OFF\n");	
-			dwError = it950x_wr_regbits(&PDC->state, Processor_LINK, p_reg_top_gpioh5_o, reg_top_gpioh5_o_pos, reg_top_gpioh5_o_len, 1);
-			dwError = Destate_controlPowerSaving ((Destate*) &PDC->destate, bOn);	
-			if(dwError) { 
-				deb_data("ApCtrl::IT913x chip suspend error = 0x%04x\n", dwError); 
-				goto exit;
-			}			
-		}
-#endif
-	} else {          // 9507
 		if(bOn) {	  // resume
 			deb_data("IT950x Power ON\n");				
 			dwError = IT9507_controlPowerSaving (&PDC->state, bOn);				
@@ -3070,7 +3043,7 @@ u32 DL_ApPwCtrl (
 				goto exit;
 			}
 		}			
-	}
+
 
 exit:
     mutex_unlock(&mymutex);

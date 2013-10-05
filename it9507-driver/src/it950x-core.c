@@ -708,7 +708,7 @@ try:
 
 #if !(defined(DTVCAM_POWER_CTRL) && defined(AVSENDER_POWER_CTRL))
 		if(atomic_read(&dev->tx_pw_on) == 0) {
-			error = DL_ApPwCtrl(&dev->DC, 0, 1);
+			error = DL_ApPwCtrl(&dev->DC, 1);
 			atomic_set(&dev->tx_pw_on, 1);	
 		}
 #endif	
@@ -757,7 +757,7 @@ static int it950x_usb_tx_release(struct inode *inode, struct file *file)
 #if !(defined(DTVCAM_POWER_CTRL) && defined(AVSENDER_POWER_CTRL))		
 		if(atomic_read(&dev->tx_pw_on) == 1) {
 //DAVE			if(atomic_read(&dev->g_AP_use_rx) == 0) {   // RX not used, suspend tx.
-				error = DL_ApPwCtrl(&dev->DC, 0, 0);
+				error = DL_ApPwCtrl(&dev->DC, 0);
 				atomic_set(&dev->tx_pw_on, 0);	
 //DAVE			} else {
 //DAVE				deb_data("RX lock TX_PowerSaving\n");
@@ -932,7 +932,7 @@ static int it950x_probe(struct usb_interface *intf, const struct usb_device_id *
 	atomic_set(&dev->tx_pw_on, 0);	
 //DAVE	atomic_set(&dev->rx_pw_on, 0);	
 //DAVE	DL_ApPwCtrl(&dev->DC, 1, 0);	
-	DL_ApPwCtrl(&dev->DC, 0, 0);	
+	DL_ApPwCtrl(&dev->DC, 0);	
 #endif	
 	deb_data("USB ITEtech device now attached to USBSkel-%d \n", intf->minor);
 

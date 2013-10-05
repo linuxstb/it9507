@@ -171,8 +171,7 @@ struct tuner_priv {
 extern int it950x_device_count;
 
 extern u32 Device_init(struct usb_device *udev,PDEVICE_CONTEXT PDCs, bool bBoot);
-extern u32 DL_ApCtrl(void* handle, u8 ucSlaveDemod, bool bOn);
-extern u32 DL_ApPwCtrl(void* handle, bool ucSlaveDemod, bool bOn);
+extern u32 DL_ApPwCtrl(void* handle, bool bOn);
 extern u32 DL_isLocked(void *handle,u8 ucSlaveDemod, bool *bLock);
 extern u32 DL_ReSetInterval(void);
 extern u32 DL_Reboot(void* handle);
