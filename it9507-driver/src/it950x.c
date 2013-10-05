@@ -2726,34 +2726,32 @@ module_param_named(debug,dvb_usb_it950x_debug, int, 0644);
 static DEFINE_MUTEX(mymutex);
 
 //get EEPROM_IRMODE/bIrTblDownload/bRAWIr/architecture config from EEPROM
-static u32 DRV_GetEEPROMConfig(
-	void* handle)
+static u32 DRV_GetEEPROMConfig(struct it950x_state* state)
 {       
     u32 dwError = Error_NO_ERROR;
 	u8 chip_version = 0;
 	u32 chip_Type;
 	u8  var[2];
-    PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	//bIrTblDownload option
     u8 btmp = 0;
 	
 	deb_data("- Enter %s Function -",__FUNCTION__);
 
 	//patch for read eeprom valid bit
-	dwError = it950x_rd_reg(&pdc->state, Processor_LINK, chip_version_7_0, &chip_version);
-	dwError = it950x_rd_regs(&pdc->state, Processor_LINK, chip_version_7_0+1, 2, var);
+	dwError = it950x_rd_reg(state, Processor_LINK, chip_version_7_0, &chip_version);
+	dwError = it950x_rd_regs(state, Processor_LINK, chip_version_7_0+1, 2, var);
 
 	if(dwError) deb_data("DRV_GetEEPROMConfig fail---cant read chip version");
 
 	chip_Type = var[1]<<8 | var[0];
 	if(chip_Type==0x9135 && chip_version == 2) //Om2
 	{
-		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, 0x461d, 1, &btmp);
+		dwError = it950x_rd_regs(state, Processor_LINK, 0x461d, 1, &btmp);
 		deb_data("Chip Version is %d---and Read 461d---valid bit = 0x%02X", chip_version, btmp);
 	}
 	else 
 	{
-		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, 0x4979, 1, &btmp);
+		dwError = it950x_rd_regs(state, Processor_LINK, 0x4979, 1, &btmp);
 		deb_data("Chip Version is %d---and Read 4979---valid bit = 0x%02X", chip_version, btmp);
 	}
 	if (dwError) 
@@ -2771,7 +2769,7 @@ static u32 DRV_GetEEPROMConfig(
 	else
 	{
 		deb_data("=============Need read eeprom");
-		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_IRMODE, 1, &btmp);
+		dwError = it950x_rd_regs(state, Processor_LINK, EEPROM_IRMODE, 1, &btmp);
     	if (dwError) goto exit;
     	deb_data("EEPROM_IRMODE = 0x%02X, ", btmp);	
 
@@ -2779,33 +2777,32 @@ static u32 DRV_GetEEPROMConfig(
     	//pdc->state.chipNumber = 1;    
 
 #if 0
-    	dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_TSMODE, 1, &btmp);
+    	dwError = it950x_rd_regs(state, Processor_LINK, EEPROM_TSMODE, 1, &btmp);
     	if (dwError) goto exit;
     	deb_data("EEPROM_TSMODE = 0x%02X", btmp);
 	// We know this is 0 - i.e. single TS mode.
 #endif
 
 		//dwError = it950x_wr_reg((Destate*) &pdc->Destate, 0, Processor_LINK, EEPROM_SUSPEND, 0);
-		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
+		dwError = it950x_rd_regs(state, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
 		deb_data("EEPROM susped mode=%d", btmp);
     	
     }
 		//pdc->state.chipNumber = 1; 
 
 //init some device info
-    pdc->fc.ulCurrentFrequency = 0;  
-    pdc->fc.ucCurrentBandWidth = 0;
-    pdc->fc.ulDesiredFrequency = 0;	
-    pdc->fc.ucDesiredBandWidth = 6000;	
+    state->fc.ulCurrentFrequency = 0;  
+    state->fc.ucCurrentBandWidth = 0;
+    state->fc.ulDesiredFrequency = 0;	
+    state->fc.ucDesiredBandWidth = 6000;	
 
     //For PID Filter Setting
-    //pdc->fc.ulcPIDs = 0;    
-    pdc->fc.bEnPID = false;
-    pdc->fc.bApOn = false;
-    pdc->fc.bResetTs = false;
+    //state->fc.ulcPIDs = 0;    
+    state->fc.bApOn = false;
+    state->fc.bResetTs = false;
 
-    pdc->fc.tunerinfo.bTunerOK = false;
-    pdc->fc.tunerinfo.bSettingFreq = false;
+    state->fc.tunerinfo.bTunerOK = false;
+    state->fc.tunerinfo.bSettingFreq = false;
 	
 exit:
     return(dwError);
@@ -2813,14 +2810,10 @@ exit:
 
 //************** DL_ *************//
 
-u32 DL_ApPwCtrl (
-	void* handle,
-    bool  bOn
-)
+u32 DL_ApPwCtrl (struct it950x_state *state, bool  bOn)
 {
     u32 dwError = Error_NO_ERROR;
 	u8    i = 0;
-	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT)handle;
 	
 	mutex_lock(&mymutex);
 
@@ -2829,20 +2822,20 @@ u32 DL_ApPwCtrl (
 
 		if(bOn) {	  // resume
 			deb_data("IT950x Power ON\n");				
-			dwError = IT9507_controlPowerSaving (&PDC->state, bOn);				
+			dwError = IT9507_controlPowerSaving (state, bOn);				
 			if(dwError) { 
 				deb_data("ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError); 
 				goto exit;
 			}
 		} else {      // suspend
 			//deb_data("IT950x TxMode RF OFF\n");				
-			dwError = IT9507_setTxModeEnable(&PDC->state, 0);
+			dwError = IT9507_setTxModeEnable(state, 0);
 			if(dwError) {
 				deb_data("ApCtrl::IT9507_setTxModeEnable error = 0x%04x\n", dwError);
 				goto exit;				
 			}
 			deb_data("IT950x Power OFF\n");							
-			dwError = IT9507_controlPowerSaving (&PDC->state, bOn);			
+			dwError = IT9507_controlPowerSaving (state, bOn);			
 			if(dwError) {
 				deb_data("ApCtrl::IT9507_controlPowerSaving error = 0x%04x\n", dwError);
 				goto exit;
@@ -2855,18 +2848,15 @@ exit:
     	return(dwError);
 }
 
-u32 DL_CheckTunerInited(
-	void* handle,
-	bool *bOn )
+u32 DL_CheckTunerInited(struct it950x_state *state, bool *bOn)
 {
 	u32 dwError = Error_NO_ERROR;
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	
     mutex_lock(&mymutex);
 
     deb_data("- Enter %s Function -\n",__FUNCTION__);
 
-    *bOn = pdc->fc.tunerinfo.bTunerInited;
+    *bOn = state->fc.tunerinfo.bTunerInited;
 
     mutex_unlock(&mymutex);
 
@@ -3118,7 +3108,7 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
     return(dwError);
 }
 
-u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
+u32 Device_init(struct usb_device *udev,struct it950x_state *state, bool bBoot)
 {
 	u32 error = Error_NO_ERROR;
 	u8 filterIdx=0;
@@ -3127,19 +3117,19 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
         u32 cmdVersion = 0; 
 	u8 deviceType;
 
-	PDC->state.udev = udev;
-	dev_set_drvdata(&udev->dev, PDC);
+	state->udev = udev;
+	dev_set_drvdata(&udev->dev, state);
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
 	mutex_lock(&mymutex);
-	error = IT9507_getFirmwareVersion (&PDC->state, Processor_LINK, &version);
+	error = IT9507_getFirmwareVersion (state, Processor_LINK, &version);
 
     	if (version != 0) {
-        	PDC->state.booted = true;
+        	state->booted = true;
     	} 
     	else {
-        	PDC->state.booted = false;
+        	state->booted = false;
     	}
 
         if (error)  // TODO: Check before using value of version
@@ -3152,10 +3142,10 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	//************* Set Device init Info *************//
 	if (bBoot)
 	{
-		PDC->state.frequency = 666000;
-		PDC->state.bandwidth = 8000;
+		state->frequency = 666000;
+		state->bandwidth = 8000;
 
-        	error =DRV_GetEEPROMConfig(PDC);
+        	error =DRV_GetEEPROMConfig(state);
         	if (error)
         	{
             		deb_data("DRV_GetEEPROMConfig fail : 0x%08x\n", error);
@@ -3164,32 +3154,32 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
         	}
 	}//bBoot
 	
-	if(PDC->state.booted) //warm-boot/(S1)
+	if(state->booted) //warm-boot/(S1)
 	{
 		//tuner power on
-		error = it950x_wr_regbits(&PDC->state, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);
+		error = it950x_wr_regbits(state, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);
 		if(error) deb_data("DRV_TunerWakeup fail!\n"); 
 	}
 
 	// Start of DL_Initialize
 
-	if(EagleUser_getDeviceType(&PDC->state, &deviceType) != 0)
+	if(EagleUser_getDeviceType(state, &deviceType) != 0)
 		printk("- EagleUser_getDeviceType fail -\n");
 
-	if(IT9507_setSlaveIICAddress(&PDC->state, SLAVE_DEMOD_2WIREADDR) != 0)
+	if(IT9507_setSlaveIICAddress(state, SLAVE_DEMOD_2WIREADDR) != 0)
 		printk("- IT9507_setSlaveIICAddress fail -\n");	
 	
 	
-	if(PDC->state.booted) //from Standard_setBusTuner() > Standard_getFirmwareVersion()
+	if(state->booted) //from Standard_setBusTuner() > Standard_getFirmwareVersion()
     	{
         	//use "Command_QUERYINFO" to get fw version 
-        	error = IT9507_getFirmwareVersion(&PDC->state, Processor_OFDM, &cmdVersion);
+        	error = IT9507_getFirmwareVersion(state, Processor_OFDM, &cmdVersion);
         	if(error) deb_data("DRV_Initialize : IT9507_getFirmwareVersion : error = 0x%08u\n", error);
 
         	if(cmdVersion != DVB_OFDM_VERSION)
         	{
             		deb_data("Reboot: Outside Fw = 0x%x, Inside Fw = 0x%x", DVB_OFDM_VERSION, cmdVersion);
-            		error = IT9507_TXreboot(&PDC->state);
+            		error = IT9507_TXreboot(state);
             		if(error) 
             		{
                 		deb_data("IT9507_reboot : error = 0x%08u\n", error);
@@ -3208,14 +3198,14 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 
 	//			case StreamType_DVBT_DATAGRAM:
 	deb_data("    StreamType_DVBT_DATAGRAM\n");
-	error = IT9507_initialize (&PDC->state, 0);
+	error = IT9507_initialize (state, 0);
 				 
 	if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
 	else deb_data("    Device initialize TX Ok\n");
 
-    IT9507_getFirmwareVersion (&PDC->state, Processor_OFDM, &cmdVersion);
+    IT9507_getFirmwareVersion (state, Processor_OFDM, &cmdVersion);
     deb_data("    FwVer OFDM = 0x%x, ", cmdVersion);
-    IT9507_getFirmwareVersion (&PDC->state, Processor_LINK, &cmdVersion);
+    IT9507_getFirmwareVersion (state, Processor_LINK, &cmdVersion);
     deb_data("FwVer LINK = 0x%x\n", cmdVersion);
     
 	// End of DL_Initialize
@@ -3229,7 +3219,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	deb_data("	%s success \n",__FUNCTION__);
 
 
-	error = it950x_wr_reg(&PDC->state, Processor_OFDM, 0xF7C6, 0x1);
+	error = it950x_wr_reg(state, Processor_OFDM, 0xF7C6, 0x1);
 	if(error)	printk( "AirHD Reg Write fail!\n");
 	else printk( "AirHD Reg Write ok!\n");
 	

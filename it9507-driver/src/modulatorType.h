@@ -404,22 +404,6 @@ typedef struct _TPS{
 
 //--------------------------
 
-/**
- * The data structure of Eagle
- */
-struct it950x_state {
-	/** Basic structure */
-	struct usb_device *udev;
-	u8 i2cAddr;
-	u16 bandwidth;
-	u32 frequency;    
-	bool booted;
-	u8 slaveIICAddr;  
-	ChannelModulation channelModulation;
-	CalibrationInfo calibrationInfo;
-};
-
-
 extern const u8 Eagle_bitMask[8];
 #define REG_MASK(pos, len)                (Eagle_bitMask[len-1] << pos)
 #define REG_CLEAR(temp, pos, len)         (temp & (~REG_MASK(pos, len)))

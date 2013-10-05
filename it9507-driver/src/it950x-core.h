@@ -117,30 +117,24 @@ typedef struct _FILTER_CONTEXT_HW {
     u16  ucCurrentBandWidth;  
     u32 ulDesiredFrequency;
     u16  ucDesiredBandWidth;   
-    //ULONG ulBandWidth;   
     bool bTimerOn;
-   // PKSFILTER filter;
-    u8 GraphBuilt;
     TUNER_INFO tunerinfo; 
-    //SIGNAL_STATISTICS ss;
-    //SIGNAL_RETRAIN sr;  
-    //u32   gdwOrigFCW;        //move from AF901x.cpp [global variable]
-    //u8    gucOrigUnplugTh;   //move from AF901x.cpp [global variable]
-    //u8    gucPreShiftIdx;    //move from AF901x.cpp [global variable]    
-    // PKSFILTERFACTORY  pFilterFactory;
-    int  bEnPID;
-    //ULONG ulcPIDs;
-    //ULONG aulPIDs[32];
     bool bApOn;
     int bResetTs;
-    u8 OvrFlwChk;
 } FILTER_CONTEXT_HW, *PFILTER_CONTEXT_HW;  
 
-typedef struct _DEVICE_CONTEXT {
-    FILTER_CONTEXT_HW fc;
-    struct it950x_state state;	
-} DEVICE_CONTEXT, *PDEVICE_CONTEXT;
-
+struct it950x_state {
+	/** Basic structure */
+	struct usb_device *udev;
+	u8 i2cAddr;
+	u16 bandwidth;
+	u32 frequency;    
+	bool booted;
+	u8 slaveIICAddr;  
+	ChannelModulation channelModulation;
+	CalibrationInfo calibrationInfo;
+        FILTER_CONTEXT_HW fc;
+};
 
 struct it950x_ofdm_channel {
 	u32 RF_kHz;
@@ -170,13 +164,12 @@ struct tuner_priv {
 //extern PDEVICE_CONTEXT PDC;
 extern int it950x_device_count;
 
-extern u32 Device_init(struct usb_device *udev,PDEVICE_CONTEXT PDCs, bool bBoot);
-extern u32 DL_ApPwCtrl(void* handle, bool bOn);
-extern u32 DL_isLocked(void *handle,u8 ucSlaveDemod, bool *bLock);
+extern u32 Device_init(struct usb_device *udev,struct it950x_state *state, bool bBoot);
+extern u32 DL_ApPwCtrl (struct it950x_state *state, bool  bOn);
 extern u32 DL_ReSetInterval(void);
-extern u32 DL_Reboot(void* handle);
-extern u32 DL_CheckTunerInited(void *handle, bool *bOn);
-extern u32 DL_DemodIOCTLFun(struct it950x_state* modulator, u32 IOCTLCode, unsigned long pIOBuffer);
+extern u32 DL_Reboot(struct it950x_state *state);
+extern u32 DL_CheckTunerInited(struct it950x_state *state, bool *bOn);
+extern u32 DL_DemodIOCTLFun(struct it950x_state* state, u32 IOCTLCode, unsigned long pIOBuffer);
 extern u32 DL_LoadIQtable_Fromfile(void *handle);
 
 #endif

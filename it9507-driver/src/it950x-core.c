@@ -49,7 +49,7 @@ struct it950x_dev {
 //	__u8			bulk_out_endpointAddr;	/* the address of the bulk out endpoint */
 	struct kref		kref;
 	struct file *tx_file;
-	DEVICE_CONTEXT DC;	
+        struct it950x_state state;
 	u8 tx_on;
 	u8 tx_chip_minor;	
 	u8 g_AP_use;
@@ -708,7 +708,7 @@ try:
 
 #if !(defined(DTVCAM_POWER_CTRL) && defined(AVSENDER_POWER_CTRL))
 		if(atomic_read(&dev->tx_pw_on) == 0) {
-			error = DL_ApPwCtrl(&dev->DC, 1);
+			error = DL_ApPwCtrl(&dev->state, 1);
 			atomic_set(&dev->tx_pw_on, 1);	
 		}
 #endif	
@@ -757,7 +757,7 @@ static int it950x_usb_tx_release(struct inode *inode, struct file *file)
 #if !(defined(DTVCAM_POWER_CTRL) && defined(AVSENDER_POWER_CTRL))		
 		if(atomic_read(&dev->tx_pw_on) == 1) {
 //DAVE			if(atomic_read(&dev->g_AP_use_rx) == 0) {   // RX not used, suspend tx.
-				error = DL_ApPwCtrl(&dev->DC, 0);
+				error = DL_ApPwCtrl(&dev->state, 0);
 				atomic_set(&dev->tx_pw_on, 0);	
 //DAVE			} else {
 //DAVE				deb_data("RX lock TX_PowerSaving\n");
@@ -817,7 +817,7 @@ long it950x_usb_tx_unlocked_ioctl(
 			Tx_RingBuffer_cmd(dev, pRequest->cmd, pRequest->len);
 			return 0;		
 	}
-	return DL_DemodIOCTLFun((void*)&dev->DC.state, (u32)cmd, parg);
+	return DL_DemodIOCTLFun((void*)&dev->state, (u32)cmd, parg);
 }
 
 
@@ -896,7 +896,7 @@ static int it950x_probe(struct usb_interface *intf, const struct usb_device_id *
 
 	//memset(&DC, 0, sizeof(DC));
 	deb_data("===it950x usb device pluged in ===\n");
-	retval = Device_init(interface_to_usbdev(intf), &dev->DC, true);
+	retval = Device_init(interface_to_usbdev(intf), &dev->state, true);
 	if (retval) {
 		deb_data("Device_init Fail: 0x%08x\n", retval);
 		return retval;
@@ -932,7 +932,7 @@ static int it950x_probe(struct usb_interface *intf, const struct usb_device_id *
 	atomic_set(&dev->tx_pw_on, 0);	
 //DAVE	atomic_set(&dev->rx_pw_on, 0);	
 //DAVE	DL_ApPwCtrl(&dev->DC, 1, 0);	
-	DL_ApPwCtrl(&dev->DC, 0);	
+	DL_ApPwCtrl(&dev->state, 0);	
 #endif	
 	deb_data("USB ITEtech device now attached to USBSkel-%d \n", intf->minor);
 
@@ -953,7 +953,7 @@ static int it950x_suspend(struct usb_interface *intf, pm_message_t state)
 	error = DL_Reboot();
 #else
     if (dev->DevicePower) {
-		error = DL_CheckTunerInited(&dev->DC, &dev->TunerInited0);
+		error = DL_CheckTunerInited(&dev->state, &dev->TunerInited0);
 
 		dev->DeviceReboot = true;
     }
@@ -977,7 +977,7 @@ static int it950x_resume(struct usb_interface *intf)
 #ifdef EEEPC
 #else
     if (dev->DeviceReboot) {
-		retval = Device_init(interface_to_usbdev(intf),&dev->DC, false);
+		retval = Device_init(interface_to_usbdev(intf),&dev->state, false);
 		if(retval)
 			deb_data("Device_init Fail: 0x%08x\n", retval);
 
