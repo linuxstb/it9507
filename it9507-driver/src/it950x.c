@@ -2811,23 +2811,6 @@ exit:
     return(dwError);
 }
 
-static u32 DRV_TunerWakeup(
-      void *     handle
-)
-{   
-    	u32 dwError = Error_NO_ERROR;
-
-    	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT) handle;
-
-	deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-	//tuner power on
-	dwError = it950x_wr_regbits(&pdc->state, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);
-
-    return(dwError);
-
-}
-
 //************** DL_ *************//
 
 u32 DL_ApPwCtrl (
@@ -3183,7 +3166,8 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	
 	if(PDC->state.booted) //warm-boot/(S1)
 	{
-		error = DRV_TunerWakeup(PDC);
+		//tuner power on
+		error = it950x_wr_regbits(&PDC->state, Processor_LINK,  p_reg_top_gpioh7_o, reg_top_gpioh7_o_pos, reg_top_gpioh7_o_len, 1);
 		if(error) deb_data("DRV_TunerWakeup fail!\n"); 
 	}
 
