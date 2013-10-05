@@ -2830,34 +2830,6 @@ static u32 DRV_TunerWakeup(
 
 //************** DL_ *************//
 
-static u32  DL_GetEEPROMConfig(
-	 void *      handle
-)
-{   
-	u32 dwError = Error_NO_ERROR;
-    mutex_lock(&mymutex);
-
-    dwError = DRV_GetEEPROMConfig(handle);
-
-    mutex_unlock(&mymutex);
-
-    return(dwError);
-} 
-
-static u32 DL_TunerWakeup(
-      void *     handle
-)
-{    
-	u32 dwError = Error_NO_ERROR;
-    mutex_lock(&mymutex);
-
-    dwError = DRV_TunerWakeup(handle);
-
-    mutex_unlock(&mymutex);
-   
-    	return(dwError);
-}
-
 u32 DL_ApPwCtrl (
 	void* handle,
     bool  bOn
@@ -3186,7 +3158,6 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
     	else {
         	PDC->state.booted = false;
     	}
-	mutex_unlock(&mymutex);
 
         if (error)  // TODO: Check before using value of version
         {
@@ -3201,10 +3172,10 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 		PDC->state.frequency = 666000;
 		PDC->state.bandwidth = 8000;
 
-        	error =DL_GetEEPROMConfig(PDC);
+        	error =DRV_GetEEPROMConfig(PDC);
         	if (error)
         	{
-            		deb_data("DL_GetEEPROMConfig fail : 0x%08x\n", error);
+            		deb_data("DRV_GetEEPROMConfig fail : 0x%08x\n", error);
 			errcount++;
             		goto Exit;
         	}
@@ -3212,12 +3183,11 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	
 	if(PDC->state.booted) //warm-boot/(S1)
 	{
-		error = DL_TunerWakeup(PDC);
-		if(error) deb_data("DL_TunerWakeup fail!\n"); 
+		error = DRV_TunerWakeup(PDC);
+		if(error) deb_data("DRV_TunerWakeup fail!\n"); 
 	}
 
 	// Start of DL_Initialize
-    mutex_lock(&mymutex);
 
 	if(EagleUser_getDeviceType(&PDC->state, &deviceType) != 0)
 		printk("- EagleUser_getDeviceType fail -\n");
@@ -3239,10 +3209,10 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
             		if(error) 
             		{
                 		deb_data("IT9507_reboot : error = 0x%08u\n", error);
-                		goto end_of_init;
+                		goto Exit;
             		}
             		else {
-			  goto end_of_init;
+			  goto Exit;
             		}
         	}
         	else
@@ -3264,10 +3234,6 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
     IT9507_getFirmwareVersion (&PDC->state, Processor_LINK, &cmdVersion);
     deb_data("FwVer LINK = 0x%x\n", cmdVersion);
     
-end_of_init:	
-	mutex_unlock(&mymutex);
-
-    
 	// End of DL_Initialize
 
 	if (error) {
@@ -3284,6 +3250,7 @@ end_of_init:
 	else printk( "AirHD Reg Write ok!\n");
 	
 Exit:
+	mutex_unlock(&mymutex);
 	
 	if(errcount)
         printk( "[Device_init] Error %d\n", errcount);
