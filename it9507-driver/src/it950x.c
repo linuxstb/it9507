@@ -2725,70 +2725,6 @@ module_param_named(debug,dvb_usb_it950x_debug, int, 0644);
 
 static DEFINE_MUTEX(mymutex);
 
-static u32  DRV_Initialize(
-	    void *      handle
-)
-{
-	u32 error = Error_NO_ERROR;
-	u32 error_rx = Error_NO_ERROR;
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-	u8 temp = 0;
-	//u8 usb_dma_reg;
-	u8 chip_version = 0; 
-        u32 cmdVersion = 0; 
-	u8 deviceType;
-
-	deb_data("- Enter %s Function -\n",__FUNCTION__);
-
-	if(EagleUser_getDeviceType(&pdc->state, &deviceType) != 0)
-		printk("- EagleUser_getDeviceType fail -\n");
-
-	if(IT9507_setSlaveIICAddress(&pdc->state, SLAVE_DEMOD_2WIREADDR) != 0)
-		printk("- IT9507_setSlaveIICAddress fail -\n");	
-	
-	
-	if(pdc->state.booted) //from Standard_setBusTuner() > Standard_getFirmwareVersion()
-    	{
-        	//use "Command_QUERYINFO" to get fw version 
-        	error = IT9507_getFirmwareVersion(&pdc->state, Processor_OFDM, &cmdVersion);
-        	if(error) deb_data("DRV_Initialize : IT9507_getFirmwareVersion : error = 0x%08u\n", error);
-
-        	if(cmdVersion != DVB_OFDM_VERSION)
-        	{
-            		deb_data("Reboot: Outside Fw = 0x%x, Inside Fw = 0x%x", DVB_OFDM_VERSION, cmdVersion);
-            		error = IT9507_TXreboot(&pdc->state);
-            		if(error) 
-            		{
-                		deb_data("IT9507_reboot : error = 0x%08u\n", error);
-                		return error;
-            		}
-            		else {
-                		return Error_NOT_READY;
-            		}
-        	}
-        	else
-        	{
-            		deb_data("	Fw version is the same!\n");
-  	      		error = Error_NO_ERROR;
-        	}
-	}//pdc->IT950x.booted
-
-	//			case StreamType_DVBT_DATAGRAM:
-	deb_data("    StreamType_DVBT_DATAGRAM\n");
-	error = IT9507_initialize (&pdc->state, 0);
-				 
-	if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
-	else deb_data("    Device initialize TX Ok\n");
-
-    IT9507_getFirmwareVersion (&pdc->state, Processor_OFDM, &cmdVersion);
-    deb_data("    FwVer OFDM = 0x%x, ", cmdVersion);
-    IT9507_getFirmwareVersion (&pdc->state, Processor_LINK, &cmdVersion);
-    deb_data("FwVer LINK = 0x%x\n", cmdVersion);
-    
-    return error;
-	
-}
-
 //get EEPROM_IRMODE/bIrTblDownload/bRAWIr/architecture config from EEPROM
 static u32 DRV_GetEEPROMConfig(
 	void* handle)
@@ -2893,21 +2829,6 @@ static u32 DRV_TunerWakeup(
 }
 
 //************** DL_ *************//
-
-static u32 DL_Initialize(
-	    void *      handle
-)
-{
-	u32 dwError = Error_NO_ERROR;
-    mutex_lock(&mymutex);
-
-    dwError = DRV_Initialize(handle);
-
-	mutex_unlock(&mymutex);
-
-	return (dwError); 
-    
-}
 
 static u32  DL_GetEEPROMConfig(
 	 void *      handle
@@ -3248,6 +3169,8 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	u8 filterIdx=0;
 	int errcount=0;
 	u32 version = 0;
+        u32 cmdVersion = 0; 
+	u8 deviceType;
 
 	PDC->state.udev = udev;
 	dev_set_drvdata(&udev->dev, PDC);
@@ -3293,7 +3216,60 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 		if(error) deb_data("DL_TunerWakeup fail!\n"); 
 	}
 
-	error = DL_Initialize(PDC);
+	// Start of DL_Initialize
+    mutex_lock(&mymutex);
+
+	if(EagleUser_getDeviceType(&PDC->state, &deviceType) != 0)
+		printk("- EagleUser_getDeviceType fail -\n");
+
+	if(IT9507_setSlaveIICAddress(&PDC->state, SLAVE_DEMOD_2WIREADDR) != 0)
+		printk("- IT9507_setSlaveIICAddress fail -\n");	
+	
+	
+	if(PDC->state.booted) //from Standard_setBusTuner() > Standard_getFirmwareVersion()
+    	{
+        	//use "Command_QUERYINFO" to get fw version 
+        	error = IT9507_getFirmwareVersion(&PDC->state, Processor_OFDM, &cmdVersion);
+        	if(error) deb_data("DRV_Initialize : IT9507_getFirmwareVersion : error = 0x%08u\n", error);
+
+        	if(cmdVersion != DVB_OFDM_VERSION)
+        	{
+            		deb_data("Reboot: Outside Fw = 0x%x, Inside Fw = 0x%x", DVB_OFDM_VERSION, cmdVersion);
+            		error = IT9507_TXreboot(&PDC->state);
+            		if(error) 
+            		{
+                		deb_data("IT9507_reboot : error = 0x%08u\n", error);
+                		goto end_of_init;
+            		}
+            		else {
+			  goto end_of_init;
+            		}
+        	}
+        	else
+        	{
+            		deb_data("	Fw version is the same!\n");
+  	      		error = Error_NO_ERROR;
+        	}
+	}//PDC->IT950x.booted
+
+	//			case StreamType_DVBT_DATAGRAM:
+	deb_data("    StreamType_DVBT_DATAGRAM\n");
+	error = IT9507_initialize (&PDC->state, 0);
+				 
+	if (error) deb_data("IT950x_initialize _Device initialize fail : 0x%08x\n", error);
+	else deb_data("    Device initialize TX Ok\n");
+
+    IT9507_getFirmwareVersion (&PDC->state, Processor_OFDM, &cmdVersion);
+    deb_data("    FwVer OFDM = 0x%x, ", cmdVersion);
+    IT9507_getFirmwareVersion (&PDC->state, Processor_LINK, &cmdVersion);
+    deb_data("FwVer LINK = 0x%x\n", cmdVersion);
+    
+end_of_init:	
+	mutex_unlock(&mymutex);
+
+    
+	// End of DL_Initialize
+
 	if (error) {
 		deb_data("DL_Initialize fail! 0x%08x\n", error);
 		errcount++;
