@@ -2807,7 +2807,6 @@ static u32 DRV_GetEEPROMConfig(
     PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
 	//bIrTblDownload option
     u8 btmp = 0;
-	int ucSlaveDemod;
 	
 	deb_data("- Enter %s Function -",__FUNCTION__);
 
@@ -2985,27 +2984,6 @@ static u32 DL_TunerWakeup(
     mutex_unlock(&mymutex);
    
     	return(dwError);
-}
-
-u32 DL_TunerPowerCtrl(void* handle, u8 bPowerOn)
-{
-	u32 dwError = Error_NO_ERROR;
-	u8    ucSlaveDemod=0;
-  	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
-
-    mutex_lock(&mymutex);
-
-	deb_data("enter DL_TunerPowerCtrl:  bOn = %s\n", bPowerOn?"ON":"OFF");
-
-/*    for (ucSlaveDemod=0; ucSlaveDemod<PDC->state.chipNumber; ucSlaveDemod++)
-    {
-    	dwError = DRV_TunerPowerCtrl(PDC, ucSlaveDemod, bPowerOn);
-    	if(dwError) deb_data("  DRV_TunerPowerCtrl Fail: 0x%08x\n", dwError);
-    }*/
-
-    mutex_unlock(&mymutex);
-
-    return (dwError);
 }
 
 u32 DL_ApPwCtrl (
