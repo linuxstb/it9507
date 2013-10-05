@@ -1845,14 +1845,6 @@ static u32 IT9507_initialize (
 	state->calibrationInfo.tableGroups = IQ_TABLE_NROW;
 	state->i2cAddr = i2cAddr;
 
-	error = IT9507_getFirmwareVersion (state, Processor_LINK, &version);
-	if (error) goto exit;
-	if (version != 0) {
-		state->booted = true;
-	} else {
-		state->booted = false;	
-	}
-
 	/** Write secondary I2C address to device */
 	//error = it950x_wr_reg (state, Processor_LINK, p_eagle_reg_lnk2ofdm_data_63_56, EagleUser_IIC_SPEED);
 	//if (error) goto exit;	
@@ -1860,11 +1852,12 @@ static u32 IT9507_initialize (
 	error = it950x_wr_reg (state, Processor_LINK, second_i2c_address, 0x00);
 	if (error) goto exit;
 
-	
-	/** Load firmware */
-	error = it950x_load_firmware (state);
-	if (error) goto exit;
-	state->booted = true;
+        if (!state->booted) {	
+          /** Load firmware */
+	  error = it950x_load_firmware (state);
+	  if (error) goto exit;
+	  state->booted = true;
+	}
 
 	error = it950x_wr_reg (state, Processor_LINK, 0xD924, 0);//set UART -> GPIOH4
 	if (error) goto exit;
@@ -2882,31 +2875,6 @@ exit:
     return(dwError);
 }
 
-static u32 DRV_SetBusTuner(
-	 void * handle, 
-	 u16 tunerId
-)
-{
-	u32 dwError = Error_NO_ERROR;
-	u32 	 version = 0;
-
-	PDEVICE_CONTEXT pdc = (PDEVICE_CONTEXT)handle;
-
-	deb_data("- Enter %s Function -",__FUNCTION__);
-	deb_data("tunerId =0x%x\n", tunerId);
-
-	dwError = IT9507_getFirmwareVersion (&pdc->state, Processor_LINK, &version);
-    	if (version != 0) {
-        	pdc->state.booted = true;
-    	} 
-    	else {
-        	pdc->state.booted = false;
-    	}
-	if (dwError) {deb_data("Destate_getFirmwareVersion  error\n");}
-
-    	return(dwError); 
-}
-
 static u32 DRV_TunerWakeup(
       void *     handle
 )
@@ -2939,23 +2907,6 @@ static u32 DL_Initialize(
 
 	return (dwError); 
     
-}
-
-static u32 DL_SetBusTuner(
-	 void * handle, 
-	 u16 tunerId
-)
-{
-	u32 dwError = Error_NO_ERROR;
-	
-	mutex_lock(&mymutex);
-
-    dwError = DRV_SetBusTuner(handle, tunerId);
-
-    mutex_unlock(&mymutex);
-
-	return (dwError);
-
 }
 
 static u32  DL_GetEEPROMConfig(
@@ -3296,30 +3247,36 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	u32 error = Error_NO_ERROR;
 	u8 filterIdx=0;
 	int errcount=0;
+	u32 version = 0;
 
 	PDC->state.udev = udev;
 	dev_set_drvdata(&udev->dev, PDC);
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
-        printk("        DRIVER_RELEASE_VERSION  : %s\n", DRIVER_RELEASE_VERSION);
-	printk("        EAGLE_FW_RELEASE_OFDM_VERSION: %d.%d.%d.%d\n", DVB_OFDM_VERSION1, DVB_OFDM_VERSION2, DVB_OFDM_VERSION3, DVB_OFDM_VERSION4);	
-	printk("        API_TX_RELEASE_VERSION  : %X.%X.%X\n", Eagle_Version_NUMBER, Eagle_Version_DATE, Eagle_Version_BUILD);
+	mutex_lock(&mymutex);
+	error = IT9507_getFirmwareVersion (&PDC->state, Processor_LINK, &version);
 
+    	if (version != 0) {
+        	PDC->state.booted = true;
+    	} 
+    	else {
+        	PDC->state.booted = false;
+    	}
+	mutex_unlock(&mymutex);
+
+        if (error)  // TODO: Check before using value of version
+        {
+            deb_data("IT9507_getFirmwareVersion fail : 0x%08x\n", error);
+	    errcount++;
+            goto Exit;
+        }
 
 	//************* Set Device init Info *************//
 	if (bBoot)
 	{
 		PDC->state.frequency = 666000;
 		PDC->state.bandwidth = 8000;
-
-        	error = DL_SetBusTuner (PDC, 0x38);
-        	if (error)
-        	{ 
-            		deb_data("First DL_SetBusTuner fail : 0x%08x\n",error );
-			errcount++;
-            		goto Exit; 
-        	}
 
         	error =DL_GetEEPROMConfig(PDC);
         	if (error)
@@ -3329,16 +3286,6 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
             		goto Exit;
         	}
 	}//bBoot
-	
-	error = DL_SetBusTuner(PDC, 0x38);
-	
-    	if (error)
-    	{
-        	deb_data("DL_SetBusTuner fail!\n");
-		errcount++;
-        	goto Exit;
-    	}
-
 	
 	if(PDC->state.booted) //warm-boot/(S1)
 	{
