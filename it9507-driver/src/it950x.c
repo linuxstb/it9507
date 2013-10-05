@@ -2744,10 +2744,11 @@ static u32  DRV_Initialize(
 	//u8 usb_dma_reg;
 	u8 chip_version = 0; 
         u32 cmdVersion = 0; 
+	u8 deviceType;
 
 	deb_data("- Enter %s Function -\n",__FUNCTION__);
 
-	if(EagleUser_getDeviceType(&pdc->state, &pdc->deviceType) != 0)
+	if(EagleUser_getDeviceType(&pdc->state, &deviceType) != 0)
 		printk("- EagleUser_getDeviceType fail -\n");
 
 	if(IT9507_setSlaveIICAddress(&pdc->state, SLAVE_DEMOD_2WIREADDR) != 0)
@@ -2764,7 +2765,6 @@ static u32  DRV_Initialize(
         	{
             		deb_data("Reboot: Outside Fw = 0x%x, Inside Fw = 0x%x", DVB_OFDM_VERSION, cmdVersion);
             		error = IT9507_TXreboot(&pdc->state);
-            		pdc->bBootCode = true;
             		if(error) 
             		{
                 		deb_data("IT9507_reboot : error = 0x%08u\n", error);
@@ -2802,35 +2802,6 @@ static u32  DRV_Initialize(
 	
 }
 
-static u32 DRV_InitDevInfo(
-    	void *      handle,
-    	u8        ucSlaveDemod
-)
-{
-    u32 dwError = Error_NO_ERROR;    
-   	PDEVICE_CONTEXT PDC = (PDEVICE_CONTEXT) handle;
-    PDC->fc[ucSlaveDemod].ulCurrentFrequency = 0;  
-    PDC->fc[ucSlaveDemod].ucCurrentBandWidth = 0;
-
-    PDC->fc[ucSlaveDemod].ulDesiredFrequency = 0;	
-    PDC->fc[ucSlaveDemod].ucDesiredBandWidth = 6000;	
-
-    //For PID Filter Setting
-    //PDC->fc[ucSlaveDemod].ulcPIDs = 0;    
-    PDC->fc[ucSlaveDemod].bEnPID = false;
-
-    PDC->fc[ucSlaveDemod].bApOn = false;
-    
-    PDC->fc[ucSlaveDemod].bResetTs = false;
-
-
-
-    PDC->fc[ucSlaveDemod].tunerinfo.bTunerOK = false;
-    PDC->fc[ucSlaveDemod].tunerinfo.bSettingFreq = false;
-
-    return dwError;
-}	
-
 //get EEPROM_IRMODE/bIrTblDownload/bRAWIr/architecture config from EEPROM
 static u32 DRV_GetEEPROMConfig(
 	void* handle)
@@ -2855,13 +2826,11 @@ static u32 DRV_GetEEPROMConfig(
 	chip_Type = var[1]<<8 | var[0];
 	if(chip_Type==0x9135 && chip_version == 2) //Om2
 	{
-		pdc->chip_version = 2;
 		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, 0x461d, 1, &btmp);
 		deb_data("Chip Version is %d---and Read 461d---valid bit = 0x%02X", chip_version, btmp);
 	}
 	else 
 	{
-		pdc->chip_version = 1; //Om1
 		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, 0x4979, 1, &btmp);
 		deb_data("Chip Version is %d---and Read 4979---valid bit = 0x%02X", chip_version, btmp);
 	}
@@ -2876,7 +2845,7 @@ static u32 DRV_GetEEPROMConfig(
 	  printk("it905x: btmp=%d\n",btmp);
 		deb_data("=============No need read eeprom");
     	//pdc->state.chipNumber = 1;    
-		pdc->fc[0].tunerinfo.TunerId = 0x38;
+		pdc->fc.tunerinfo.TunerId = 0x38;
 	}
 	else
 	{
@@ -2898,33 +2867,46 @@ static u32 DRV_GetEEPROMConfig(
 //tunerID option, in Omega, not need to read register, just assign 0x38;
 		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_TUNERID, 1, &btmp);
 		if (btmp==0x51) {
-			pdc->fc[0].tunerinfo.TunerId = 0x51;  	
+			pdc->fc.tunerinfo.TunerId = 0x51;  	
 		}
 		else if (btmp==0x52) {
-			pdc->fc[0].tunerinfo.TunerId = 0x52;  	
+			pdc->fc.tunerinfo.TunerId = 0x52;  	
 		}
 		else if (btmp==0x60) {
-			pdc->fc[0].tunerinfo.TunerId = 0x60;  	
+			pdc->fc.tunerinfo.TunerId = 0x60;  	
 		}
 		else if (btmp==0x61) {
-			pdc->fc[0].tunerinfo.TunerId = 0x61;  	
+			pdc->fc.tunerinfo.TunerId = 0x61;  	
 		}
 		else if (btmp==0x62) {
-			pdc->fc[0].tunerinfo.TunerId = 0x62;  	
+			pdc->fc.tunerinfo.TunerId = 0x62;  	
 		}
 		else {
-			pdc->fc[0].tunerinfo.TunerId = 0x38;  	
+			pdc->fc.tunerinfo.TunerId = 0x38;  	
 		}		
 	
-		deb_data("pdc->fc[0].tunerinfo.TunerId = 0x%x", pdc->fc[0].tunerinfo.TunerId);
+		deb_data("pdc->fc.tunerinfo.TunerId = 0x%x", pdc->fc.tunerinfo.TunerId);
 		//dwError = it950x_wr_reg((Destate*) &pdc->Destate, 0, Processor_LINK, EEPROM_SUSPEND, 0);
 		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
 		deb_data("EEPROM susped mode=%d", btmp);
     	
     }
 		//pdc->state.chipNumber = 1; 
+
 //init some device info
-		dwError = DRV_InitDevInfo(handle, 0);
+    pdc->fc.ulCurrentFrequency = 0;  
+    pdc->fc.ucCurrentBandWidth = 0;
+    pdc->fc.ulDesiredFrequency = 0;	
+    pdc->fc.ucDesiredBandWidth = 6000;	
+
+    //For PID Filter Setting
+    //pdc->fc.ulcPIDs = 0;    
+    pdc->fc.bEnPID = false;
+    pdc->fc.bApOn = false;
+    pdc->fc.bResetTs = false;
+
+    pdc->fc.tunerinfo.bTunerOK = false;
+    pdc->fc.tunerinfo.bSettingFreq = false;
 	
 exit:
     return(dwError);
@@ -3121,7 +3103,6 @@ exit:
 
 u32 DL_CheckTunerInited(
 	void* handle,
-	u8 ucSlaveDemod,
 	bool *bOn )
 {
 	u32 dwError = Error_NO_ERROR;
@@ -3131,7 +3112,7 @@ u32 DL_CheckTunerInited(
 
     deb_data("- Enter %s Function -\n",__FUNCTION__);
 
-    *bOn = pdc->fc[ucSlaveDemod].tunerinfo.bTunerInited;
+    *bOn = pdc->fc.tunerinfo.bTunerInited;
 
     mutex_unlock(&mymutex);
 
@@ -3404,33 +3385,8 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	{
 		PDC->state.frequency = 666000;
 		PDC->state.bandwidth = 8000;
-		PDC->fc[0].tunerinfo.TunerId = 0;
-		PDC->fc[1].tunerinfo.TunerId = 0;
-        	PDC->FilterCnt = 0;
-		PDC->UsbCtrlTimeOut = 1;
-	}
-	else {
-        	PDC->UsbCtrlTimeOut = 5;
-    	}//bBoot
+		PDC->fc.tunerinfo.TunerId = 0;
 
-	if (bBoot) {
-		//************* Set USB Info *************//
-		PDC->MaxPacketSize = 0x0200; //default USB2.0
-		PDC->UsbMode = (PDC->MaxPacketSize == 0x200)?0x0200:0x0110;  
-		deb_data("USB mode= 0x%x\n", PDC->UsbMode);
-
-		PDC->TsPacketCount = (PDC->UsbMode == 0x200)?TS_PACKET_COUNT_HI:TS_PACKET_COUNT_FU;
-		PDC->TsFrames = (PDC->UsbMode == 0x200)?TS_FRAMES_HI:TS_FRAMES_FU;
-		PDC->TsFrameSize = TS_PACKET_SIZE*PDC->TsPacketCount;
-		PDC->TsFrameSizeDw = PDC->TsFrameSize/4;
-	}
-	PDC->bEP12Error = false;
-    	PDC->bEP45Error = false; 
-    	PDC->ForceWrite = false;    
-    	PDC->ulActiveFilter = 0;
-	
-	if(bBoot)
-    	{
         	error = DL_SetBusTuner (PDC, 0x38);
         	if (error)
         	{ 
@@ -3448,7 +3404,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
         	}
 	}//bBoot
 	
-	error = DL_SetBusTuner(PDC, PDC->fc[0].tunerinfo.TunerId);
+	error = DL_SetBusTuner(PDC, PDC->fc.tunerinfo.TunerId);
 	
     	if (error)
     	{

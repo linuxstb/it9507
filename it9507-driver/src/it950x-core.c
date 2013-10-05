@@ -953,8 +953,7 @@ static int it950x_suspend(struct usb_interface *intf, pm_message_t state)
 	error = DL_Reboot();
 #else
     if (dev->DevicePower) {
-		error = DL_CheckTunerInited(&dev->DC, 0, &dev->TunerInited0);
-		error = DL_CheckTunerInited(&dev->DC, 1, &dev->TunerInited1);
+		error = DL_CheckTunerInited(&dev->DC, &dev->TunerInited0);
 
 		dev->DeviceReboot = true;
     }

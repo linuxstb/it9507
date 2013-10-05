@@ -145,25 +145,8 @@ typedef struct _FILTER_CONTEXT_HW {
 } FILTER_CONTEXT_HW, *PFILTER_CONTEXT_HW;  
 
 typedef struct _DEVICE_CONTEXT {
-    FILTER_CONTEXT_HW fc[2];
-    bool bBootCode;
-    bool bEP12Error;
-    bool bEP45Error;
-    u16 UsbMode;
-    u16 MaxPacketSize;
-    u32 TsFrames;
-    u32 TsFrameSize;
-    u32 TsFrameSizeDw;
-    u32 TsPacketCount;
-    u32   ulActiveFilter;
-    u8 FilterCnt;
-    u8 UsbCtrlTimeOut;
+    FILTER_CONTEXT_HW fc;
     struct it950x_state state;	
-	u8 deviceType;    
-    
-    bool ForceWrite;
-    u8 chip_version;
-
 } DEVICE_CONTEXT, *PDEVICE_CONTEXT;
 
 
@@ -201,7 +184,7 @@ extern u32 DL_ApPwCtrl(void* handle, bool ucSlaveDemod, bool bOn);
 extern u32 DL_isLocked(void *handle,u8 ucSlaveDemod, bool *bLock);
 extern u32 DL_ReSetInterval(void);
 extern u32 DL_Reboot(void* handle);
-extern u32 DL_CheckTunerInited(void *handle, u8 ucSlaveDemod, bool *bOn);
+extern u32 DL_CheckTunerInited(void *handle, bool *bOn);
 extern u32 DL_DemodIOCTLFun(struct it950x_state* modulator, u32 IOCTLCode, unsigned long pIOBuffer);
 extern u32 DL_LoadIQtable_Fromfile(void *handle);
 
