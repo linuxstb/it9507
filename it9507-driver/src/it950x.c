@@ -1863,7 +1863,6 @@ static u32 IT9507_initialize (
 	
 	/** Load firmware */
 	error = it950x_load_firmware (state);
-        printk("it950x - returned from loadFirmware\n");
 	if (error) goto exit;
 	state->booted = true;
 
@@ -2845,7 +2844,6 @@ static u32 DRV_GetEEPROMConfig(
 	  printk("it905x: btmp=%d\n",btmp);
 		deb_data("=============No need read eeprom");
     	//pdc->state.chipNumber = 1;    
-		pdc->fc.tunerinfo.TunerId = 0x38;
 	}
 	else
 	{
@@ -2864,28 +2862,6 @@ static u32 DRV_GetEEPROMConfig(
 	// We know this is 0 - i.e. single TS mode.
 #endif
 
-//tunerID option, in Omega, not need to read register, just assign 0x38;
-		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_TUNERID, 1, &btmp);
-		if (btmp==0x51) {
-			pdc->fc.tunerinfo.TunerId = 0x51;  	
-		}
-		else if (btmp==0x52) {
-			pdc->fc.tunerinfo.TunerId = 0x52;  	
-		}
-		else if (btmp==0x60) {
-			pdc->fc.tunerinfo.TunerId = 0x60;  	
-		}
-		else if (btmp==0x61) {
-			pdc->fc.tunerinfo.TunerId = 0x61;  	
-		}
-		else if (btmp==0x62) {
-			pdc->fc.tunerinfo.TunerId = 0x62;  	
-		}
-		else {
-			pdc->fc.tunerinfo.TunerId = 0x38;  	
-		}		
-	
-		deb_data("pdc->fc.tunerinfo.TunerId = 0x%x", pdc->fc.tunerinfo.TunerId);
 		//dwError = it950x_wr_reg((Destate*) &pdc->Destate, 0, Processor_LINK, EEPROM_SUSPEND, 0);
 		dwError = it950x_rd_regs(&pdc->state, Processor_LINK, EEPROM_SUSPEND, 1, &btmp);
 		deb_data("EEPROM susped mode=%d", btmp);
@@ -3385,7 +3361,6 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
 	{
 		PDC->state.frequency = 666000;
 		PDC->state.bandwidth = 8000;
-		PDC->fc.tunerinfo.TunerId = 0;
 
         	error = DL_SetBusTuner (PDC, 0x38);
         	if (error)
@@ -3404,7 +3379,7 @@ u32 Device_init(struct usb_device *udev, PDEVICE_CONTEXT PDC, bool bBoot)
         	}
 	}//bBoot
 	
-	error = DL_SetBusTuner(PDC, PDC->fc.tunerinfo.TunerId);
+	error = DL_SetBusTuner(PDC, 0x38);
 	
     	if (error)
     	{

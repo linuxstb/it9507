@@ -103,18 +103,10 @@ extern int dvb_usb_it950x_debug;
 //***************** from device.h *****************//
 
 /*AirHD no use, RC, after kernel 38 support*/
-struct it950x_config {
-	u8  dual_mode:1;
-	u16 mt2060_if1[2];
-	u16 firmware_size;
-	u16 firmware_checksum;
-	u32 eeprom_sum;
-};
 
 typedef struct _TUNER_INFO {
     bool bTunerInited;
     bool bSettingFreq;
-    u8 TunerId;
     bool bTunerOK;
 	bool bTunerLock;//AirHD
   //DAVE Tuner_struct MXL5005_Info;
