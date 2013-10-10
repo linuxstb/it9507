@@ -3125,19 +3125,19 @@ u32 Device_init(struct usb_device *udev,struct it950x_state *state, bool bBoot)
 	mutex_lock(&mymutex);
 	error = IT9507_getFirmwareVersion (state, Processor_LINK, &version);
 
+        if (error)
+        {
+            deb_data("IT9507_getFirmwareVersion fail : 0x%08x\n", error);
+	    errcount++;
+            goto Exit;
+        }
+
     	if (version != 0) {
         	state->booted = true;
     	} 
     	else {
         	state->booted = false;
     	}
-
-        if (error)  // TODO: Check before using value of version
-        {
-            deb_data("IT9507_getFirmwareVersion fail : 0x%08x\n", error);
-	    errcount++;
-            goto Exit;
-        }
 
 	//************* Set Device init Info *************//
 	if (bBoot)
