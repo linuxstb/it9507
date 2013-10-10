@@ -33,10 +33,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <time.h>
 #include <linux/types.h>
 
-#define u8 __u8
-#define u16 __u16
-#define u32 __u32
-
 #include "../include/dvbmod.h"
 
 /* Function based on code in the tsrfsend.c application by Avalpa

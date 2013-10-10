@@ -79,7 +79,7 @@ typedef enum {
  * The defination of ChannelInformation.
  */
 typedef struct {
-    u32 frequency;                    /** Channel frequency in KHz.                                */
+    __u32 frequency;                    /** Channel frequency in KHz.                                */
     TransmissionModes transmissionMode; /** Number of carriers used for OFDM signal                  */
     Constellation constellation;        /** Constellation scheme (FFT mode) in use                   */
     Interval interval;                  /** Fraction of symbol length used as guard (Guard Interval) */
@@ -88,79 +88,73 @@ typedef struct {
 } ChannelModulation;
 
 typedef struct _TPS{
-    u16 cellid;
+    __u16 cellid;
 } TPS, *pTPS;
 
 /* Use 'k' as magic number */
 #define AFA_IOC_MAGIC  'k'
 
 typedef struct {
-    u8				chip;
-    u8 				transmissionMode;
-	u8				constellation;
-	u8				interval;
-	u8				highCodeRate;
-    u32				error;
-    u8				reserved[16];
+    __u8				chip;
+    __u8 				transmissionMode;
+	__u8				constellation;
+	__u8				interval;
+	__u8				highCodeRate;
+    __u32				error;
+    __u8				reserved[16];
 } SetModuleRequest, *PSetModuleRequest;
 
 typedef struct {
-    u8				chip;
-    u16				bandwidth;
-    u32				frequency;
-    u32				error;
-    u8				reserved[16];
+    __u8				chip;
+    __u16				bandwidth;
+    __u32				frequency;
+    __u32				error;
+    __u8				reserved[16];
 } TxAcquireChannelRequest, *PTxAcquireChannelRequest;
 
 typedef struct {
-    u8				OnOff;
-    u32				error;
-    u8				reserved[16];
+    __u8				OnOff;
+    __u32				error;
+    __u8				reserved[16];
 } TxModeRequest, *PTxModeRequest;
 
 typedef struct {
     int				GainValue;
-    u32				error;
+    __u32				error;
 } SetGainRequest, *PSetGainRequest;
 
 typedef struct {
-       u8                      chip;
-    u32                        error;
-    u8                 reserved[16];
+       __u8                      chip;
+    __u32                        error;
+    __u8                 reserved[16];
 } StartTransferRequest, *PStartTransferRequest;
 
 typedef struct {
-       u8                      chip;
-    u32                        error;
-    u8                 reserved[16];
+       __u8                      chip;
+    __u32                        error;
+    __u8                 reserved[16];
 } StopTransferRequest, *PStopTransferRequest;
 
 
 typedef struct {
-	u32*			len;
-    u8*			cmd;
-    u8			reserved[16];
-} CmdRequest, *PCmdRequest;
-
-typedef struct {
-    u32			error;
-	u32          frequency;
-	u16           bandwidth;    
+    __u32			error;
+	__u32          frequency;
+	__u16           bandwidth;    
 	int*			maxGain;
 	int*			minGain;
-    u8			reserved[16];	
+    __u8			reserved[16];	
 } GetGainRangeRequest, *PGetGainRangeRequest;
 
 typedef struct {
-    u32		   error;
+    __u32		   error;
     TPS           tps;
-    u8		   reserved[16];	
+    __u8		   reserved[16];	
 } SetTPSRequest, *PSetTPSRequest;
 
 typedef struct {
-    u32		   error;
+    __u32		   error;
 	int			  *gain;	 
-    u8		   reserved[16];	
+    __u8		   reserved[16];	
 } GetOutputGainRequest, *PGetOutputGainRequest;
 
 /**
@@ -193,6 +187,6 @@ typedef struct {
 #define IOCTL_ITE_DEMOD_SETTPS_TX \
 	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x0E, SetTPSRequest)
 
-u32 DemodIOCTLFun(void *demodulator, u32 IOCTLCode, unsigned long pIOBuffer);
+__u32 DemodIOCTLFun(void *demodulator, __u32 IOCTLCode, unsigned long pIOBuffer);
 
 #endif

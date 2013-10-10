@@ -55,6 +55,12 @@ typedef enum {
     Processor_OFDM = 8
 } Processor;
 
+typedef struct {
+    u32*                  len;
+    u8*                       cmd;
+    u8                        reserved[16];
+} CmdRequest, *PCmdRequest;
+
 //--------------------------
 
 extern const u8 Eagle_bitMask[8];
