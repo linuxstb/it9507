@@ -23,12 +23,12 @@
 #include <linux/file.h>
 #include <asm/uaccess.h>
 #include "error.h"
-#include "modulatorIocontrol.h"
-#include "modulatorType.h"
 #include <linux/version.h>
 #include <linux/mutex.h>
 #include <linux/mm.h>
 #include <linux/gfp.h>
+#include "modulatorType.h"
+#include "../include/dvbmod.h"
 
 #define   DRIVER_RELEASE_VERSION    "v13.06.27.1"
 

@@ -9,7 +9,6 @@
  */
 
 #include "it950x-core.h"
-#include "modulatorIocontrol.h"
 
 /* Get a minor range for devices from the usb maintainer */
 #define USB_it913x_MINOR_RANGE 47
