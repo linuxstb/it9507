@@ -34,12 +34,8 @@
 
 #define URB_TEST	0
 #define URB_COUNT_TX   8
-#define URB_COUNT_TX_LOW_BRATE 64
-#define URB_COUNT_TX_CMD   1
 #define URB_COUNT_RX   16
 #define URB_BUFSIZE_TX 32712//65424//16356//32712
-#define URB_BUFSIZE_TX_LOW_BRATE 1504 // 188 * 8
-#define URB_BUFSIZE_TX_CMD 188//65424//16356//32712
 #define URB_BUFSIZE_RX 188 * 348//32712//65424//16356//32712
 #define CLEAN_HARDWARE_BUFFER_SIZE 1000
 //***************** from device.h *****************//
