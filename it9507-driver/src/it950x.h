@@ -18,9 +18,6 @@
 
 //***************** from device.h *****************//
 
-#define SLAVE_DEMOD_2WIREADDR  0x3A
-
-
 extern int dvb_usb_it950x_debug;
 //#define deb_info(args...)   dprintk(dvb_usb_it950x_debug,0x01,args)
 //#define deb_fw(args...)     dprintk(dvb_usb_it950x_debug,0x02,args)
