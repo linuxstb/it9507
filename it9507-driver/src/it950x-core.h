@@ -34,23 +34,12 @@
 
 #define URB_TEST	0
 #define URB_COUNT_TX   8
-#define URB_COUNT_RX   16
 #define URB_BUFSIZE_TX 32712//65424//16356//32712
-#define URB_BUFSIZE_RX 188 * 348//32712//65424//16356//32712
-#define CLEAN_HARDWARE_BUFFER_SIZE 1000
+
 //***************** from device.h *****************//
 
 #define SLAVE_DEMOD_2WIREADDR  0x3A
 
-#define TS_PACKET_SIZE         188
-#define TS_PACKET_COUNT_HI     348
-#define TS_PACKET_COUNT_FU     21
-
-//***************** from driver.h *****************//
-#define TS_FRAMES_HI 128
-#define TS_FRAMES_FU 128
-#define MAX_USB20_IRP_NUM  5
-#define MAX_USB11_IRP_NUM  2
 
 //***************** from afdrv.h *****************//
 //#define GANY_ONLY 0x42F5
@@ -98,14 +87,10 @@ extern int dvb_usb_it950x_debug;
 
 //***************** from device.h *****************//
 
-/*AirHD no use, RC, after kernel 38 support*/
-
 typedef struct _TUNER_INFO {
     bool bTunerInited;
     bool bSettingFreq;
     bool bTunerOK;
-	bool bTunerLock;//AirHD
-  //DAVE Tuner_struct MXL5005_Info;
 } TUNER_INFO, *PTUNER_INFO;
 
 typedef struct _FILTER_CONTEXT_HW {
@@ -113,7 +98,6 @@ typedef struct _FILTER_CONTEXT_HW {
     u16  ucCurrentBandWidth;  
     u32 ulDesiredFrequency;
     u16  ucDesiredBandWidth;   
-    bool bTimerOn;
     TUNER_INFO tunerinfo; 
     bool bApOn;
     int bResetTs;
@@ -131,34 +115,6 @@ struct it950x_state {
 	CalibrationInfo calibrationInfo;
         FILTER_CONTEXT_HW fc;
 };
-
-struct it950x_ofdm_channel {
-	u32 RF_kHz;
-	u8  Bw;
-	s16 nfft;
-	s16 guard;
-	s16 nqam;
-	s16 vit_hrch;
-	s16 vit_select_hp;
-	s16 vit_alpha;
-	s16 vit_code_rate_hp;
-	s16 vit_code_rate_lp;
-	u8  intlv_native;
-};
-
-struct tuner_priv {
-        struct tuner_config *cfg;
-        struct i2c_adapter   *i2c;
-
-        u32 frequency;
-        u32 bandwidth;
-        u16 if1_freq;
-        u8  fmfreq;
-};
-
-//extern struct usb_device *udevs;
-//extern PDEVICE_CONTEXT PDC;
-extern int it950x_device_count;
 
 extern u32 Device_init(struct usb_device *udev,struct it950x_state *state, bool bBoot);
 extern u32 DL_ApPwCtrl (struct it950x_state *state, bool  bOn);
