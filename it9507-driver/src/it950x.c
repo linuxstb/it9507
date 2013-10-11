@@ -19,7 +19,6 @@
 #include "modulatorError.h"
 #include "modulatorRegister.h"
 #include "modulatorVariable.h"
-#include "modulatorVersion.h"
 #include "IQ_fixed_table.h"
 
 /* LINK processor firmware extracted from modulatorFirmware.h in ITE driver 
