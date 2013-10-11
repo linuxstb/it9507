@@ -15,10 +15,6 @@
 
 #include "it950x-core.h"
 #include "it950x-priv.h"
-#include "modulatorType.h"
-#include "modulatorError.h"
-#include "modulatorRegister.h"
-#include "modulatorVariable.h"
 #include "IQ_fixed_table.h"
 
 /* LINK processor firmware extracted from modulatorFirmware.h in ITE driver 
@@ -55,6 +51,14 @@ static u8 IT9507Cmd_sequence = 0;
 #define EagleUser_USB11_FRAME_SIZE           (188 * 21)
 #define EagleUser_USB11_FRAME_SIZE_DW        (EagleUser_USB11_FRAME_SIZE / 4)
 #define EagleUser_MAXFRAMESIZE			63
+
+const u8 Eagle_bitMask[Eagle_MAX_BIT] = {
+	0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF
+};
+#define REG_MASK(pos, len)                (Eagle_bitMask[len-1] << pos)
+#define REG_CLEAR(temp, pos, len)         (temp & (~REG_MASK(pos, len)))
+#define REG_CREATE(val, temp, pos, len)   ((val << pos) | (REG_CLEAR(temp, pos, len)))
+#define REG_GET(value, pos, len)          ((value & REG_MASK(pos, len)) >> pos)
 
 
 static u32 IT9507Cmd_addChecksum (
@@ -1051,10 +1055,6 @@ exit:
 }
 
 /* End of code originally in eagleTuner.c */
-
-const u8 Eagle_bitMask[Eagle_MAX_BIT] = {
-	0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF
-};
 
 /** local functions */
 static unsigned int c_fN_min[9] = {

@@ -12,54 +12,13 @@
 #ifndef _IT950x_H_
 #define _IT950x_H_
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/kref.h>
-#include <linux/usb.h>
-#include <linux/fs.h>
-#include <linux/file.h>
-#include <asm/uaccess.h>
-#include <linux/version.h>
-#include <linux/mutex.h>
-#include <linux/mm.h>
-#include <linux/gfp.h>
-#include "modulatorType.h"
-#include "modulatorError.h"
 #include "../include/dvbmod.h"
 
-#define   DRIVER_RELEASE_VERSION    "v13.06.27.1"
 
-#define URB_TEST	0
-#define URB_COUNT_TX   8
-#define URB_BUFSIZE_TX 32712//65424//16356//32712
 
 //***************** from device.h *****************//
 
 #define SLAVE_DEMOD_2WIREADDR  0x3A
-
-
-//***************** from afdrv.h *****************//
-//#define GANY_ONLY 0x42F5
-#define EEPROM_FLB_OFS  8
-
-#define EEPROM_IRMODE      (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x10)   //00:disabled, 01:HID
-#define EEPROM_SELSUSPEND  (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x28)   //Selective Suspend Mode
-#define EEPROM_TSMODE      (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x28+1) //0:one ts, 1:dual ts
-#define EEPROM_2WIREADDR   (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x28+2) //MPEG2 2WireAddr
-#define EEPROM_SUSPEND     (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x28+3) //Suspend Mode
-#define EEPROM_IRTYPE      (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x28+4) //0:NEC, 1:RC6
-#define EEPROM_SAWBW1      (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x28+5)
-#define EEPROM_XTAL1       (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x28+6) //0:28800, 1:20480
-#define EEPROM_SPECINV1    (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x28+7)
-#define EEPROM_TUNERID     (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x30+4) //
-#define EEPROM_IFFREQL     (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x30) 
-#define EEPROM_IFFREQH     (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x30+1)   
-#define EEPROM_IF1L        (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x30+2)   
-#define EEPROM_IF1H        (OVA_EEPROM_CFG+EEPROM_FLB_OFS+0x30+3)
-#define EEPROM_SHIFT       (0x10)                 //EEPROM Addr Shift for slave front end
 
 
 extern int dvb_usb_it950x_debug;
@@ -84,6 +43,21 @@ extern int dvb_usb_it950x_debug;
 #define deb_data(args...)
 #endif
 
+
+typedef struct {
+    u32 frequency;      /**  */
+    int  dAmp;			  /**  */
+	int  dPhi;	
+} IQtable;
+
+typedef struct {
+    IQtable *ptrIQtableEx;
+	u16 tableGroups;		//Number of IQtable groups;
+	int	outputGain;	
+    u16 c1DefaultValue;
+	u16 c2DefaultValue;
+	u16 c3DefaultValue;
+} CalibrationInfo;
 
 //***************** from device.h *****************//
 

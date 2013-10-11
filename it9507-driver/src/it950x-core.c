@@ -8,7 +8,23 @@
  *   The core of IT950x serial driver.
  */
 
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/kref.h>
+#include <linux/usb.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#include <asm/uaccess.h>
+#include <linux/version.h>
+#include <linux/mutex.h>
+#include <linux/mm.h>
+#include <linux/gfp.h>
 #include "it950x-core.h"
+
+#define   DRIVER_RELEASE_VERSION    "v13.06.27.1"
 
 /* Get a minor range for devices from the usb maintainer */
 #define USB_it913x_MINOR_RANGE 47
@@ -20,6 +36,10 @@
 #define USB_it913x_MINOR_BASE	192
 #define USB_it950x_MINOR_BASE	192 + USB_it913x_MINOR_RANGE
 #endif
+
+#define URB_TEST	0
+#define URB_COUNT_TX   8
+#define URB_BUFSIZE_TX 32712//65424//16356//32712
 
 #if URB_TEST
 unsigned int loop_cnt = 0;
@@ -284,7 +304,7 @@ int Tx_RingBuffer(
 		}
 	}
    
-    return ModulatorError_NO_ERROR;
+	return 0;
 }
 
 /******************************************************************/
@@ -543,7 +563,6 @@ long it950x_usb_tx_unlocked_ioctl(
 	unsigned long parg)
 {
 	struct it950x_dev *dev;
-	PCmdRequest pRequest;	
 	//deb_data("it950x_usb_ioctl function\n");
 
 	dev = (struct it950x_dev *)file->private_data;
