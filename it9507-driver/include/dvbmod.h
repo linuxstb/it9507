@@ -69,33 +69,16 @@ typedef struct {
 } GetOutputGainRequest, *PGetOutputGainRequest;
 
 /**
- * Demodulator API commands
+ * Modulator API commands
  */
-#define IOCTRL_ITE_GROUP_STANDARD           0x000
-#define IOCTRL_ITE_GROUP_OTHER              0x500
 
-#define IOCTL_ITE_DEMOD_SETMODULE_TX \
-	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x21, SetModuleRequest)
-	
-#define IOCTL_ITE_DEMOD_ACQUIRECHANNEL_TX \
-	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x22, TxAcquireChannelRequest)
-
-#define IOCTL_ITE_DEMOD_ADJUSTOUTPUTGAIN_TX \
-	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x2B, SetGainRequest)
-
-#define IOCTL_ITE_DEMOD_GETGAINRANGE_TX \
-	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x2C, GetGainRangeRequest)
-
-#define IOCTL_ITE_DEMOD_GETOUTPUTGAIN_TX \
-	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x2D, GetOutputGainRequest)
-
-#define IOCTL_ITE_DEMOD_STARTTRANSFER_TX \
-	_IO(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x07)
-	
-#define IOCTL_ITE_DEMOD_STOPTRANSFER_TX \
-	_IO(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x08)
-	
-#define IOCTL_ITE_DEMOD_SETTPSCELLID_TX \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x0E, SetTPSCellIdRequest)
+#define ITE_MOD_SETMODULE         _IOW('k', 0x40, SetModuleRequest)
+#define ITE_MOD_ACQUIRECHANNEL    _IOW('k', 0x41, TxAcquireChannelRequest)
+#define ITE_MOD_ADJUSTOUTPUTGAIN  _IOW('k', 0x42, SetGainRequest)
+#define ITE_MOD_GETGAINRANGE      _IOW('k', 0x43, GetGainRangeRequest)
+#define ITE_MOD_GETOUTPUTGAIN     _IOW('k', 0x44, GetOutputGainRequest)
+#define ITE_MOD_STARTTRANSFER     _IO('k', 0x45)
+#define ITE_MOD_STOPTRANSFER      _IO('k', 0x46)
+#define ITE_MOD_SETTPSCELLID      _IOR('k', 0x47, SetTPSCellIdRequest)
 
 #endif

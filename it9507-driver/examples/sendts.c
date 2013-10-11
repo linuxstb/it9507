@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
   TxAcquireChannelRequest channel_request;
   channel_request.frequency = 794000;
   channel_request.bandwidth = 8000;
-  result = ioctl(mod_fd, IOCTL_ITE_DEMOD_ACQUIRECHANNEL_TX, &channel_request);
+  result = ioctl(mod_fd, ITE_MOD_ACQUIRECHANNEL, &channel_request);
 
   /* Set modulation parameters */
   SetModuleRequest module_request;
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
   module_request.constellation = QAM_64;
   module_request.interval = GUARD_INTERVAL_1_4;
   module_request.highCodeRate = FEC_2_3;
-  result = ioctl(mod_fd, IOCTL_ITE_DEMOD_SETMODULE_TX, &module_request);
+  result = ioctl(mod_fd, ITE_MOD_SETMODULE, &module_request);
 
   GetGainRangeRequest get_gain_range_request;
   int mingain,maxgain;
@@ -135,24 +135,24 @@ int main(int argc, char* argv[])
   get_gain_range_request.bandwidth = 8000;
   get_gain_range_request.minGain = &mingain;
   get_gain_range_request.maxGain = &maxgain;
-  result = ioctl(mod_fd, IOCTL_ITE_DEMOD_GETGAINRANGE_TX, &get_gain_range_request);
+  result = ioctl(mod_fd, ITE_MOD_GETGAINRANGE, &get_gain_range_request);
   fprintf(stderr,"Gain range: %d to %d\n",mingain,maxgain);
 
   SetGainRequest set_gain_request;
   set_gain_request.GainValue = -10;
-  result = ioctl(mod_fd, IOCTL_ITE_DEMOD_ADJUSTOUTPUTGAIN_TX, &set_gain_request);  
+  result = ioctl(mod_fd, ITE_MOD_ADJUSTOUTPUTGAIN, &set_gain_request);  
   fprintf(stderr,"Gain set to %d\n",set_gain_request.GainValue);
 
   SetTPSCellIdRequest tps_cellid_request;
   tps_cellid_request.cellid = 0;
-  result = ioctl(mod_fd, IOCTL_ITE_DEMOD_SETTPSCELLID_TX, (void *)&tps_cellid_request);
+  result = ioctl(mod_fd, ITE_MOD_SETTPSCELLID, (void *)&tps_cellid_request);
 
   /* Calculate and display the channel capacity based on the modulation/channel parameters */
   channel_capacity = calc_channel_capacity(&channel_request,&module_request);
   fprintf(stderr,"Channel capacity = %dbps\n",channel_capacity);
 
   /* Start the transfer */
-  result = ioctl(mod_fd, IOCTL_ITE_DEMOD_STARTTRANSFER_TX);
+  result = ioctl(mod_fd, ITE_MOD_STARTTRANSFER);
 
   /* The main transfer loop */
   unsigned char buf[188*1000];
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
   }  
 
   /* Stop the transfer */
-  result = ioctl(mod_fd, IOCTL_ITE_DEMOD_STOPTRANSFER_TX);
+  result = ioctl(mod_fd, ITE_MOD_STOPTRANSFER);
 
   close(mod_fd);
   return 0;

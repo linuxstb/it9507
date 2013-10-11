@@ -2462,13 +2462,13 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
 
     switch (IOCTLCode)
     {
-        case IOCTL_ITE_DEMOD_ADJUSTOUTPUTGAIN_TX: 
+        case ITE_MOD_ADJUSTOUTPUTGAIN: 
         {
             PSetGainRequest pRequest = (PSetGainRequest) pIOBuffer;
             pRequest->error = IT9507_adjustOutputGain(state, &pRequest->GainValue);
             break;
         }
-        case IOCTL_ITE_DEMOD_SETMODULE_TX:
+        case ITE_MOD_SETMODULE:
         {
             ChannelModulation temp;
             PSetModuleRequest pRequest = (PSetModuleRequest) pIOBuffer;
@@ -2481,25 +2481,25 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
             deb_data("IT950x TxMode RF ON\n");                
             break;
         }
-        case IOCTL_ITE_DEMOD_ACQUIRECHANNEL_TX:
+        case ITE_MOD_ACQUIRECHANNEL:
         {
             PTxAcquireChannelRequest pRequest = (PTxAcquireChannelRequest) pIOBuffer;
             pRequest->error = IT9507_acquireTxChannel(state, pRequest->bandwidth, pRequest->frequency);
             break;
         }
-        case IOCTL_ITE_DEMOD_GETGAINRANGE_TX:
+        case ITE_MOD_GETGAINRANGE:
         {
             PGetGainRangeRequest pRequest = (PGetGainRangeRequest) pIOBuffer;        
             pRequest->error = IT9507_getGainRange (state, pRequest->frequency, pRequest->bandwidth, pRequest->maxGain, pRequest->minGain);
             break;
         }
-        case IOCTL_ITE_DEMOD_SETTPSCELLID_TX:
+        case ITE_MOD_SETTPSCELLID:
         {
             PSetTPSCellIdRequest pRequest = (PSetTPSCellIdRequest) pIOBuffer;        
             pRequest->error = IT9507_setTPSCellId (state, pRequest->cellid);
             break;
         }
-        case IOCTL_ITE_DEMOD_GETOUTPUTGAIN_TX:
+        case ITE_MOD_GETOUTPUTGAIN:
         {
             PGetOutputGainRequest pRequest = (PGetOutputGainRequest) pIOBuffer;        
             pRequest->error = IT9507_getOutputGain (state, pRequest->gain);
