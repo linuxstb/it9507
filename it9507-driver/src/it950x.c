@@ -1908,38 +1908,6 @@ exit :
 	return (error);
 }
 
-#if 0
-static u32 IT9507_resetPSBBuffer (
-	IN  struct it950x_state*    state
-){
-	u32 error = ModulatorError_NO_ERROR;
-	u32 temp;
-
-	if(state->tsInterfaceType == PARALLEL_TS_INPUT)
-		temp = 0xF9CC;
-	else
-		temp = 0xF9CD;
-
-	error = it950x_wr_reg (state, Processor_OFDM, 0xF9A4, 1);
-	if (error) goto exit;
-
-	error = it950x_wr_reg (state, Processor_OFDM, temp, 0);
-	if (error) goto exit;
-
-
-
-	error = it950x_wr_reg (state, Processor_OFDM, 0xF9A4, 0);
-	if (error) goto exit;
-
-	error = it950x_wr_reg (state, Processor_OFDM, temp, 1);
-
-exit :
-
-
-	return (error);
-}
-#endif
-
 static u32 IT9507_setTsInterface (
     IN  struct it950x_state*    state
 ) {
@@ -2336,51 +2304,8 @@ exit:
 
 }
 
-#define FW_VER         0x08060000
-
 int dvb_usb_it950x_debug;
 module_param_named(debug,dvb_usb_it950x_debug, int, 0644);
-
-
-#define  p_reg_top_pwrdw_hwen  0xD809 
-#define reg_top_pwrdw_hwen_pos 0
-#define reg_top_pwrdw_hwen_len 1
-
-#define    p_reg_top_pwrdw 0xD80B 
-#define reg_top_pwrdw_pos 0
-#define reg_top_pwrdw_len 1
-
-#define    r_reg_top_gpioh1_i	0xD8AE 
-#define	reg_top_gpioh1_i_pos 0
-#define	reg_top_gpioh1_i_len 1
-
-#define    p_reg_top_gpioh1_o	0xD8AF 
-#define	reg_top_gpioh1_o_pos 0
-#define	reg_top_gpioh1_o_len 1
-
-#define    p_reg_top_gpioh1_en	0xD8B0 
-#define	reg_top_gpioh1_en_pos 0
-#define	reg_top_gpioh1_en_len 1
-
-#define    p_reg_top_gpioh1_on	0xD8B1 
-#define	reg_top_gpioh1_on_pos 0
-#define	reg_top_gpioh1_on_len 1
-
-#define    r_reg_top_gpioh5_i	0xD8BA 
-#define	reg_top_gpioh5_i_pos 0
-#define	reg_top_gpioh5_i_len 1
-
-#define    p_reg_top_gpioh5_o	0xD8BB 
-#define	reg_top_gpioh5_o_pos 0
-#define	reg_top_gpioh5_o_len 1
-
-#define    p_reg_top_gpioh5_en	0xD8BC 
-#define	reg_top_gpioh5_en_pos 0
-#define	reg_top_gpioh5_en_len 1
-
-#define    p_reg_top_gpioh5_on	0xD8BD 
-#define	reg_top_gpioh5_on_pos 0
-#define	reg_top_gpioh5_on_len 1
 
 #define    p_reg_top_gpioh7_o	0xD8C3 
 #define	reg_top_gpioh7_o_pos 0
