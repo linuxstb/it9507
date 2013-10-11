@@ -41,7 +41,6 @@ typedef struct {
     fe_guard_interval_t interval;
     fe_code_rate_t highCodeRate;
     __u32				error;
-    __u8				reserved[16];
 } SetModuleRequest, *PSetModuleRequest;
 
 typedef struct {
@@ -49,13 +48,11 @@ typedef struct {
     __u16				bandwidth;
     __u32				frequency;
     __u32				error;
-    __u8				reserved[16];
 } TxAcquireChannelRequest, *PTxAcquireChannelRequest;
 
 typedef struct {
     __u8				OnOff;
     __u32				error;
-    __u8				reserved[16];
 } TxModeRequest, *PTxModeRequest;
 
 typedef struct {
@@ -66,13 +63,11 @@ typedef struct {
 typedef struct {
        __u8                      chip;
     __u32                        error;
-    __u8                 reserved[16];
 } StartTransferRequest, *PStartTransferRequest;
 
 typedef struct {
        __u8                      chip;
     __u32                        error;
-    __u8                 reserved[16];
 } StopTransferRequest, *PStopTransferRequest;
 
 
@@ -82,19 +77,16 @@ typedef struct {
 	__u16           bandwidth;    
 	int*			maxGain;
 	int*			minGain;
-    __u8			reserved[16];	
 } GetGainRangeRequest, *PGetGainRangeRequest;
 
 typedef struct {
     __u32		   error;
     TPS           tps;
-    __u8		   reserved[16];	
 } SetTPSRequest, *PSetTPSRequest;
 
 typedef struct {
     __u32		   error;
 	int			  *gain;	 
-    __u8		   reserved[16];	
 } GetOutputGainRequest, *PGetOutputGainRequest;
 
 /**
