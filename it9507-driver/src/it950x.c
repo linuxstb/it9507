@@ -1761,50 +1761,111 @@ static u32 IT9507_setTXChannelModulation (
 	//u8 temp;
 	error = IT9507_setTxModeEnable(state,0);
 	if (error) goto exit;
-	/** Set constellation type */
-	temp=(u8)channelModulation->constellation;
 
+	/** Set constellation type */
+        switch (channelModulation->constellation) {
+          case QPSK:
+            temp = 0;
+            break;
+          case QAM_16:
+            temp = 1;
+            break;
+          case QAM_64:
+            temp = 2;
+            break;
+          default:
+            error = ModulatorError_INVALID_CONSTELLATION_MODE;
+            goto exit;
+        }
 	state->channelModulation.constellation=channelModulation->constellation;
 	error = it950x_wr_reg (state, Processor_OFDM, 0xf721, temp);
 	if (error) goto exit;
 
+        switch (channelModulation->highCodeRate) {
+          case FEC_1_2:
+            temp = 0;
+            break;
+          case FEC_2_3:
+            temp = 1;
+            break;
+          case FEC_3_4:
+            temp = 2;
+            break;
+          case FEC_5_6:
+            temp = 3;
+            break;
+          case FEC_7_8:
+            temp = 4;
+            break;
+          default:
+            error = ModulatorError_INVALID_CONSTELLATION_MODE;  /* WRONG ERROR */
+            goto exit;
+        }
 	state->channelModulation.highCodeRate=channelModulation->highCodeRate;
-	temp=(u8)channelModulation->highCodeRate;
 	error = it950x_wr_reg (state, Processor_OFDM, 0xf723, temp);
 	if (error) goto exit;
+
 	/** Set low code rate */
 
 	/** Set guard interval */
-	state->channelModulation.interval=channelModulation->interval;
-	temp=(u8)channelModulation->interval;
+	switch (channelModulation->interval){
+		case GUARD_INTERVAL_1_4:
+			temp = 3;
+			break;
+		case GUARD_INTERVAL_1_8:
+			temp = 2;			
+			break;
+		case GUARD_INTERVAL_1_16:
+			temp = 1;			
+			break;
+		case GUARD_INTERVAL_1_32:
+			temp = 0;
+			break;
 
+		default:
+			error = ModulatorError_INVALID_CONSTELLATION_MODE;
+			break;
+	}
+	state->channelModulation.interval=channelModulation->interval;
 	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_tps_gi, temp);
 	if (error) goto exit;
+
 	/** Set FFT mode */
+        switch (channelModulation->transmissionMode) {
+          case TRANSMISSION_MODE_2K:
+            temp = 0;
+            break;
+          case TRANSMISSION_MODE_4K:
+            temp = 2;
+            break;
+          case TRANSMISSION_MODE_8K:
+            temp = 1;
+            break;
+          default:
+            error = ModulatorError_INVALID_FFT_MODE;
+        }
 	state->channelModulation.transmissionMode=channelModulation->transmissionMode;
-	temp=(u8)channelModulation->transmissionMode;
 	error = it950x_wr_reg (state, Processor_OFDM, 0xf726, temp);
 	if (error) goto exit;
 
 
+        /* What is this? */
 	switch (channelModulation->interval){
-		case Interval_1_OVER_32:              
+		case GUARD_INTERVAL_1_32:
 			temp = 8;
 			break;
-		case Interval_1_OVER_16:            
+		case GUARD_INTERVAL_1_16:
 			temp = 4;			
 			break;
-		case Interval_1_OVER_8:            
+		case GUARD_INTERVAL_1_8:
 			temp = 2;			
 			break;
-		case Interval_1_OVER_4:             
+		case GUARD_INTERVAL_1_4:
 			temp = 1;
 			break;
 
 		default:
-			
 			error = ModulatorError_INVALID_CONSTELLATION_MODE;
-			
 			break;
 	}
 

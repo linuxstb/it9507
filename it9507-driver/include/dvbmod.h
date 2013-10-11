@@ -10,81 +10,21 @@
  *
  */
 
-#ifndef __IOCONTROL_H__
-#define __IOCONTROL_H__
+#ifndef _DVBMOD_H_
+#define _DVBMOD_H_
 
 #include <linux/types.h>
-
-/**
- * The type defination of Bandwidth.
- */
-typedef enum {
-    Bandwidth_6M = 0,           /** Signal bandwidth is 6MHz */
-    Bandwidth_7M,               /** Signal bandwidth is 7MHz */
-    Bandwidth_8M,               /** Signal bandwidth is 8MHz */
-    Bandwidth_5M,               /** Signal bandwidth is 5MHz */
-	Bandwidth_4M,               /** Signal bandwidth is 4MHz */
-	Bandwidth_3M,               /** Signal bandwidth is 3MHz */
-	Bandwidth_2_5M ,            /** Signal bandwidth is 2.5MHz */
-	Bandwidth_2M                /** Signal bandwidth is 2MHz */
-} Bandwidth;
-
-/**
- * The type defination of TransmissionMode.
- */
-typedef enum {
-    TransmissionMode_2K = 0,    /** OFDM frame consists of 2048 different carriers (2K FFT mode) */
-    TransmissionMode_8K = 1,    /** OFDM frame consists of 8192 different carriers (8K FFT mode) */
-    TransmissionMode_4K = 2     /** OFDM frame consists of 4096 different carriers (4K FFT mode) */
-} TransmissionModes;
-
-
-/**
- * The type defination of Interval.
- */
-typedef enum {
-    Interval_1_OVER_32 = 0,     /** Guard interval is 1/32 of symbol length */
-    Interval_1_OVER_16,         /** Guard interval is 1/16 of symbol length */
-    Interval_1_OVER_8,          /** Guard interval is 1/8 of symbol length  */
-    Interval_1_OVER_4           /** Guard interval is 1/4 of symbol length  */
-} Interval;
-
-
-/**
- * The type defination of CodeRate.
- */
-typedef enum {
-    CodeRate_1_OVER_2 = 0,      /** Signal uses FEC coding ratio of 1/2 */
-    CodeRate_2_OVER_3,          /** Signal uses FEC coding ratio of 2/3 */
-    CodeRate_3_OVER_4,          /** Signal uses FEC coding ratio of 3/4 */
-    CodeRate_5_OVER_6,          /** Signal uses FEC coding ratio of 5/6 */
-    CodeRate_7_OVER_8,          /** Signal uses FEC coding ratio of 7/8 */
-    CodeRate_NONE               /** None, NXT doesn't have this one     */
-} CodeRate;
-
-
-
-
-/**
- * The type defination of Constellation.
- */
-typedef enum {
-
-    Constellation_QPSK = 0,     /** Signal uses QPSK constellation  */
-    Constellation_16QAM,        /** Signal uses 16QAM constellation */
-    Constellation_64QAM         /** Signal uses 64QAM constellation */
-} Constellation;
+#include <linux/dvb/frontend.h>
 
 /**
  * The defination of ChannelInformation.
  */
 typedef struct {
     __u32 frequency;                    /** Channel frequency in KHz.                                */
-    TransmissionModes transmissionMode; /** Number of carriers used for OFDM signal                  */
-    Constellation constellation;        /** Constellation scheme (FFT mode) in use                   */
-    Interval interval;                  /** Fraction of symbol length used as guard (Guard Interval) */
-    CodeRate highCodeRate;              /** FEC coding ratio of high-priority stream                 */
-    Bandwidth bandwidth;
+    fe_transmit_mode_t transmissionMode; /** Number of carriers used for OFDM signal                  */
+    fe_modulation_t constellation;        /** Constellation scheme (FFT mode) in use                   */
+    fe_guard_interval_t interval;                  /** Fraction of symbol length used as guard (Guard Interval) */
+    fe_code_rate_t highCodeRate;              /** FEC coding ratio of high-priority stream                 */
 } ChannelModulation;
 
 typedef struct _TPS{
@@ -96,10 +36,10 @@ typedef struct _TPS{
 
 typedef struct {
     __u8				chip;
-    __u8 				transmissionMode;
-	__u8				constellation;
-	__u8				interval;
-	__u8				highCodeRate;
+    fe_transmit_mode_t transmissionMode;
+    fe_modulation_t constellation;
+    fe_guard_interval_t interval;
+    fe_code_rate_t highCodeRate;
     __u32				error;
     __u8				reserved[16];
 } SetModuleRequest, *PSetModuleRequest;

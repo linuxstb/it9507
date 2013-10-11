@@ -30,6 +30,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <sys/ioctl.h>
 #include <inttypes.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 #include <linux/types.h>
 
@@ -41,39 +42,61 @@ static int calc_channel_capacity(TxAcquireChannelRequest *channel_request,
                                  SetModuleRequest *module_request)
 {
   uint64_t channel_capacity;
+  int temp;
+
+  switch (module_request->constellation) {
+    case QPSK:
+      temp = 0;
+      break;
+    case QAM_16:
+      temp = 1;
+      break;
+    case QAM_64:
+      temp = 2;
+      break;
+    default:
+      fprintf(stderr,"Invalid constellation, aborting\n");
+      exit(1);
+  }
   channel_capacity = channel_request->bandwidth * 1000;
-  channel_capacity = channel_capacity * ( module_request->constellation * 2 + 2);
+  channel_capacity = channel_capacity * ( temp * 2 + 2);
 
   switch (module_request->interval) {
-  case Interval_1_OVER_32:
-    channel_capacity = channel_capacity*32/33;
-    break;
-  case Interval_1_OVER_16:
-    channel_capacity = channel_capacity*16/17;
-    break;
-  case Interval_1_OVER_8:
-    channel_capacity = channel_capacity*8/9;
-    break;
-  case Interval_1_OVER_4:
-    channel_capacity = channel_capacity*4/5;
-    break;
+    case GUARD_INTERVAL_1_32:
+      channel_capacity = channel_capacity*32/33;
+      break;
+    case GUARD_INTERVAL_1_16:
+      channel_capacity = channel_capacity*16/17;
+      break;
+    case GUARD_INTERVAL_1_8:
+      channel_capacity = channel_capacity*8/9;
+      break;
+    case GUARD_INTERVAL_1_4:
+      channel_capacity = channel_capacity*4/5;
+      break;
+    default:
+      fprintf(stderr,"Invalid guard interval, aborting\n");
+      exit(1);
   }
   switch (module_request->highCodeRate) {
-  case CodeRate_1_OVER_2:
-    channel_capacity = channel_capacity*1/2;
-    break;
-  case CodeRate_2_OVER_3:
-    channel_capacity = channel_capacity*2/3;
-    break;
-  case CodeRate_3_OVER_4:
-    channel_capacity = channel_capacity*3/4;
-    break;
-  case CodeRate_5_OVER_6:
-    channel_capacity = channel_capacity*5/6;
-    break;
-  case CodeRate_7_OVER_8:
-    channel_capacity = channel_capacity*7/8;
-    break;
+    case FEC_1_2:
+      channel_capacity = channel_capacity*1/2;
+      break;
+    case FEC_2_3:
+      channel_capacity = channel_capacity*2/3;
+      break;
+    case FEC_3_4:
+      channel_capacity = channel_capacity*3/4;
+      break;
+    case FEC_5_6:
+      channel_capacity = channel_capacity*5/6;
+      break;
+    case FEC_7_8:
+      channel_capacity = channel_capacity*7/8;
+      break;
+    default:
+      fprintf(stderr,"Invalid coderate, aborting\n");
+      exit(1);
   }
 
   return channel_capacity/544*423;
@@ -102,10 +125,10 @@ int main(int argc, char* argv[])
   /* Set modulation parameters */
   SetModuleRequest module_request;
   module_request.chip = 0;
-  module_request.transmissionMode = TransmissionMode_8K;
-  module_request.constellation = Constellation_64QAM;
-  module_request.interval = Interval_1_OVER_4;
-  module_request.highCodeRate = CodeRate_2_OVER_3;
+  module_request.transmissionMode = TRANSMISSION_MODE_8K;
+  module_request.constellation = QAM_64;
+  module_request.interval = GUARD_INTERVAL_1_4;
+  module_request.highCodeRate = FEC_2_3;
   result = ioctl(mod_fd, IOCTL_ITE_DEMOD_SETMODULE_TX, &module_request);
 
   GetGainRangeRequest get_gain_range_request;
