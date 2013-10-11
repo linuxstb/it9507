@@ -117,14 +117,12 @@ int main(int argc, char* argv[])
 
   /* Set channel (frequency/bandwidth) */
   TxAcquireChannelRequest channel_request;
-  channel_request.chip = 0;
   channel_request.frequency = 794000;
   channel_request.bandwidth = 8000;
   result = ioctl(mod_fd, IOCTL_ITE_DEMOD_ACQUIRECHANNEL_TX, &channel_request);
 
   /* Set modulation parameters */
   SetModuleRequest module_request;
-  module_request.chip = 0;
   module_request.transmissionMode = TRANSMISSION_MODE_8K;
   module_request.constellation = QAM_64;
   module_request.interval = GUARD_INTERVAL_1_4;

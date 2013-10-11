@@ -35,7 +35,6 @@ typedef struct _TPS{
 #define AFA_IOC_MAGIC  'k'
 
 typedef struct {
-    __u8				chip;
     fe_transmit_mode_t transmissionMode;
     fe_modulation_t constellation;
     fe_guard_interval_t interval;
@@ -44,7 +43,6 @@ typedef struct {
 } SetModuleRequest, *PSetModuleRequest;
 
 typedef struct {
-    __u8				chip;
     __u16				bandwidth;
     __u32				frequency;
     __u32				error;
@@ -61,12 +59,10 @@ typedef struct {
 } SetGainRequest, *PSetGainRequest;
 
 typedef struct {
-       __u8                      chip;
     __u32                        error;
 } StartTransferRequest, *PStartTransferRequest;
 
 typedef struct {
-       __u8                      chip;
     __u32                        error;
 } StopTransferRequest, *PStopTransferRequest;
 
