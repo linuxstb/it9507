@@ -13,7 +13,7 @@
 #include <linux/delay.h>
 #include <linux/vmalloc.h>
 
-#include "it950x-core.h"
+#include "it950x.h"
 #include "it950x-priv.h"
 #include "IQ_fixed_table.h"
 
