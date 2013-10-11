@@ -49,22 +49,9 @@ typedef struct {
 } TxAcquireChannelRequest, *PTxAcquireChannelRequest;
 
 typedef struct {
-    __u8				OnOff;
-    __u32				error;
-} TxModeRequest, *PTxModeRequest;
-
-typedef struct {
     int				GainValue;
     __u32				error;
 } SetGainRequest, *PSetGainRequest;
-
-typedef struct {
-    __u32                        error;
-} StartTransferRequest, *PStartTransferRequest;
-
-typedef struct {
-    __u32                        error;
-} StopTransferRequest, *PStopTransferRequest;
 
 
 typedef struct {
@@ -107,10 +94,10 @@ typedef struct {
 	_IOW(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_STANDARD + 0x2D, GetOutputGainRequest)
 
 #define IOCTL_ITE_DEMOD_STARTTRANSFER_TX \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x07, StartTransferRequest)
+	_IO(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x07)
 	
 #define IOCTL_ITE_DEMOD_STOPTRANSFER_TX \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x08, StopTransferRequest)
+	_IO(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x08)
 	
 #define IOCTL_ITE_DEMOD_SETTPS_TX \
 	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x0E, SetTPSRequest)
