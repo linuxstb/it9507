@@ -143,10 +143,9 @@ int main(int argc, char* argv[])
   result = ioctl(mod_fd, IOCTL_ITE_DEMOD_ADJUSTOUTPUTGAIN_TX, &set_gain_request);  
   fprintf(stderr,"Gain set to %d\n",set_gain_request.GainValue);
 
-  SetTPSRequest tps_request;
-  memset(&tps_request, 0, sizeof(tps_request));
-  tps_request.tps.cellid = 0;
-  result = ioctl(mod_fd, IOCTL_ITE_DEMOD_SETTPS_TX, (void *)&tps_request);
+  SetTPSCellIdRequest tps_cellid_request;
+  tps_cellid_request.cellid = 0;
+  result = ioctl(mod_fd, IOCTL_ITE_DEMOD_SETTPSCELLID_TX, (void *)&tps_cellid_request);
 
   /* Calculate and display the channel capacity based on the modulation/channel parameters */
   channel_capacity = calc_channel_capacity(&channel_request,&module_request);

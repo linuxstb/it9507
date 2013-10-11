@@ -27,10 +27,6 @@ typedef struct {
     fe_code_rate_t highCodeRate;              /** FEC coding ratio of high-priority stream                 */
 } ChannelModulation;
 
-typedef struct _TPS{
-    __u16 cellid;
-} TPS, *pTPS;
-
 /* Use 'k' as magic number */
 #define AFA_IOC_MAGIC  'k'
 
@@ -64,8 +60,8 @@ typedef struct {
 
 typedef struct {
     __u32		   error;
-    TPS           tps;
-} SetTPSRequest, *PSetTPSRequest;
+    __u16 cellid;
+} SetTPSCellIdRequest, *PSetTPSCellIdRequest;
 
 typedef struct {
     __u32		   error;
@@ -99,7 +95,7 @@ typedef struct {
 #define IOCTL_ITE_DEMOD_STOPTRANSFER_TX \
 	_IO(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x08)
 	
-#define IOCTL_ITE_DEMOD_SETTPS_TX \
-	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x0E, SetTPSRequest)
+#define IOCTL_ITE_DEMOD_SETTPSCELLID_TX \
+	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x0E, SetTPSCellIdRequest)
 
 #endif

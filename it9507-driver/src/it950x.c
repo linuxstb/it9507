@@ -2286,18 +2286,18 @@ static u32 IT9507_getOutputGain (
     return(ModulatorError_NO_ERROR);
 }
 
-static u32 IT9507_setTPS (
+static u32 IT9507_setTPSCellId (
      struct it950x_state*    state,
-     TPS           tps
+     u16 cellid
 ){
 	u32   error = ModulatorError_NO_ERROR;
 	//---- set TPS Cell ID
 	
 
-	error = it950x_wr_reg (state, Processor_OFDM, 0xF727, (u8)(tps.cellid>>8));
+	error = it950x_wr_reg (state, Processor_OFDM, 0xF727, (u8)(cellid>>8));
 	if (error) goto exit;
 
-	error = it950x_wr_reg (state, Processor_OFDM, 0xF728, (u8)(tps.cellid));
+	error = it950x_wr_reg (state, Processor_OFDM, 0xF728, (u8)(cellid));
 		
 exit:	
 	return (error);
@@ -2493,10 +2493,10 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
             pRequest->error = IT9507_getGainRange (state, pRequest->frequency, pRequest->bandwidth, pRequest->maxGain, pRequest->minGain);
             break;
         }
-        case IOCTL_ITE_DEMOD_SETTPS_TX:
+        case IOCTL_ITE_DEMOD_SETTPSCELLID_TX:
         {
-            PSetTPSRequest pRequest = (PSetTPSRequest) pIOBuffer;        
-            pRequest->error = IT9507_setTPS (state, pRequest->tps);
+            PSetTPSCellIdRequest pRequest = (PSetTPSCellIdRequest) pIOBuffer;        
+            pRequest->error = IT9507_setTPSCellId (state, pRequest->cellid);
             break;
         }
         case IOCTL_ITE_DEMOD_GETOUTPUTGAIN_TX:
