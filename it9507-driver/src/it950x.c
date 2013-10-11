@@ -142,7 +142,7 @@ static u32 EagleUser_busTx (
    
 	if (ret) deb_data(" Usb2_writeControlBus fail : 0x%08x\n", ret);
 
-	return (Error_NO_ERROR);
+	return (ModulatorError_NO_ERROR);
 }
 
 
@@ -168,7 +168,7 @@ static u32 EagleUser_busRx (
 	 
 	if (ret) 	deb_data(" Usb2_readControlBus fail : 0x%08x\n", ret);
 
-	return (Error_NO_ERROR);
+	return (ModulatorError_NO_ERROR);
 }
 
 static u32 it950x_io (
@@ -2393,7 +2393,7 @@ static DEFINE_MUTEX(mymutex);
 //get EEPROM_IRMODE/bIrTblDownload/bRAWIr/architecture config from EEPROM
 static u32 DRV_GetEEPROMConfig(struct it950x_state* state)
 {       
-    u32 dwError = Error_NO_ERROR;
+    u32 dwError = ModulatorError_NO_ERROR;
 	u8 chip_version = 0;
 	u32 chip_Type;
 	u8  var[2];
@@ -2477,7 +2477,7 @@ exit:
 
 u32 DL_ApPwCtrl (struct it950x_state *state, bool  bOn)
 {
-    u32 dwError = Error_NO_ERROR;
+    u32 dwError = ModulatorError_NO_ERROR;
 	u8    i = 0;
 	
 	mutex_lock(&mymutex);
@@ -2515,7 +2515,7 @@ exit:
 
 u32 DL_CheckTunerInited(struct it950x_state *state, bool *bOn)
 {
-	u32 dwError = Error_NO_ERROR;
+	u32 dwError = ModulatorError_NO_ERROR;
 	
     mutex_lock(&mymutex);
 
@@ -2530,7 +2530,7 @@ u32 DL_CheckTunerInited(struct it950x_state *state, bool *bOn)
 
 u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pIOBuffer)
 {
-    u32 dwError = Error_NO_ERROR;
+    u32 dwError = ModulatorError_NO_ERROR;
 
     mutex_lock(&mymutex);
 
@@ -2595,7 +2595,7 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
 
 u32 Device_init(struct usb_device *udev,struct it950x_state *state, bool bBoot)
 {
-	u32 error = Error_NO_ERROR;
+	u32 error = ModulatorError_NO_ERROR;
 	u8 filterIdx=0;
 	int errcount=0;
 	u32 version = 0;
@@ -2677,7 +2677,7 @@ u32 Device_init(struct usb_device *udev,struct it950x_state *state, bool bBoot)
         	else
         	{
             		deb_data("	Fw version is the same!\n");
-  	      		error = Error_NO_ERROR;
+  	      		error = ModulatorError_NO_ERROR;
         	}
 	}//PDC->IT950x.booted
 

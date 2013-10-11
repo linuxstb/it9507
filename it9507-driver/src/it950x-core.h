@@ -22,7 +22,6 @@
 #include <linux/fs.h>
 #include <linux/file.h>
 #include <asm/uaccess.h>
-#include "error.h"
 #include <linux/version.h>
 #include <linux/mutex.h>
 #include <linux/mm.h>

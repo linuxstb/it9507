@@ -241,10 +241,6 @@ int Tx_RingBuffer(
       *pBufferLength = dev->dwTxRemaingBufferSize;
     }
 
-    if (*pBufferLength == 0) {
-      return -Error_BUFFER_INSUFFICIENT;
-    }
-	
 	/* memory must enough because checking at first in this function */
 	if(dwWriteBuffAddr >= dwCurrBuffAddr){      
 		/* To_kernel_urb not run a cycle or both run a cycle */
@@ -288,7 +284,7 @@ int Tx_RingBuffer(
 		}
 	}
    
-    return Error_NO_ERROR;
+    return ModulatorError_NO_ERROR;
 }
 
 /******************************************************************/
@@ -593,6 +589,10 @@ static ssize_t it950x_tx_write(
 	dev = (struct it950x_dev *)file->private_data;
 	if (dev == NULL)
 		return -ENODEV;
+
+	if (Len == 0)
+		return 0;
+
 #if URB_TEST
 	loop_cnt++;	
 #endif
