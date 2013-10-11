@@ -62,9 +62,9 @@ const u8 Eagle_bitMask[Eagle_MAX_BIT] = {
 
 
 static u32 IT9507Cmd_addChecksum (
-    IN  struct it950x_state*    state,
-    OUT u32*          bufferLength,
-    OUT u8*           buffer
+     struct it950x_state*    state,
+    u32*          bufferLength,
+    u8*           buffer
 ) {
     u32 error  = ModulatorError_NO_ERROR;
     u32 loop   = (*bufferLength - 1) / 2;
@@ -91,9 +91,9 @@ static u32 IT9507Cmd_addChecksum (
 
 
 static u32 IT9507Cmd_removeChecksum (
-    IN  struct it950x_state*    state,
-    OUT u32*          bufferLength,
-    OUT u8*           buffer
+     struct it950x_state*    state,
+    u32*          bufferLength,
+    u8*           buffer
 ) {
     u32 error    = ModulatorError_NO_ERROR;
     u32 loop     = (*bufferLength - 3) / 2;
@@ -124,9 +124,9 @@ exit :
 }
 
 static u32 EagleUser_busTx (
-    IN  struct it950x_state*    state,
-    IN  u32           bufferLength,
-    IN  u8*           buffer
+     struct it950x_state*    state,
+     u32           bufferLength,
+     u8*           buffer
 ) {
     u32     ret;
     int		  act_len;
@@ -150,9 +150,9 @@ static u32 EagleUser_busTx (
 
 
 static u32 EagleUser_busRx (
-    IN  struct it950x_state*    state,
-    IN  u32           bufferLength,
-    OUT u8*           buffer
+     struct it950x_state*    state,
+     u32           bufferLength,
+    u8*           buffer
 ) {
 	u32     ret;
 	int       nu8sRead;
@@ -299,51 +299,51 @@ return (error);
 }
 
 static u32 it950x_wr_regs (
-    IN  struct it950x_state*    state,
-    IN  Processor     processor,
-    IN  u32         registerAddress,
-    IN  u8          writeBufferLength,
-    IN  u8*         writeBuffer
+     struct it950x_state*    state,
+     Processor     processor,
+     u32         registerAddress,
+     u8          writeBufferLength,
+     u8*         writeBuffer
 ) {
   return it950x_io(state,processor,Command_REG_DEMOD_WRITE,registerAddress,writeBufferLength,writeBuffer);
 }
 
 static u32 it950x_wr_reg (
-    IN  struct it950x_state*    state,
-    IN  Processor       processor,
-    IN  u32           registerAddress,
-    IN  u8            value
+     struct it950x_state*    state,
+     Processor       processor,
+     u32           registerAddress,
+     u8            value
 ) {
   return (it950x_io(state,processor,Command_REG_DEMOD_WRITE,registerAddress, 1, &value));
 }
 
 static u32 it950x_rd_regs (
-    IN  struct it950x_state*    state,
-    IN  Processor       processor,
-    IN  u32           registerAddress,
-    IN  u8            readBufferLength,
-    OUT u8*           readBuffer
+     struct it950x_state*    state,
+     Processor       processor,
+     u32           registerAddress,
+     u8            readBufferLength,
+    u8*           readBuffer
 ) {
   return it950x_io(state,processor,Command_REG_DEMOD_READ,registerAddress,readBufferLength,readBuffer);
 }
 
 static u32 it950x_rd_reg (
-    IN  struct it950x_state*    state,
-    IN  Processor       processor,
-    IN  u32           registerAddress,
-    OUT u8*           value
+     struct it950x_state*    state,
+     Processor       processor,
+     u32           registerAddress,
+    u8*           value
 ) {
   return it950x_io(state,processor,Command_REG_DEMOD_READ,registerAddress,1,value);
 }
 
 
 static u32 it950x_wr_regbits (
-    IN  struct it950x_state*    state,
-    IN  Processor       processor,
-    IN  u32           registerAddress,
-    IN  u8            position,
-    IN  u8            length,
-    IN  u8            value
+     struct it950x_state*    state,
+     Processor       processor,
+     u32           registerAddress,
+     u8            position,
+     u8            length,
+     u8            value
 )
 {
     u32 error = ModulatorError_NO_ERROR;
@@ -371,13 +371,13 @@ exit:
 
 
 static u32 IT9507Cmd_sendCommand (
-    IN  struct it950x_state*    state,
-    IN  u16            command,
-    IN  Processor       processor,
-    IN  u32           writeBufferLength,
-    IN  const u8*           writeBuffer,
-    IN  u32           readBufferLength,
-    OUT u8*           readBuffer
+     struct it950x_state*    state,
+     u16            command,
+     Processor       processor,
+     u32           writeBufferLength,
+     const u8*           writeBuffer,
+     u32           readBufferLength,
+    u8*           readBuffer
 ) {
     u32       error = ModulatorError_NO_ERROR;
     u8        buffer[255];
@@ -487,7 +487,7 @@ exit :
 }
 
 static u32 EagleUser_setSystemConfig (
-    IN  struct it950x_state*    state
+     struct it950x_state*    state
 ) {
 	u32 error = 0;
 
@@ -526,8 +526,8 @@ exit:
 
 
 static u32 EagleUser_getDeviceType (
-	IN  struct it950x_state*    state,
-	OUT  u8*		  deviceType	   
+	 struct it950x_state*    state,
+	 u8*		  deviceType	   
 ){	
 	u32 error = ModulatorError_NO_ERROR;
 	u8 temp;
@@ -553,7 +553,7 @@ static u32 EagleUser_getDeviceType (
 
 
 static u32 EagleUser_mpegConfig (
-    IN  struct it950x_state*    state
+     struct it950x_state*    state
 ) {
     /*
      *  ToDo:  Add code here
@@ -564,7 +564,7 @@ static u32 EagleUser_mpegConfig (
 
 
  u32 EagleUser_Initialization  (
-    IN  struct it950x_state*    state
+     struct it950x_state*    state
 ) {
 	/*
      *  ToDo:  Add code here
@@ -586,9 +586,9 @@ exit:
 
 
 static u32 EagleUser_acquireChannel (
-	IN  struct it950x_state*    state,
-	IN  u16          bandwidth,
-	IN  u32         frequency
+	 struct it950x_state*    state,
+	 u16          bandwidth,
+	 u32         frequency
 ){
 
 	/*
@@ -612,8 +612,8 @@ exit:
 }
 
 static u32 EagleUser_setTxModeEnable (
-	IN  struct it950x_state*            state,
-	IN  u8                    enable	
+	 struct it950x_state*            state,
+	 u8                    enable	
 ) {
 	/*
      *  ToDo:  Add code here
@@ -878,8 +878,8 @@ exit:
 }
 
 static u32 EagleTuner_setIQCalibration(
-	IN  struct it950x_state*    state,
-    IN  u32         frequency	
+	 struct it950x_state*    state,
+     u32         frequency	
 ) {
 	u32   error = ModulatorError_NO_ERROR;
 	u32 reg = 0;
@@ -968,9 +968,9 @@ exit:
 
 
 static u32 EagleTuner_calIQCalibrationValue(
-	IN  struct it950x_state*    state,
-    IN  u32         frequency,
-	IN  u8*		  val
+	 struct it950x_state*    state,
+     u32         frequency,
+	 u8*		  val
 ) {
 	u32   error = ModulatorError_NO_ERROR;
 	
@@ -1061,7 +1061,7 @@ static unsigned int c_fN_min[9] = {
 	53000, 74000, 111000, 148000, 222000, 296000, 445000, 573000, 950000
 };
 
-static u32 IT9507_setTsInterface (IN  struct it950x_state*    state);
+static u32 IT9507_setTsInterface (struct it950x_state*    state);
 
 unsigned int IT9507_getLoFreq(unsigned int rf_freq_kHz)
 {
@@ -1132,7 +1132,7 @@ unsigned int IT9507_getLoFreq(unsigned int rf_freq_kHz)
 
 
 static u32 IT9507Cmd_reboot (
-    IN  struct it950x_state*    state
+     struct it950x_state*    state
 ) {
     u32       error = ModulatorError_NO_ERROR;
     u16        command;
@@ -1160,9 +1160,9 @@ exit :
 }
 
 static u32 IT9507_calOutputGain (
-	IN  struct it950x_state*    state,
-	IN  u8		  *defaultValue,
-	IN  int			  *gain	   
+	 struct it950x_state*    state,
+	 u8		  *defaultValue,
+	 int			  *gain	   
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 	int amp_mul;
@@ -1284,8 +1284,8 @@ exit:
 
 
 static u32 IT9507_selectBandwidth (
-	IN  struct it950x_state*    state,
-	IN  u16          bandwidth          /** KHz              */
+	 struct it950x_state*    state,
+	 u16          bandwidth          /** KHz              */
 ) {
 	u32 error ;
 	u8 temp1 ;
@@ -1442,9 +1442,9 @@ exit :
 }
 
 static u32 IT9507_runTxCalibration (
-	IN  struct it950x_state*    state,
-	IN  u16            bandwidth,
-    IN  u32           frequency
+	 struct it950x_state*    state,
+	 u16            bandwidth,
+     u32           frequency
 ){
 	u32 error = ModulatorError_NO_ERROR;
 	u8 c1_default_value[2],c2_default_value[2],c3_default_value[2];
@@ -1473,8 +1473,8 @@ exit:
 }
 
 static u32 IT9507_setFrequency (
-	IN  struct it950x_state*    state,
-	IN  u32           frequency
+	 struct it950x_state*    state,
+	 u32           frequency
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 	
@@ -1522,9 +1522,9 @@ exit :
 }
 
 static u32 IT9507_getFirmwareVersion (
-    IN  struct it950x_state*    state,
-    IN  Processor       processor,
-    OUT u32*          version
+     struct it950x_state*    state,
+     Processor       processor,
+    u32*          version
 ) {
     u32 error = ModulatorError_NO_ERROR;
 
@@ -1543,7 +1543,7 @@ exit :
 }
 
 static int it950x_load_firmware (
-	IN  struct it950x_state*    state
+	 struct it950x_state*    state
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 	u32 version;
@@ -1610,8 +1610,8 @@ exit :
 }
 
 static u32 IT9507_initialize (
-    IN  struct it950x_state*    state,
-	IN  u8            i2cAddr
+     struct it950x_state*    state,
+	 u8            i2cAddr
 ) {
 
 	u32 error = ModulatorError_NO_ERROR;
@@ -1706,8 +1706,8 @@ exit:
 
 
 static u32 IT9507_setTxModeEnable (
-    IN  struct it950x_state*            state,
-    IN  u8                    enable
+     struct it950x_state*            state,
+     u8                    enable
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 
@@ -1750,8 +1750,8 @@ exit :
 
 
 static u32 IT9507_setTXChannelModulation (
-    IN  struct it950x_state*            state,
-    IN  ChannelModulation*      channelModulation
+     struct it950x_state*            state,
+     ChannelModulation*      channelModulation
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 
@@ -1881,9 +1881,9 @@ exit :
 }
 
 static u32 IT9507_acquireTxChannel (
-	IN  struct it950x_state*            state,
-    IN  u16            bandwidth,
-    IN  u32           frequency
+	 struct it950x_state*            state,
+     u16            bandwidth,
+     u32           frequency
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 	u16 TABLE_NROW = state->calibrationInfo.tableGroups;
@@ -1909,7 +1909,7 @@ exit :
 }
 
 static u32 IT9507_setTsInterface (
-    IN  struct it950x_state*    state
+     struct it950x_state*    state
 ) {
     u32 error = ModulatorError_NO_ERROR;
 	u16 frameSize;
@@ -2031,7 +2031,7 @@ exit :
 }
 
 static u32 IT9507_TXreboot (
-    IN  struct it950x_state*    state
+     struct it950x_state*    state
 )  {
 	u32 error = ModulatorError_NO_ERROR;
 	u32 version;
@@ -2055,8 +2055,8 @@ exit :
 
 
 static u32 IT9507_controlPowerSaving (
-    IN  struct it950x_state*    state,
-    IN  u8            control
+     struct it950x_state*    state,
+     u8            control
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 
@@ -2093,8 +2093,8 @@ exit :
 
 
 static u32 IT9507_setSlaveIICAddress (
-    IN  struct it950x_state*    state,
-	IN  u8          SlaveAddress
+     struct it950x_state*    state,
+	 u8          SlaveAddress
 ){
 	u32 error = ModulatorError_NO_ERROR;
 
@@ -2106,8 +2106,8 @@ static u32 IT9507_setSlaveIICAddress (
 }
 
 static u32 IT9507_adjustOutputGain (
-	IN  struct it950x_state*    state,
-	IN  int			  *gain	   
+	 struct it950x_state*    state,
+	 int			  *gain	   
 ){
 	u32 error = ModulatorError_NO_ERROR;
 	int amp_mul;
@@ -2244,11 +2244,11 @@ exit:
 }
 
 static u32 IT9507_getGainRange (
-	IN  struct it950x_state*    state,
-	IN  u32           frequency,
-	IN  u16            bandwidth,    
-	OUT int*			maxGain,
-	OUT int*			minGain
+	 struct it950x_state*    state,
+	 u32           frequency,
+	 u16            bandwidth,    
+	int*			maxGain,
+	int*			minGain
 ){
 	u32 error = ModulatorError_NO_ERROR;
 	u8 val[6];
@@ -2277,8 +2277,8 @@ exit:
 }
 
 static u32 IT9507_getOutputGain (
-	IN  struct it950x_state*    state,
-	OUT  int			  *gain	   
+	 struct it950x_state*    state,
+	 int			  *gain	   
 ){
    
     *gain = state->calibrationInfo.outputGain;
@@ -2287,8 +2287,8 @@ static u32 IT9507_getOutputGain (
 }
 
 static u32 IT9507_setTPS (
-    IN  struct it950x_state*    state,
-    IN  TPS           tps
+     struct it950x_state*    state,
+     TPS           tps
 ){
 	u32   error = ModulatorError_NO_ERROR;
 	//---- set TPS Cell ID

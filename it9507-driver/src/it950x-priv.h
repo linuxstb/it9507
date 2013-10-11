@@ -172,8 +172,6 @@
 #define ModulatorError_OUT_OF_CALIBRATION_RANGE			0x00000051
 #define ModulatorError_FIRMWARE_STATUS					0x01000000
 
-#define IN
-#define OUT
 #define IT9507Cmd_buildCommand(command, processor)  (command + (u16) (processor << 12))
 #define Eagle_MAX_BIT               8
 #define IQ_TABLE_NROW 92
