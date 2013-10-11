@@ -27,6 +27,7 @@
 #include <linux/mm.h>
 #include <linux/gfp.h>
 #include "modulatorType.h"
+#include "modulatorError.h"
 #include "../include/dvbmod.h"
 
 #define   DRIVER_RELEASE_VERSION    "v13.06.27.1"
