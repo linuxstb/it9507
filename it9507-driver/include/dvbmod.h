@@ -127,6 +127,4 @@ typedef struct {
 #define IOCTL_ITE_DEMOD_SETTPS_TX \
 	_IOR(AFA_IOC_MAGIC, IOCTRL_ITE_GROUP_OTHER + 0x0E, SetTPSRequest)
 
-__u32 DemodIOCTLFun(void *demodulator, __u32 IOCTLCode, unsigned long pIOBuffer);
-
 #endif
