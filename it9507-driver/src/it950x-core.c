@@ -656,21 +656,18 @@ static int it950x_probe(struct usb_interface *intf, const struct usb_device_id *
 
 	/* allocate memory for our device state and intialize it */
 	dev = kzalloc(sizeof(struct it950x_dev), GFP_KERNEL);
-	dev->g_AP_use = 0;
-	//dev->DC.modulator.ptrIQtableEx = kzalloc(sizeof(IQtable)*91, GFP_KERNEL);
-	atomic_set(&dev->g_AP_use_tx, 0);
-
 	if (dev == NULL) {
 		deb_data("Out of memory\n");
 		return retval;
 	}
 	
+	atomic_set(&dev->g_AP_use_tx, 0);
+
 	dev->usbdev = interface_to_usbdev(intf);
 
 	/* we can register the device now, as it is ready */
 	usb_set_intfdata(intf, dev);
 
-	//memset(&DC, 0, sizeof(DC));
 	deb_data("===it950x usb device pluged in ===\n");
 	retval = Device_init(interface_to_usbdev(intf), &dev->state, true);
 	if (retval) {
