@@ -1750,8 +1750,8 @@ exit :
 
 
 static u32 IT9507_setTXChannelModulation (
-     struct it950x_state*            state,
-     ChannelModulation*      channelModulation
+	struct it950x_state*            state,
+	struct dvb_modulator_parameters *params
 ) {
 	u32 error = ModulatorError_NO_ERROR;
 
@@ -1762,7 +1762,7 @@ static u32 IT9507_setTXChannelModulation (
 	if (error) goto exit;
 
 	/** Set constellation type */
-        switch (channelModulation->constellation) {
+        switch (params->constellation) {
           case QPSK:
             temp = 0;
             break;
@@ -1776,11 +1776,10 @@ static u32 IT9507_setTXChannelModulation (
             error = ModulatorError_INVALID_CONSTELLATION_MODE;
             goto exit;
         }
-	state->channelModulation.constellation=channelModulation->constellation;
 	error = it950x_wr_reg (state, Processor_OFDM, 0xf721, temp);
 	if (error) goto exit;
 
-        switch (channelModulation->highCodeRate) {
+        switch (params->code_rate_HP) {
           case FEC_1_2:
             temp = 0;
             break;
@@ -1800,14 +1799,13 @@ static u32 IT9507_setTXChannelModulation (
             error = ModulatorError_INVALID_CONSTELLATION_MODE;  /* WRONG ERROR */
             goto exit;
         }
-	state->channelModulation.highCodeRate=channelModulation->highCodeRate;
 	error = it950x_wr_reg (state, Processor_OFDM, 0xf723, temp);
 	if (error) goto exit;
 
 	/** Set low code rate */
 
 	/** Set guard interval */
-	switch (channelModulation->interval){
+	switch (params->guard_interval){
 		case GUARD_INTERVAL_1_4:
 			temp = 3;
 			break;
@@ -1825,12 +1823,11 @@ static u32 IT9507_setTXChannelModulation (
 			error = ModulatorError_INVALID_CONSTELLATION_MODE;
 			break;
 	}
-	state->channelModulation.interval=channelModulation->interval;
 	error = it950x_wr_reg (state, Processor_OFDM, p_eagle_reg_tps_gi, temp);
 	if (error) goto exit;
 
 	/** Set FFT mode */
-        switch (channelModulation->transmissionMode) {
+        switch (params->transmission_mode) {
           case TRANSMISSION_MODE_2K:
             temp = 0;
             break;
@@ -1843,13 +1840,12 @@ static u32 IT9507_setTXChannelModulation (
           default:
             error = ModulatorError_INVALID_FFT_MODE;
         }
-	state->channelModulation.transmissionMode=channelModulation->transmissionMode;
 	error = it950x_wr_reg (state, Processor_OFDM, 0xf726, temp);
 	if (error) goto exit;
 
 
         /* What is this? */
-	switch (channelModulation->interval){
+	switch (params->guard_interval){
 		case GUARD_INTERVAL_1_32:
 			temp = 8;
 			break;
@@ -2468,35 +2464,28 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
             pRequest->error = IT9507_adjustOutputGain(state, &pRequest->GainValue);
             break;
         }
-        case ITE_MOD_SETMODULE:
+        case ITE_MOD_SET_PARAMETERS:
         {
-            ChannelModulation temp;
-            PSetModuleRequest pRequest = (PSetModuleRequest) pIOBuffer;
-            temp.constellation = pRequest->constellation;
-            temp.highCodeRate = pRequest->highCodeRate;
-            temp.interval = pRequest->interval;
-            temp.transmissionMode = pRequest->transmissionMode;
-            pRequest->error = IT9507_setTXChannelModulation(state, &temp);
-            pRequest->error = IT9507_setTxModeEnable(state, 1);
+            struct dvb_modulator_parameters *params = (struct dvb_modulator_parameters*)pIOBuffer;
+            if ((dwError = IT9507_acquireTxChannel(state, params->bandwidth_hz, params->frequency_khz)))
+              return -EINVAL; /* TODO: Check return value */
+
+            if ((dwError = IT9507_setTXChannelModulation(state,params)))
+              return -EINVAL; /* TODO: Check return value */
+
+            if ((dwError = IT9507_setTPSCellId(state, params->cellid)))
+              return -EINVAL; /* TODO: Check return value */
+
+            if ((dwError = IT9507_setTxModeEnable(state, 1)))
+              return -EINVAL; /* TODO: Check return value */
+
             deb_data("IT950x TxMode RF ON\n");                
-            break;
-        }
-        case ITE_MOD_ACQUIRECHANNEL:
-        {
-            PTxAcquireChannelRequest pRequest = (PTxAcquireChannelRequest) pIOBuffer;
-            pRequest->error = IT9507_acquireTxChannel(state, pRequest->bandwidth, pRequest->frequency);
             break;
         }
         case ITE_MOD_GETGAINRANGE:
         {
             PGetGainRangeRequest pRequest = (PGetGainRangeRequest) pIOBuffer;        
             pRequest->error = IT9507_getGainRange (state, pRequest->frequency, pRequest->bandwidth, pRequest->maxGain, pRequest->minGain);
-            break;
-        }
-        case ITE_MOD_SETTPSCELLID:
-        {
-            PSetTPSCellIdRequest pRequest = (PSetTPSCellIdRequest) pIOBuffer;        
-            pRequest->error = IT9507_setTPSCellId (state, pRequest->cellid);
             break;
         }
         case ITE_MOD_GETOUTPUTGAIN:

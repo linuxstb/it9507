@@ -38,13 +38,12 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 /* Function based on code in the tsrfsend.c application by Avalpa
    Digital Engineering srl */
-static int calc_channel_capacity(TxAcquireChannelRequest *channel_request,
-                                 SetModuleRequest *module_request)
+static int calc_channel_capacity(struct dvb_modulator_parameters *params)
 {
   uint64_t channel_capacity;
   int temp;
 
-  switch (module_request->constellation) {
+  switch (params->constellation) {
     case QPSK:
       temp = 0;
       break;
@@ -58,10 +57,10 @@ static int calc_channel_capacity(TxAcquireChannelRequest *channel_request,
       fprintf(stderr,"Invalid constellation, aborting\n");
       exit(1);
   }
-  channel_capacity = channel_request->bandwidth * 1000;
+  channel_capacity = params->bandwidth_hz * 1000;
   channel_capacity = channel_capacity * ( temp * 2 + 2);
 
-  switch (module_request->interval) {
+  switch (params->guard_interval) {
     case GUARD_INTERVAL_1_32:
       channel_capacity = channel_capacity*32/33;
       break;
@@ -78,7 +77,7 @@ static int calc_channel_capacity(TxAcquireChannelRequest *channel_request,
       fprintf(stderr,"Invalid guard interval, aborting\n");
       exit(1);
   }
-  switch (module_request->highCodeRate) {
+  switch (params->code_rate_HP) {
     case FEC_1_2:
       channel_capacity = channel_capacity*1/2;
       break;
@@ -108,6 +107,7 @@ int main(int argc, char* argv[])
   int mod_fd;
   int result;
   int channel_capacity;
+  struct dvb_modulator_parameters params;
 
   /* Open Device - hard-coded to device #1 */
   if ((mod_fd = open("/dev/dvbmod0", O_RDWR)) < 0) {
@@ -115,19 +115,15 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  /* Set channel (frequency/bandwidth) */
-  TxAcquireChannelRequest channel_request;
-  channel_request.frequency = 794000;
-  channel_request.bandwidth = 8000;
-  result = ioctl(mod_fd, ITE_MOD_ACQUIRECHANNEL, &channel_request);
-
   /* Set modulation parameters */
-  SetModuleRequest module_request;
-  module_request.transmissionMode = TRANSMISSION_MODE_8K;
-  module_request.constellation = QAM_64;
-  module_request.interval = GUARD_INTERVAL_1_4;
-  module_request.highCodeRate = FEC_2_3;
-  result = ioctl(mod_fd, ITE_MOD_SETMODULE, &module_request);
+  params.frequency_khz = 794000;
+  params.bandwidth_hz = 8000;
+  params.transmission_mode = TRANSMISSION_MODE_8K;
+  params.constellation = QAM_64;
+  params.guard_interval = GUARD_INTERVAL_1_4;
+  params.code_rate_HP = FEC_2_3;
+  params.cellid = 0;
+  result = ioctl(mod_fd, ITE_MOD_SET_PARAMETERS, &params);
 
   GetGainRangeRequest get_gain_range_request;
   int mingain,maxgain;
@@ -143,12 +139,8 @@ int main(int argc, char* argv[])
   result = ioctl(mod_fd, ITE_MOD_ADJUSTOUTPUTGAIN, &set_gain_request);  
   fprintf(stderr,"Gain set to %d\n",set_gain_request.GainValue);
 
-  SetTPSCellIdRequest tps_cellid_request;
-  tps_cellid_request.cellid = 0;
-  result = ioctl(mod_fd, ITE_MOD_SETTPSCELLID, (void *)&tps_cellid_request);
-
   /* Calculate and display the channel capacity based on the modulation/channel parameters */
-  channel_capacity = calc_channel_capacity(&channel_request,&module_request);
+  channel_capacity = calc_channel_capacity(&params);
   fprintf(stderr,"Channel capacity = %dbps\n",channel_capacity);
 
   /* Start the transfer */

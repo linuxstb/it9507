@@ -81,8 +81,7 @@ struct it950x_state {
 	u16 bandwidth;
 	u32 frequency;    
 	bool booted;
-	u8 slaveIICAddr;  
-	ChannelModulation channelModulation;
+	u8 slaveIICAddr;
 	CalibrationInfo calibrationInfo;
         FILTER_CONTEXT_HW fc;
 };
