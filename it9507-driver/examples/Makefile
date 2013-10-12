@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -D_FILE_OFFSET_BITS=64
+CFLAGS = -W -Wall -D_FILE_OFFSET_BITS=64
 
 all: sendts
 
