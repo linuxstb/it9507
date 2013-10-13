@@ -107,6 +107,7 @@ int main(int argc, char* argv[])
   int mod_fd;
   int result;
   int channel_capacity;
+  int gain;
   struct dvb_modulator_parameters params;
 
   /* Open Device - hard-coded to device #1 */
@@ -122,29 +123,24 @@ int main(int argc, char* argv[])
   params.constellation = QAM_64;
   params.guard_interval = GUARD_INTERVAL_1_4;
   params.code_rate_HP = FEC_2_3;
-  params.cellid = 0;
+  params.cell_id = 0;
   result = ioctl(mod_fd, ITE_MOD_SET_PARAMETERS, &params);
 
-  GetGainRangeRequest get_gain_range_request;
-  int mingain,maxgain;
-  get_gain_range_request.frequency = 794000;
-  get_gain_range_request.bandwidth = 8000;
-  get_gain_range_request.minGain = &mingain;
-  get_gain_range_request.maxGain = &maxgain;
-  result = ioctl(mod_fd, ITE_MOD_GETGAINRANGE, &get_gain_range_request);
-  fprintf(stderr,"Gain range: %d to %d\n",mingain,maxgain);
+  struct dvb_modulator_gain_range gain_range;
+  gain_range.frequency_khz = 794000;
+  result = ioctl(mod_fd, ITE_MOD_GET_RF_GAIN_RANGE, &gain_range);
+  fprintf(stderr,"Gain range: %d to %d\n",gain_range.min_gain,gain_range.max_gain);
 
-  SetGainRequest set_gain_request;
-  set_gain_request.GainValue = -10;
-  result = ioctl(mod_fd, ITE_MOD_ADJUSTOUTPUTGAIN, &set_gain_request);  
-  fprintf(stderr,"Gain set to %d\n",set_gain_request.GainValue);
+  gain = -10;
+  result = ioctl(mod_fd, ITE_MOD_SET_RF_GAIN, &gain);
+  fprintf(stderr,"Gain set to %d\n",gain);
 
   /* Calculate and display the channel capacity based on the modulation/channel parameters */
   channel_capacity = calc_channel_capacity(&params);
   fprintf(stderr,"Channel capacity = %dbps\n",channel_capacity);
 
   /* Start the transfer */
-  result = ioctl(mod_fd, ITE_MOD_STARTTRANSFER);
+  result = ioctl(mod_fd, ITE_MOD_START_TRANSFER);
 
   /* The main transfer loop */
   unsigned char buf[188*1000];
@@ -176,7 +172,7 @@ int main(int argc, char* argv[])
   }  
 
   /* Stop the transfer */
-  result = ioctl(mod_fd, ITE_MOD_STOPTRANSFER);
+  result = ioctl(mod_fd, ITE_MOD_STOP_TRANSFER);
 
   close(mod_fd);
   return 0;

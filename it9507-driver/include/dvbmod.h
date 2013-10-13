@@ -1,12 +1,8 @@
 /**
  *
- * Copyright (c) 2013 ITE Corporation. All rights reserved. 
+ * dvbmod.h - DVB modulator kernel API
  *
- * Module Name:
- *   iocontrol.h
- *
- * Abstract:
- *   The structure and IO code for IO control call.
+ * Copyright (C) 2013 Dave Chapman <dave@dchapman.com>
  *
  */
 
@@ -23,37 +19,24 @@ struct dvb_modulator_parameters {
 	fe_guard_interval_t	guard_interval;
 	fe_code_rate_t 		code_rate_HP;
 	__u16			bandwidth_hz;    /* Bandwidth in Hz */
-	__u16			cellid;
+	__u16			cell_id;
 };
 
-typedef struct {
-    int				GainValue;
-    __u32				error;
-} SetGainRequest, *PSetGainRequest;
-
-
-typedef struct {
-    __u32			error;
-	__u32          frequency;
-	__u16           bandwidth;    
-	int*			maxGain;
-	int*			minGain;
-} GetGainRangeRequest, *PGetGainRangeRequest;
-
-typedef struct {
-    __u32		   error;
-	int			  *gain;	 
-} GetOutputGainRequest, *PGetOutputGainRequest;
+struct dvb_modulator_gain_range {
+	__u32			frequency_khz;   /* frequency in KHz */
+	int			min_gain;
+	int			max_gain;
+};
 
 /**
  * Modulator API commands
  */
 
 #define ITE_MOD_SET_PARAMETERS    _IOW('k', 0x40, struct dvb_modulator_parameters)
-#define ITE_MOD_ADJUSTOUTPUTGAIN  _IOW('k', 0x42, SetGainRequest)
-#define ITE_MOD_GETGAINRANGE      _IOW('k', 0x43, GetGainRangeRequest)
-#define ITE_MOD_GETOUTPUTGAIN     _IOW('k', 0x44, GetOutputGainRequest)
-#define ITE_MOD_STARTTRANSFER     _IO('k', 0x45)
-#define ITE_MOD_STOPTRANSFER      _IO('k', 0x46)
+#define ITE_MOD_SET_RF_GAIN       _IOWR('k', 0x41, int)
+#define ITE_MOD_GET_RF_GAIN       _IOR('k', 0x42, int)
+#define ITE_MOD_GET_RF_GAIN_RANGE _IOWR('k', 0x43, struct dvb_modulator_gain_range)
+#define ITE_MOD_START_TRANSFER    _IO('k', 0x44)
+#define ITE_MOD_STOP_TRANSFER     _IO('k', 0x45)
 
 #endif

@@ -50,7 +50,7 @@ typedef struct {
 typedef struct {
     IQtable *ptrIQtableEx;
 	u16 tableGroups;		//Number of IQtable groups;
-	int	outputGain;	
+	s32	outputGain;	
     u16 c1DefaultValue;
 	u16 c2DefaultValue;
 	u16 c3DefaultValue;

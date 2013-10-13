@@ -2241,33 +2241,30 @@ exit:
 
 static u32 IT9507_getGainRange (
 	 struct it950x_state*    state,
-	 u32           frequency,
-	 u16            bandwidth,    
-	int*			maxGain,
-	int*			minGain
+	struct dvb_modulator_gain_range* gain_range
 ){
 	u32 error = ModulatorError_NO_ERROR;
 	u8 val[6];
 	u16 TABLE_NROW = state->calibrationInfo.tableGroups;
-	if(state->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<frequency 
-		|| state->calibrationInfo.ptrIQtableEx[0].frequency>frequency 
+	if(state->calibrationInfo.ptrIQtableEx[TABLE_NROW-1].frequency<gain_range->frequency_khz
+		|| state->calibrationInfo.ptrIQtableEx[0].frequency>gain_range->frequency_khz
 	){
 		error = ModulatorError_FREQ_OUT_OF_RANGE;
 		goto exit;
 	}
 
-	if((bandwidth !=0) && (frequency !=0)){
-		error = EagleTuner_calIQCalibrationValue(state,frequency,val);
+	if(gain_range->frequency_khz !=0){
+		error = EagleTuner_calIQCalibrationValue(state,gain_range->frequency_khz,val);
 	}else{
 		error = ModulatorError_FREQ_OUT_OF_RANGE;
 		goto exit;
 	}
 
-	*maxGain = 100;
-	IT9507_calOutputGain(state, val, maxGain);
+	gain_range->max_gain = 100;
+	IT9507_calOutputGain(state, val, &gain_range->max_gain);
 
-	*minGain = -100;
-	IT9507_calOutputGain(state, val, minGain);
+	gain_range->min_gain = -100;
+	IT9507_calOutputGain(state, val, &gain_range->min_gain);
 exit:		
 	return (error);
 }
@@ -2458,10 +2455,11 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
 
     switch (IOCTLCode)
     {
-        case ITE_MOD_ADJUSTOUTPUTGAIN: 
+        case ITE_MOD_SET_RF_GAIN:
         {
-            PSetGainRequest pRequest = (PSetGainRequest) pIOBuffer;
-            pRequest->error = IT9507_adjustOutputGain(state, &pRequest->GainValue);
+            if ((dwError = IT9507_adjustOutputGain(state, (int*)pIOBuffer)))
+              return -EINVAL; /* TODO: Check return value */
+
             break;
         }
         case ITE_MOD_SET_PARAMETERS:
@@ -2473,7 +2471,7 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
             if ((dwError = IT9507_setTXChannelModulation(state,params)))
               return -EINVAL; /* TODO: Check return value */
 
-            if ((dwError = IT9507_setTPSCellId(state, params->cellid)))
+            if ((dwError = IT9507_setTPSCellId(state, params->cell_id)))
               return -EINVAL; /* TODO: Check return value */
 
             if ((dwError = IT9507_setTxModeEnable(state, 1)))
@@ -2482,16 +2480,16 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
             deb_data("IT950x TxMode RF ON\n");                
             break;
         }
-        case ITE_MOD_GETGAINRANGE:
+        case ITE_MOD_GET_RF_GAIN_RANGE:
         {
-            PGetGainRangeRequest pRequest = (PGetGainRangeRequest) pIOBuffer;        
-            pRequest->error = IT9507_getGainRange (state, pRequest->frequency, pRequest->bandwidth, pRequest->maxGain, pRequest->minGain);
+	  if ((dwError = IT9507_getGainRange (state,(struct dvb_modulator_gain_range*)pIOBuffer)))
+              return -EINVAL; /* TODO: Check return value */
             break;
         }
-        case ITE_MOD_GETOUTPUTGAIN:
+        case ITE_MOD_GET_RF_GAIN:
         {
-            PGetOutputGainRequest pRequest = (PGetOutputGainRequest) pIOBuffer;        
-            pRequest->error = IT9507_getOutputGain (state, pRequest->gain);
+            if ((dwError = IT9507_getOutputGain(state, (int*)pIOBuffer)))
+              return -EINVAL; /* TODO: Check return value */
             break;
         }
         default:

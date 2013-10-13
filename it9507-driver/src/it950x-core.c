@@ -581,11 +581,11 @@ long it950x_usb_tx_unlocked_ioctl(
 
 	switch (cmd)
 	{
-		case ITE_MOD_STARTTRANSFER:
+		case ITE_MOD_START_TRANSFER:
 			tx_start_urb_transfer(dev);
 			return 0;
 					
-		case ITE_MOD_STOPTRANSFER:
+		case ITE_MOD_STOP_TRANSFER:
 			tx_stop_urb_transfer(dev);
 			return 0;
 	}
