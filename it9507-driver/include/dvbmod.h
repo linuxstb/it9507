@@ -40,7 +40,5 @@ struct dvb_modulator_gain_range {
 #define DVBMOD_SET_RF_GAIN       _IOWR('k', 0x41, int)
 #define DVBMOD_GET_RF_GAIN       _IOR('k', 0x42, int)
 #define DVBMOD_GET_RF_GAIN_RANGE _IOWR('k', 0x43, struct dvb_modulator_gain_range)
-#define DVBMOD_START_TRANSFER    _IO('k', 0x44)
-#define DVBMOD_STOP_TRANSFER     _IO('k', 0x45)
 
 #endif

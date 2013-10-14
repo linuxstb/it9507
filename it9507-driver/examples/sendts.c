@@ -139,9 +139,6 @@ int main(int argc, char* argv[])
   channel_capacity = calc_channel_capacity(&params);
   fprintf(stderr,"Channel capacity = %dbps\n",channel_capacity);
 
-  /* Start the transfer */
-  result = ioctl(mod_fd, DVBMOD_START_TRANSFER);
-
   /* The main transfer loop */
   unsigned char buf[188*1000];
   int n;
@@ -170,9 +167,6 @@ int main(int argc, char* argv[])
       }
     }
   }  
-
-  /* Stop the transfer */
-  result = ioctl(mod_fd, DVBMOD_STOP_TRANSFER);
 
   close(mod_fd);
   return 0;

@@ -509,6 +509,8 @@ try:
 	dev->tx_file = file;
 	file->private_data = dev;
 
+        tx_start_urb_transfer(dev);
+
 exit:
 	return retval;
 }
@@ -579,16 +581,6 @@ long it950x_usb_tx_unlocked_ioctl(
 	//if (_IOC_TYPE(cmd) != AFA_IOC_MAGIC) return -ENOTTY;
 	//if (_IOC_NR(cmd) > AFA_IOC_MAXNR) return -ENOTTY;
 
-	switch (cmd)
-	{
-		case DVBMOD_START_TRANSFER:
-			tx_start_urb_transfer(dev);
-			return 0;
-					
-		case DVBMOD_STOP_TRANSFER:
-			tx_stop_urb_transfer(dev);
-			return 0;
-	}
 	return DL_DemodIOCTLFun(&dev->state, cmd, parg);
 }
 
