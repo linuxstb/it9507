@@ -22,6 +22,7 @@
 #include <linux/mutex.h>
 #include <linux/mm.h>
 #include <linux/gfp.h>
+#include "dvb_ringbuffer.h"
 #include "it950x.h"
 
 #define   DRIVER_RELEASE_VERSION    "v13.06.27.1"
@@ -29,25 +30,12 @@
 /* Get a minor range for devices from the usb maintainer */
 #define USB_it913x_MINOR_RANGE 47
 #define USB_it950x_MINOR_RANGE 16
-#ifdef CONFIG_USB_DYNAMIC_MINORS
-#define USB_it913x_MINOR_BASE	0
-#define USB_it950x_MINOR_BASE	USB_it913x_MINOR_RANGE
-#else
 #define USB_it913x_MINOR_BASE	192
 #define USB_it950x_MINOR_BASE	192 + USB_it913x_MINOR_RANGE
-#endif
 
-#define URB_TEST	0
 #define URB_COUNT_TX   8
 #define URB_BUFSIZE_TX 32712//65424//16356//32712
 
-#if URB_TEST
-unsigned int loop_cnt = 0;
-unsigned int diff_time_tx_write = 0;
-unsigned int min_1 = 0;
-struct timeval now, start;	
-#endif
-	
 static DEFINE_MUTEX(it950x_mutex);
 static DEFINE_MUTEX(it950x_urb_kill);
 static DEFINE_MUTEX(it950x_rb_mutex);
@@ -62,10 +50,6 @@ typedef struct it950x_urb_context{
 struct it950x_dev {
 	struct usb_device *	usbdev;			    /* the usb device for this device */
 	struct usb_interface *	interface;		/* the interface for this device */
-//	unsigned char *		bulk_in_buffer;		/* the buffer to receive data */
-//	size_t			bulk_in_size;		    /* the size of the receive buffer */
-//	__u8			bulk_in_endpointAddr;	/* the address of the bulk in endpoint */
-//	__u8			bulk_out_endpointAddr;	/* the address of the bulk out endpoint */
 	struct kref		kref;
 	struct file *tx_file;
         struct it950x_state state;
@@ -104,7 +88,7 @@ struct usb_device_id it950x_usb_id_table[] = {
 MODULE_DEVICE_TABLE(usb, it950x_usb_id_table);
 
 /* AirHD */
-u32 Tx_RMRingBuffer(struct it950x_urb_context *context, u32 dwDataFrameSize)
+static u32 Tx_RMRingBuffer(struct it950x_urb_context *context, u32 dwDataFrameSize)
 {
 	struct it950x_dev *dev = context->dev;
 	u32 dwBuffLen = 0;
@@ -179,39 +163,11 @@ static int tx_stop_urb_transfer(struct it950x_dev *dev)
 		deb_data("%s: iso xfer already stop!\n", __func__);
 		return 0;
 	}
-#if URB_TEST
-	min_1 = 0;
-#endif	
 	dev->tx_urb_streaming = 0;
 	
-	/*DM368 usb bus error when using kill urb */
-#if 0
-	for (i = 0; i < URB_COUNT_TX; i++) {
-		if(dev->tx_urbstatus[i] == 1) {
-			dev->tx_urbstatus[i] = 0;
-			usb_kill_urb(dev->tx_urbs[i]);
-		}
-		usb_free_urb(dev->tx_urbs[i]);
-		dev->tx_urbs[i] = NULL;
-	}
-
-	mutex_lock(&it950x_urb_kill);
-	tx_kill_busy_urbs(dev);
-	mutex_unlock(&it950x_urb_kill);
-#endif
-
 	deb_data("%s() end\n", __func__);
 
 	return 0;
-}
-
-u32 fabs_self(u32 a, u32 b)
-{
-	u32 c = 0;
-	
-	c = a - b;
-	if(c >= 0) return c;
-	else return c * -1;
 }
 
 /**
@@ -220,7 +176,7 @@ u32 fabs_self(u32 a, u32 b)
  * Successful submissions return 0(Error_NO_ERROR) and submised buffer length.
  * Otherwise this routine returns a negative error number.
  */
-int Tx_RingBuffer(
+static int Tx_RingBuffer(
 	struct it950x_dev *dev,
     u8* pBuffer,
     int non_blocking,
@@ -366,9 +322,6 @@ static int tx_start_urb_transfer(struct it950x_dev *dev)
 	int i, ret = -ENOMEM;
 
 	//deb_data("%s()\n", __func__);
-#if URB_TEST
-	min_1 = 0;
-#endif	
 	if (dev->tx_urb_streaming) {
 		deb_data("%s: iso xfer already running!\n", __func__);
 		return 0;
@@ -460,23 +413,7 @@ try:
 	
 
 	atomic_add(1, &dev->g_AP_use_tx);
-#if URB_TEST		
-	do_gettimeofday(&start);	
-#endif
 
-	/*kzalloc will limit by Embedded system*/
-#if 0
-	dev->dwTxWriteTolBufferSize = URB_BUFSIZE_TX * URB_COUNT_TX;
-	dev->pTxRingBuffer = kzalloc(dev->dwTxWriteTolBufferSize + 8, GFP_KERNEL);
-	if (dev->pTxRingBuffer) {
-		dev->pWriteFrameBuffer = dev->pTxRingBuffer + 8;
-		dev->pTxCurrBuffPointAddr = dev->pTxRingBuffer;
-		dev->pTxWriteBuffPointAddr = dev->pTxRingBuffer + 4;
-		dev->dwTxRemaingBufferSize = dev->dwTxWriteTolBufferSize;
-		dev->tx_urb_index = 0;
-		//dev->urb_use_count = URB_COUNT_TX;
-	}
-#endif
 
 	if( atomic_read(&dev->g_AP_use_tx) == 1) {      // Allocate buffer just for first user.
 		init_waitqueue_head(&dev->TxQueue);
@@ -559,7 +496,7 @@ static int it950x_usb_tx_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-long it950x_usb_tx_unlocked_ioctl(
+static long it950x_usb_tx_unlocked_ioctl(
 	struct file *file,
 	unsigned int cmd,
 	unsigned long parg)
@@ -604,9 +541,6 @@ static ssize_t it950x_tx_write(
 	if (Len == 0)
 		return 0;
 
-#if URB_TEST
-	loop_cnt++;	
-#endif
 	res = Tx_RingBuffer(dev, (u8*)user_buffer, file->f_flags & O_NONBLOCK, &Len);
 	//printk("[%lu]\n", Len);
         if (res < 0) {
@@ -760,18 +694,8 @@ static void it950x_disconnect(struct usb_interface *intf)
 		deb_data("dev = NULL");
 	}
 	
-	/*DM368 usb bus error when using kill urb */
-#if 0	
-	mutex_lock(&it950x_urb_kill);
-	
-	if(dev->tx_on) tx_kill_busy_urbs(dev);
-	if(dev->rx_on) rx_kill_busy_urbs(dev);
-	
-	mutex_unlock(&it950x_urb_kill);
-#endif
 
 	tx_free_urbs(dev);
-//	rx_free_urbs(dev);
 	
 	usb_set_intfdata(intf, NULL);
 
