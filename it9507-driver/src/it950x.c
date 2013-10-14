@@ -2455,14 +2455,14 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
 
     switch (IOCTLCode)
     {
-        case ITE_MOD_SET_RF_GAIN:
+        case DVBMOD_SET_RF_GAIN:
         {
             if ((dwError = IT9507_adjustOutputGain(state, (int*)pIOBuffer)))
               return -EINVAL; /* TODO: Check return value */
 
             break;
         }
-        case ITE_MOD_SET_PARAMETERS:
+        case DVBMOD_SET_PARAMETERS:
         {
             struct dvb_modulator_parameters *params = (struct dvb_modulator_parameters*)pIOBuffer;
             if ((dwError = IT9507_acquireTxChannel(state, params->bandwidth_hz, params->frequency_khz)))
@@ -2480,13 +2480,13 @@ u32 DL_DemodIOCTLFun(struct it950x_state *state, u32 IOCTLCode, unsigned long pI
             deb_data("IT950x TxMode RF ON\n");                
             break;
         }
-        case ITE_MOD_GET_RF_GAIN_RANGE:
+        case DVBMOD_GET_RF_GAIN_RANGE:
         {
 	  if ((dwError = IT9507_getGainRange (state,(struct dvb_modulator_gain_range*)pIOBuffer)))
               return -EINVAL; /* TODO: Check return value */
             break;
         }
-        case ITE_MOD_GET_RF_GAIN:
+        case DVBMOD_GET_RF_GAIN:
         {
             if ((dwError = IT9507_getOutputGain(state, (int*)pIOBuffer)))
               return -EINVAL; /* TODO: Check return value */

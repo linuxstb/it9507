@@ -124,15 +124,15 @@ int main(int argc, char* argv[])
   params.guard_interval = GUARD_INTERVAL_1_4;
   params.code_rate_HP = FEC_2_3;
   params.cell_id = 0;
-  result = ioctl(mod_fd, ITE_MOD_SET_PARAMETERS, &params);
+  result = ioctl(mod_fd, DVBMOD_SET_PARAMETERS, &params);
 
   struct dvb_modulator_gain_range gain_range;
   gain_range.frequency_khz = 794000;
-  result = ioctl(mod_fd, ITE_MOD_GET_RF_GAIN_RANGE, &gain_range);
+  result = ioctl(mod_fd, DVBMOD_GET_RF_GAIN_RANGE, &gain_range);
   fprintf(stderr,"Gain range: %d to %d\n",gain_range.min_gain,gain_range.max_gain);
 
   gain = -10;
-  result = ioctl(mod_fd, ITE_MOD_SET_RF_GAIN, &gain);
+  result = ioctl(mod_fd, DVBMOD_SET_RF_GAIN, &gain);
   fprintf(stderr,"Gain set to %d\n",gain);
 
   /* Calculate and display the channel capacity based on the modulation/channel parameters */
@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
   fprintf(stderr,"Channel capacity = %dbps\n",channel_capacity);
 
   /* Start the transfer */
-  result = ioctl(mod_fd, ITE_MOD_START_TRANSFER);
+  result = ioctl(mod_fd, DVBMOD_START_TRANSFER);
 
   /* The main transfer loop */
   unsigned char buf[188*1000];
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
   }  
 
   /* Stop the transfer */
-  result = ioctl(mod_fd, ITE_MOD_STOP_TRANSFER);
+  result = ioctl(mod_fd, DVBMOD_STOP_TRANSFER);
 
   close(mod_fd);
   return 0;

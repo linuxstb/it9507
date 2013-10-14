@@ -12,6 +12,10 @@
 #include <linux/types.h>
 #include <linux/dvb/frontend.h>
 
+/**
+ * Modulator API structs
+ */
+
 struct dvb_modulator_parameters {
 	__u32			frequency_khz;   /* frequency in KHz */
 	fe_transmit_mode_t	transmission_mode;
@@ -32,11 +36,11 @@ struct dvb_modulator_gain_range {
  * Modulator API commands
  */
 
-#define ITE_MOD_SET_PARAMETERS    _IOW('k', 0x40, struct dvb_modulator_parameters)
-#define ITE_MOD_SET_RF_GAIN       _IOWR('k', 0x41, int)
-#define ITE_MOD_GET_RF_GAIN       _IOR('k', 0x42, int)
-#define ITE_MOD_GET_RF_GAIN_RANGE _IOWR('k', 0x43, struct dvb_modulator_gain_range)
-#define ITE_MOD_START_TRANSFER    _IO('k', 0x44)
-#define ITE_MOD_STOP_TRANSFER     _IO('k', 0x45)
+#define DVBMOD_SET_PARAMETERS    _IOW('k', 0x40, struct dvb_modulator_parameters)
+#define DVBMOD_SET_RF_GAIN       _IOWR('k', 0x41, int)
+#define DVBMOD_GET_RF_GAIN       _IOR('k', 0x42, int)
+#define DVBMOD_GET_RF_GAIN_RANGE _IOWR('k', 0x43, struct dvb_modulator_gain_range)
+#define DVBMOD_START_TRANSFER    _IO('k', 0x44)
+#define DVBMOD_STOP_TRANSFER     _IO('k', 0x45)
 
 #endif
