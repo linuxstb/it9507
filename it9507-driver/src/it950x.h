@@ -86,13 +86,10 @@ struct it950x_state {
         FILTER_CONTEXT_HW fc;
 };
 
-extern u32 Device_init(struct usb_device *udev,struct it950x_state *state, bool bBoot);
-extern u32 DL_ApPwCtrl (struct it950x_state *state, bool  bOn);
-extern u32 DL_ReSetInterval(void);
-extern u32 DL_Reboot(struct it950x_state *state);
-extern u32 DL_CheckTunerInited(struct it950x_state *state, bool *bOn);
-extern u32 DL_DemodIOCTLFun(struct it950x_state* state, u32 IOCTLCode, unsigned long pIOBuffer);
-extern u32 DL_LoadIQtable_Fromfile(void *handle);
+u32 Device_init(struct usb_device *udev,struct it950x_state *state, bool bBoot);
+u32 DL_ApPwCtrl (struct it950x_state *state, bool  bOn);
+u32 DL_CheckTunerInited(struct it950x_state *state, bool *bOn);
+u32 DL_DemodIOCTLFun(struct it950x_state* state, u32 IOCTLCode, unsigned long pIOBuffer);
 
 #endif
 
