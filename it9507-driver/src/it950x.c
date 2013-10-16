@@ -15,7 +15,6 @@
 
 #include "it950x.h"
 #include "it950x-priv.h"
-#include "IQ_fixed_table.h"
 
 /* LINK processor firmware extracted from modulatorFirmware.h in ITE driver 
    md5sum should be b4217064db5436e8c3ade7c6e982d12e 

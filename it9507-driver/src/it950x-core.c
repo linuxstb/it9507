@@ -22,7 +22,6 @@
 #include <linux/mutex.h>
 #include <linux/mm.h>
 #include <linux/gfp.h>
-#include "dvb_ringbuffer.h"
 #include "it950x.h"
 
 #define   DRIVER_RELEASE_VERSION    "v13.06.27.1"
