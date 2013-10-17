@@ -53,9 +53,9 @@ also removed, and the API was changed to use standard DVB
 enums/#defines for the modulation parameters (constellations, code
 rate etc).
 
-The firmware that runs on the "link" MCU was extracted from the
-#include file and placed in the dvb-mod-it9507.fw file, loaded via the
-standard Linux firmware loading mechanism.
+The firmware that runs on the "link" MCU was extracted from the #include 
+file and placed in the dvb-mod-it9507.fw file, loaded via the standard 
+Linux firmware loading mechanism.
 
 The device node was also renamed from /dev/usb-it950x%d to
 /dev/dvbmod%d.
