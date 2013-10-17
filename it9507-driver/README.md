@@ -60,6 +60,18 @@ Linux firmware loading mechanism.
 The device node was also renamed from /dev/usb-it950x%d to
 /dev/dvbmod%d.
 
+One significant change/bug-fix compared to ITE's driver is in the
+implementation of the write() function.  This has been changed to
+block when the internal ringbuffer is full (ITE's driver just returned
+immediately with a 0 result code) and also to handle short writes
+(e.g. user application attempts to write 32KB, only 16KB is available
+in the buffer, so the driver just consumes 16KB.  In that case, the
+ITE driver would consume nothing).  This makes the userspace "sendts"
+application simpler and consume less CPU.
+
+Non-blocking writes (and the use of poll/select) are not yet
+implemented, but are on the to-do list.
+
 The full history of the modifications can be found on github at
 https://github.com/linuxstb/it9507 within the it9507-driver directory.
 
